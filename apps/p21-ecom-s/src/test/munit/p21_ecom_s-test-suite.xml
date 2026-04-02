@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="p21_ecom_s-test-suite.xml" />
+	<munit:test name="p21_ecom_s-test-suite-post:\customer:application\json:p21_ecom_sTest" doc:id="b3f38ae8-54c7-4890-baf5-12475a5df69c" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="9995404d-2728-4659-a943-b81b5f6db937" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Customer Create Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f7fdddc4-2bbe-4fac-9b3d-52c17573e2c4" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/createCustomerP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="3fc0adb6-9d29-48dd-a214-72325498d2cb" >
+				<munit:payload value="#[MunitTools::getResourceAsString('sample_data/createCustomerRequestBody.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to post:\customer:application\json:p21_ecom_s" doc:id="e406f780-0058-41fc-81e2-9024991f68a4" name="post:\customer:application\json:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="891062d5-503d-46da-a65f-431daf4344f9" processor="ee:transform" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Customer Create Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="82f0ba76-1c6d-48b0-bac1-5ed06f801099" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-get:\productGroups:p21_ecom_sTest" doc:id="9677f52a-0211-4d2a-905d-bd74732097ee" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="b96dbcff-3af5-4cff-b48e-fb415749c443" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Product Group Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="9fd3ff8d-7685-4b8b-a232-fd514ef6ba40" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/getProductGroupP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\productGroups:p21_ecom_s" doc:id="06812b0f-bafb-4729-9bd2-ea72ed26b7c4" name="get:\productGroups:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="674eeb09-4472-4615-b8ce-648821c0f7a1" processor="ee:transform" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Product Group Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="b7d51001-e02e-4bcd-8a26-bfb08bd8ecb3" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-get:\supplier\search:p21_ecom_sTest" doc:id="be6fba60-0b2c-4afc-9aff-ed9e0b9a92ce" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="1a3c6bae-d780-4097-8001-731d96cd3a5b" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Supplier Search Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="07fbf73e-b007-4879-979b-e8422398de35" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/getSuppliersP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\supplier\search:p21_ecom_s" doc:id="2b5c6c54-bcc5-4f56-b2ac-504dcd431544" name="get:\supplier\search:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="a6fa0b96-31e9-452b-84ef-c620859680fa" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Supplier Search Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="bada19b8-3367-4860-bb13-301618ab224a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-post:\item:application\json:p21_ecom_sTest" doc:id="fcffa294-e50b-472d-b36e-d8eb1d43716a" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="0bc2bd8b-eaf8-4477-a07f-0269009263f1" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Create Item Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="a2924f69-5185-4264-8854-49a9ae9a4d41" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/getSuppliersP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="36ecc214-3374-4db8-a96d-de16f8e0a349" >
+				<munit:payload value="#[MunitTools::getResourceAsString('sample_data/itemRequestBody.json')]" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to post:\item:application\json:p21_ecom_s" doc:id="db96b8cc-8ae5-416b-8b8f-3be1a693db1d" name="post:\item:application\json:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="cce2eb8c-677a-4db3-a6e2-e7eda8f1e585" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Create Item Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="9499db84-77e3-48f2-bc33-2a7fd69fccf5" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-get:\item\part:p21_ecom_sTest" doc:id="b63f78a3-688e-4d95-a848-73bbba45ce6f" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="847cf8aa-dfaa-467c-a998-341d02e633b6" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Items Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="4ae61343-7878-4982-a1de-a3e85b50497c" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/getItemPartP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\item\part:p21_ecom_s" doc:id="24c2c217-0c66-4aee-b3a7-32e95b14c383" name="get:\item\part:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="22ac6554-4870-4fbf-9a50-5bbbf2e74bbe" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Inventory Search Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="b94de2f4-10e2-4088-a898-2c67f5895cb6" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-get:\items\parts\(id):p21_ecom_sTest" doc:id="8b6122c0-62ce-4ee9-bb9e-acbd8587309e" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="42f45791-bee7-477a-aaaf-a583e8b9ab1f" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Items ExtendedProperties Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="abdbd9d1-9627-4b8c-a6ac-92e421341f21" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/getItemPartP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\items\parts\(id):p21_ecom_s" doc:id="23eadbd9-8745-40d6-9071-21e39503b37c" name="get:\items\parts\(id):p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="54a5a192-5cc4-4d3a-9cbf-09fdba970260" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Item Search Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f2e4e827-d802-45fc-a7ad-38ad96e72410" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-get:\locations:p21_ecom_sTest" doc:id="4f496e4f-2b36-4798-9529-83129a4c1c54" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="ac7f02a4-b0f3-45ef-91c6-5fd17b8b6f25" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Location Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="b34fe7b8-2434-4170-93fe-ef9d7f41ed2a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/getItemPartP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\locations:p21_ecom_s" doc:id="1bac942d-14b8-4bd2-95a9-f06078faac7f" name="get:\locations:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="c9ef899d-9a42-46a3-acd7-5ee7642c2476" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Location Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="cf69d27b-adb5-4ce0-8c58-d1a7cc8e4a4d" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-get:\users:p21_ecom_sTest" doc:id="a3027905-71a0-4011-8023-abff0d426bef" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="71ed0e9c-cbd8-4dff-a989-0ad4776d9849" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Users Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="cf177de4-f8ce-41e8-80fd-22e32c347beb" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/getUserP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\users:p21_ecom_s" doc:id="a4e54565-c700-4e12-bc9b-f4f0a96efb7b" name="get:\users:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="138a39e0-6916-46aa-88ba-65487a32d225" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="List Of Users Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="5a73b3f6-87ef-40eb-bb95-face9e163beb" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-post:\sales-order:application\json:p21_ecom_sTest" doc:id="deaa2a0c-5956-462e-98e6-db2ae3632c6e" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="e48c604e-9b4f-4a6c-8072-27c99b108245" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Sales Orders Create Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="32c0bd10-1351-46dd-9100-b5e316cf2d20" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/salesOrderP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="98d6ddbf-21d2-40b0-b3a6-3c6e9bb987ef" >
+				<munit:payload value="#[MunitTools::getResourceAsString('sample_data/salesOrderRequestBody.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to post:\sales-order:application\json:p21_ecom_s" doc:id="4f68a1bb-47f4-4343-94e1-e03ab817557a" name="post:\sales-order:application\json:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="e40f5e7e-a468-49a4-a6de-457632c79130" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Sales Order Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="a4149cdd-c67a-40e0-b413-fec698a086dc" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-post:\customer\shipTo:application\json:p21_ecom_sTest" doc:id="29ff4817-aa67-44ca-9ecd-79dbbfd2f04d" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="9f92eba2-7514-46ad-a326-342b5fdd4f85" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Post Ship To Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f173bdab-e370-4e8e-a0cb-2ba5bf32b58a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/shipToP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="a38af6dc-be73-40fc-812f-dfec9c844a1a" >
+				<munit:payload value="#[MunitTools::getResourceAsString('sample_data/shipToRequestBody.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to post:\customer\shipTo:application\json:p21_ecom_s" doc:id="6f56ab74-c264-45cb-ac5b-89c08cff6330" name="post:\customer\shipTo:application\json:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="e2eba7f0-6d9a-4f14-9e1e-c1925e4af9ad" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Ship To Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="59443da2-3feb-4d14-bba5-5aee9d7a0b71" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-post:\contact:application\json:p21_ecom_sTest" doc:id="53cadf8f-17b5-46f5-a731-74595ca09ffd" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="99bb536c-6988-4af8-a103-d2e207cafdb8" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Post Contact Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f173bdab-e370-4e8e-a0cb-2ba5bf32b58a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/createContactP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="cc8ad9c8-3ffd-4af8-a078-3ba63f4e2db2" >
+				<munit:payload value="#[MunitTools::getResourceAsString('sample_data/createContactRequestBody.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to post:\contact:application\json:p21_ecom_s" doc:id="a9e0278c-6c69-4439-a699-1d9d1087f9cd" name="post:\contact:application\json:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="1c72bb30-311c-47e8-89b0-d759b98c3b87" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Post Contact Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="734c5626-0d02-4f67-b437-0fcef64be6fc" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-put:\contact\add:application\json:p21_ecom_sTest" doc:id="faf831f8-8bbc-4299-8b60-db8ae68fe77c" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="2470da3b-d8cc-411b-a9f2-93199611b33d" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Contact Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="61c636ed-0488-44a8-8c37-23c805fa53ac" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/createContactP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="93cdf811-95eb-4cb7-99c7-c052ee6b25a9" >
+				<munit:payload value="#[MunitTools::getResourceAsString('sample_data/updateContactRequestBody.json')]" mediaType="application/json" />
+				<munit:attributes value="#[{&#10;	queryParams : {&#10;		'companyId' : 'CIM',&#10;		'customerId' : '719910'&#10;	}&#10;}]" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to put:\contact\add:application\json:p21_ecom_s" doc:id="b91ed906-78a8-4020-8f2c-7d7fd80f3d6c" name="put:\contact\add:application\json:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="7922739e-bc89-4b90-a94f-ba5990e2ab2c" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Update Customer With Contact Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="a8e9ab8c-fe8f-4d7a-bc53-a6baa294e418" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-post:\customerbycontact\search:application\json:p21_ecom_sTest" doc:id="d17a84eb-740a-4017-b73b-7a87536f7a10" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="c9b91da1-f28a-4621-8a58-847ac92d6203" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Customers Search By Contact Details Request call" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f879a464-76b2-4473-9789-05cf84944d13" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/createContactP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="04fb18df-49d9-4838-abca-4fbecfb6bfcb" >
+				<munit:payload value="#[MunitTools::getResourceAsString('sample_data/customerSearchByContactRequestBody.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to post:\customerbycontact\search:application\json:p21_ecom_s" doc:id="6ecc40be-b33f-4ead-a3e3-db82ddfad5aa" name="post:\customerbycontact\search:application\json:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="c90180b2-23fa-4e1a-b65b-8c5eecebd15c" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Customer Search Response" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="e5aaa73d-17ee-4b9b-9f44-7b09be628c68" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-post:\customer\search:application\json:p21_ecom_sTest" doc:id="2b08459a-22dd-4599-900a-76f967e154e5" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="fff1bf98-68f6-4b5b-a97b-a281a7136be9" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Customer by Customer Id" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="de4b7dcc-0e4b-4142-8210-3c23d39b87e9" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/searchCustomerIdCompanyIdP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="d667eeb0-c00f-4fe9-aa0b-b23d99a80d0f" >
+				<munit:payload value="#[MunitTools::getResourceAsString('sample_data/searchCustomerIdCompanyIdRequestBody.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to post:\customer\search:application\json:p21_ecom_s" doc:id="7dedd947-f422-4158-8820-ba9d14332817" name="post:\customer\search:application\json:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="dad90670-c781-4c42-8a6b-b47e5d68c085" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Customer Search ResponseCompanyId" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="fd8cc516-9e3e-4d6b-8c6b-13cd3680518f" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="p21_ecom_s-test-suite-get:\customer\(id)\contact:p21_ecom_sTest" doc:id="0a1e9420-f874-434d-9302-83a970a9176c" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="c9310dd1-b3db-45e8-a99e-0f11c3b70111" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Customer by Customer Id" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="de4b7dcc-0e4b-4142-8210-3c23d39b87e9" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/customerSearchP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when1" doc:id="21448006-93ff-4fd8-93b2-8030bdfdca68" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Contact by Contact Id" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="c6f885c9-a165-42bd-9dee-3b1e18bc50e8" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/customerSearchByContactP21Response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\customer\(id)\contact:p21_ecom_s" doc:id="419ff398-3bf4-4ce0-bb2d-e33649cf75d3" name="get:\customer\(id)\contact:p21_ecom_s"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="1b18fb91-7d4f-40ff-aad7-6c803d2d7612" processor="ee:transform" atLeast="1" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="List Contacts ResponseByCustomerID" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="6dea0a5b-2881-4069-ab59-dc01bfa9613a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

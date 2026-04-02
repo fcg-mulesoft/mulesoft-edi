@@ -1,0 +1,884 @@
+{
+	"Name": "ShipTo",
+	"Description": null,
+	"UseCodeValues": false,
+	"IgnoreDisabled": true,
+	"Transactions": [
+
+		{
+			"Status": "New",
+			"DataElements": [
+
+				{
+					"Name": "TABPAGE_SALESREP.tabpage_salesrep",
+					"BusinessObjectName": null,
+					"Type": "List",
+					"Keys": [
+						"salesrep_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "salesrep_id",
+									"Value": "220171",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "primary_salesrep",
+									"Value": "ON",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "primary_service_rep",
+									"Value": "OFF",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "delete_flag",
+									"Value": "OFF",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "commission_percentage",
+									"Value": "100.00",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "salesrep_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_1.shiptomain",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [
+						"company_id",
+						"address_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "company_id",
+									"Value": "TMM",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "address_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "address_name",
+									"Value": "ADEMOLAATIBA-TEST",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "customer_id",
+									"Value": "811974",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "default_branch",
+									"Value": "020",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "tax_group_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "terms_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "service_terms_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "invoice_type",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "phys_address1",
+									"Value": "123 Main st",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "phys_address2",
+									"Value": "Unit 5",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "phys_city",
+									"Value": "Hollywood",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "phys_state",
+									"Value": "CA",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "phys_postal_code",
+									"Value": "90210",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "phys_county",
+									"Value": "USA",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "phys_country",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "email_address",
+									"Value": "sample@gmail.com",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "shipping_address",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "phys_address3",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "company_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "customer_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_5.tp_5_dw_5",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "central_phone_number",
+									"Value": "1234567890",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "central_fax_number",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "CLASSES.classes",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "ship_to_class1_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ship_to_class2_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ship_to_class3_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ship_to_class4_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ship_to_class5_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "SHIP_TO_LABELS.ship_to_labels_dw_2",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "data_identifier_group_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "data_identifier_group_desc",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "SHIP_TO_LABELS.ship_to_labels",
+					"BusinessObjectName": null,
+					"Type": "List",
+					"Keys": [
+						"label_definition_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "label_definition_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "code_description",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "label_definition_desc",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "CONTACTS.contacts",
+					"BusinessObjectName": null,
+					"Type": "List",
+					"Keys": [
+						"contact_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "contact_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "email_address",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "pedigree_contact",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "row_status_flag",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "title",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "direct_phone",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "phone_ext",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "direct_fax",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "fax_ext",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "last_hard_touch_date",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "contacts_delete_flag",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "compute_1",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "cf_contact_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "CUSTOM_COLUMN_DATA.custom_column_data",
+					"BusinessObjectName": null,
+					"Type": "List",
+					"Keys": [
+						"company_id",
+						"ship_to_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "value_integer_dddw",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "dddw_display_value",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "value_date",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "value_string",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "value_integer",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "value_decimal_display",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "decimal_entry",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "company_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ship_to_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "value_display",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_OEOPTIONS.tabpage_oeoptions",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "preferred_location_id",
+									"Value": "20000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ups_code",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "packing_basis",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "freight_cd",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "pda_oelist_criteria_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "service_source_location",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "service_center_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "order_priority_uid",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "pick_ticket_type",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "include_non_alloc_on_pick_tix",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "exclude_canceld_from_pick_tix",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "print_packinglist_in_shipping",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "print_prices_on_packinglist",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "include_non_alloc_on_pack_list",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "exclude_canceld_from_pack_list",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "del_sch_source_location",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ups_third_party_billing_no",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "scan_and_pack_flag",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "advanced_billing_flag",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "terms_of_delivery_cd",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "mode_of_transport_cd",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "exclude_print_packinglist_wwms",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ufc_ship_to_ud_edi_x_ref_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ufc_ship_to_ud_edi_default_taker",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ufc_ship_to_ud_edi_default_contact_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "consigned_location_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "location_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "pda_oelist_criteria_desc",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "freight_desc",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "service_center_desc",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "service_source_location_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "consigned_location_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TP_PAYMENTACCOUNT.tp_paymentaccount",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "payment_acct_desc",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "payment_acct_type_cd",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "payment_type_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "payment_acct_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "acct_no_display",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "acct_expiration_date",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "extended_acct_info",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "default_for_ship_to_flag",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "row_status_flag",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "automatic_payment_flag",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "automatic_payment_limit",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "customer_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "company_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ship_to_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ship_to_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "company_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "customer_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TP_SHIPTOPRICING.pricing_detail",
+					"BusinessObjectName": null,
+					"Type": "List",
+					"Keys": [
+						"price_library_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "price_library_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "sequence_number",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "row_status_flag",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "description",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				}
+			],
+			"Documents": null
+		}
+	]
+}

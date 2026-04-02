@@ -1,0 +1,2027 @@
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:db="http://www.mulesoft.org/schema/mule/db" 
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+		<flow name="customersSearchImplFlow" doc:id="db9b6970-8b85-484e-a2d7-150b8a9cf7a8" >
+		<flow-ref doc:name="getToken-ref" doc:id="095ab876-1f02-4892-a95a-8745aa6c856d" name="systemApiGetOautTokenSubFlow"/>
+		<choice doc:name="Search Criteria Check" doc:id="797caf0f-47ba-489b-b787-96b56dbf8967" >
+			<when expression="#[output application/java&#10;---&#10;!isEmpty(payload.CentralPhoneNumber) or !isEmpty(payload.EmailAddress) or !isEmpty(payload.PhysAddress1)]">
+				<ee:transform doc:name="Search Address Request" doc:id="e297b6e4-7b18-4e60-8a55-502345e96997" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="query" ><![CDATA[%dw 2.0
+output application/java
+var modPayload = payload -- ['CompanyId']
+---
+{
+	query: (modPayload filterObject ((value, key) -> !isEmpty(value)) pluck ((value, key) -> 
+            if ( upper(key) == "CENTRALPHONENUMBER" ) 
+            	"CentralPhoneNumber eq '" ++ (value as String) ++ "'"
+          /**  else if ( upper(key) == "EMAILADDRESS" ) 
+            	"substringof('" ++ value ++ "',EmailAddress)"  */
+            else if ( upper(key) == "PHYSADDRESS1" ) 
+            	"startswith(PhysAddress1,'" ++ (value as String) ++ "')"
+            else
+                    "substringof('" ++ (value as String) ++ "', " ++ key ++ ")"
+        ) filter ((item) -> item != "") joinBy " and ")
+}]]></ee:set-variable>
+						<ee:set-variable variableName="companyId" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.CompanyId default ""]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Before Req Logger" doc:id="ebaf4466-eb0e-473b-b727-44e4cee77e34" message='#["Before p21 Search Address Request call"]' />
+				<choice doc:name="Choice" doc:id="7d64c095-e6a4-4f8b-895d-ccc9ad655cf0">
+						<when expression='#[!isEmpty(vars.companyId)]' >
+						<try doc:name="Try" doc:id="5e15f91d-d259-49e4-962e-41db26073d3a" >
+							<http:request method="GET" doc:name="Address Search Request call" doc:id="10c8f021-99f9-4654-8271-54b5c569adcc" config-ref="callReq_configuration" path="${P21api.addressSearchPath}" >
+								<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+								<http:query-params ><![CDATA[#[{
+	"\$query": vars.query.query
+}]]]></http:query-params>
+							</http:request>
+							<set-variable value="#[payload[0].AddressId]" doc:name="Set Variable" doc:id="d0ace118-64fe-43fa-a7cc-b22c51408d1f" variableName="addressId" />
+							<error-handler >
+								<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="2c7ee249-d6e1-466d-a897-45035f1623a6" type="ANY" >
+									<ee:transform doc:name="Error Data" doc:id="ee87b564-594e-49e1-8bbf-90ea377ddf02" >
+										<ee:message >
+											<ee:set-payload resource="dwl/errorResponse.dwl" />
+										</ee:message>
+									</ee:transform>
+								</on-error-propagate>
+							</error-handler>
+						</try>
+						<set-variable value="#[[]]" doc:name="Empty Customers Array Variable" doc:id="c0b6b9b3-76eb-4cf4-8060-1cd2b868c35b" variableName="customersArray" />
+						<foreach doc:name="For Each" doc:id="44a45c2f-8fd5-414d-9c90-e54e364b1088" collection="#[payload.AddressId default []]" >
+							<ee:transform doc:name="Customer Id" doc:id="01764261-9044-4280-ab9a-00566f76752a" >
+								<ee:message />
+								<ee:variables >
+									<ee:set-variable variableName="query" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	query: "CustomerId eq '" ++ payload
+}]]></ee:set-variable>
+									<ee:set-variable variableName="customerId" ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+							<logger level="INFO" doc:name="Log Query Variable" doc:id="cdc984e9-9c10-4211-ab67-921090edbb82" message='#[output application/java&#10;---&#10;"Get Customer by Customer Id Query: " ++ (vars.query.query default "")]' />
+							<logger level="INFO" doc:name="Before Req Logger" doc:id="ea0ef668-f4cd-4f77-a74f-0c47b5016715" message='#[output application/java&#10;---&#10;"Before p21 Search Customer Request call" ++ (vars.customerId default "")]' />
+							<try doc:name="Try" doc:id="5140247e-c839-4b70-afcc-e241dd2153c5" >
+								<http:request method="GET" doc:name="Get Customer by Customer Id" doc:id="06bb19a2-f5df-4fa5-96a5-90de840f0fa7" config-ref="callReq_configuration" path="#[p('P21api.customerSearchPath')]" >
+									<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+									<http:query-params ><![CDATA[#[{
+	"\$query": vars.query.query
+}]]]></http:query-params>
+								</http:request>
+								<ee:transform doc:name="Transform Message" doc:id="927c71a7-ea7a-413e-a040-313923f0a82d" >
+									<ee:message >
+									</ee:message>
+									<ee:variables >
+										<ee:set-variable variableName="custCompanyID" ><![CDATA[%dw 2.0
+output application/java
+---
+(vars.companyId default "") as String == (payload[0].CompanyId default "") as String]]></ee:set-variable>
+									</ee:variables>
+								</ee:transform>
+								<error-handler >
+									<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="e36dd40f-f68d-4e17-b34e-74d71f0ff488" >
+										<logger level="INFO" doc:name="Log Error" doc:id="f502e7f7-f25b-4db6-9081-c3056c72f7f7" message='#[output application/java&#10;---&#10;"Error Occurred during Get Customer by Customer Id - " ++ (vars.customerId default "") ++ ". Error is " ++ (error.detailedDescription default error.description)]' />
+									</on-error-continue>
+								</error-handler>
+							</try>
+							<logger level="INFO" doc:name="After Req Logger" doc:id="28b5122f-fcc1-450e-bbbc-01a73e1c6d88" message='#[output application/java&#10;---&#10;"After p21 Search Customer Request call" ++ (vars.customerId default "")]' />
+							<choice doc:name="Choice" doc:id="a2b0b47e-611c-4fe9-a2fe-59b87bab63b1" >
+								<when expression="#[vars.custCompanyID == true]" >
+									<set-variable value="#[output application/java&#10;---&#10;flatten(vars.customersArray ++ [payload])]" doc:name="Add to Customers Array" doc:id="52d031bc-0648-41eb-ac9f-b518dd44601c" variableName="customersArray" />
+								</when>
+								<otherwise >
+									<logger level="INFO" doc:name="Company Id Not Match" doc:id="9edc3d5f-b3a2-49d2-9453-e76fd7a65d65" message='#["The Company ID provided does not match the Company ID associated with the customer record."]' />
+								</otherwise>
+							</choice>
+						</foreach>
+						<ee:transform doc:name="Customer Search Response" doc:id="abf6a07d-8e82-4f89-8af2-c488336d8d02">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if (isEmpty(vars.customersArray))
+    {
+        status: "Success",
+        results: [],
+        correlationId: vars.correlationId,
+        message: "The Company ID provided does not match the Company ID associated with the customer record."
+    }
+else
+    {
+        status: "Success",
+        results: vars.customersArray,
+        correlationId: vars.correlationId
+    }]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						<logger level="INFO" doc:name="Response Logger" doc:id="89d5994c-5bea-4592-8da4-d13f5474cada" message='#["Search Customer Response"]' />
+					</when>
+					<otherwise >
+						<raise-error doc:name="Raise error- No Company ID Found" doc:id="b1c72a43-36cc-4757-9ba9-a788bffa24d0" type='SEARCH CUSTOMER: COMPANY ID NOT PASSED' description="Company ID is required " />
+						<async doc:name="Async" doc:id="f025a228-f3b8-429c-9c83-62f1eb889be8" >
+							<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="b34ff05d-52b2-4d70-8b02-1a10b71beb0e" name="errorEmailNotificationSubFlow" />
+						</async>
+					</otherwise>
+					</choice>
+			</when>
+			<when expression="#[output application/java&#10;---&#10;!isEmpty(payload.CompanyId) and !isEmpty(payload.CustomerId)]">
+				<ee:transform doc:name="Customer Id" doc:id="24890bf4-4e2b-4429-a8ae-7c6a6f0e6b41" >
+			<ee:message >
+			
+</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="customerId" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.CompanyId ++ "_" ++ payload.CustomerId]]></ee:set-variable>
+			</ee:variables>
+		
+</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="bf95b7a5-e0ba-4e61-b88f-e617d2e93e10" message='#[output application/java&#10;---&#10;"Before p21 Search Customers by Customer Id Request call" ++ (vars.customerId default "")]'/>
+		<try doc:name="Try" doc:id="df07dc30-ecf5-47dd-ad81-57ccdb1b2418" >
+			<http:request method="GET" doc:name="Get Customer by Customer Id" doc:id="a1eb1983-9cff-4102-b6da-8fc609514410" config-ref="callReq_configuration" path="#[p('P21api.customerSearchPath') ++ &quot;/&quot; ++ (vars.customerId default &quot;&quot;) ++ &quot;?extendedproperties=*&quot;]">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+				<http:query-params ><![CDATA[#[{
+	"\$query": vars.query.query
+}]]]></http:query-params>
+			
+</http:request>
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="7371c885-f46f-423e-a823-922e5adc4078" variableName="customerByIdGetRes" mimeType="application/json"/>
+					<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8d901f8b-2f97-4fd0-9275-01e72f5006e1" type="ANY">
+					<ee:transform doc:name="Error Data" doc:id="f5733089-b3e7-4fad-9311-cf25609239e0" >
+						<ee:message >
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+				<logger level="INFO" doc:name="After Req Logger" doc:id="4fab782e-06e3-43a7-802c-f870254d8810" message='#[output application/java&#10;---&#10;"After p21 Search Customers by Customer Id Request call" ++ (vars.customerId default "")]' />
+				<ee:transform doc:name="Customer Search ResponseCompanyId" doc:id="fd8cc516-9e3e-4d6b-8c6b-13cd3680518f">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				<logger level="INFO" doc:name="Response Logger" doc:id="2f7bb166-a292-4e8f-a7bd-ba54372c9fb5" message='#["Search Customer Response"]' />
+			</when>
+			<!-- <when expression="#[output application/java&#10;-&#45;&#45;&#10;!isEmpty(payload.CompanyId)]">
+				<logger level="INFO" doc:name="Before Req Logger" doc:id="c7d90f1c-1ee9-4f3f-8b67-e9546fcfd17f" message='#[output application/java&#10;-&#45;&#45;&#10;"Before p21 Search Customers by Company Id Request call" ++ (payload.CompanyId default "")]'/>
+				<ee:transform doc:name="Transform Message" doc:id="0a346965-de17-4275-8812-aa8abe8b88d0">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="companyId" ><![CDATA[%dw 2.0
+output application/java
+-&#45;&#45;
+"company_id eq '" ++ (payload.CompanyId) ++ "'"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<try doc:name="Try" doc:id="2151c26d-89be-46cd-8515-9d50a9b26b70" >
+					<http:request method="GET" doc:name="Get Customer by Company Id" doc:id="795ee0b7-b8d6-4722-9c28-5d371b343091" config-ref="callReq_configuration" path="${P21api.customerByCompanyIdPath}" >
+						<http:headers ><![CDATA[#[output application/java
+-&#45;&#45;
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+						<http:query-params ><![CDATA[#[{
+	"\$select": "customer_id, customer_name, company_id",
+	"\$filter": vars.companyId
+	
+}]]]></http:query-params>
+					</http:request>
+					<set-variable value="#[payload]" doc:name="Set Variable" doc:id="38cb4cb6-49ce-4d79-afd2-52042cafaa01" variableName="customerByIdGetRes" mimeType="application/json" />
+					<error-handler >
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="516cc24b-2b6d-4a67-bff4-241e524a94a4" type="ANY" >
+							<ee:transform doc:name="Error Data" doc:id="2b68c616-cb74-4b47-96b1-7c60edb12353" >
+								<ee:message >
+									<ee:set-payload resource="dwl/errorResponse.dwl" />
+								</ee:message>
+							</ee:transform>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+				<logger level="INFO" doc:name="After Req Logger" doc:id="26da5365-1750-4812-8135-86cb1af2ba79" message='#[output application/java&#10;-&#45;&#45;&#10;"After p21 Search Customers by Company Id Request call" ++ (payload.CompanyId default "")]' />
+				<ee:transform doc:name="Customer Search Response" doc:id="d5a66729-89d6-4efa-aacd-21c4d5d6f1b4">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+-&#45;&#45;
+{
+	"status": "Success",
+    "results": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				<logger level="INFO" doc:name="Response Logger" doc:id="9b8b143b-7c6a-4e61-a031-b5be3bb72689" message='#["Search Customer Response"]' />
+			</when> -->
+			<otherwise >
+				<ee:transform doc:name="Search Customer Request" doc:id="ea57d8ef-d18d-47e2-8815-07759f5a62a5">
+			<ee:message>
+			
+</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="query" ><![CDATA[%dw 2.0
+output application/java
+import dwl::specialcharutils as specialcharutil
+//import dwl::updateSync as util
+---
+{
+    query: (
+        payload 
+        filterObject ((value, key) -> !isEmpty(value))
+        pluck ((value, key) -> 
+            if (!isEmpty(payload.CustomerName) or !isEmpty(payload.CompanyId))
+                if (upper(key) == "COMPANYID")
+                    "CompanyId eq '" ++ (value as String) ++ "'"
+                else
+                		
+                		
+                	   "startswith(CustomerName,'" ++ (specialcharutil::handleSpecialCharForP21(value) as String) ++ "')"
+                   /** "substringof('" ++(util::customUrlEncode(value) as String) ++ "', " ++ key ++ ")" */
+           /** else if (!isEmpty(payload.FirstName) or !isEmpty(payload.LastName))
+            	"startswith(" ++ key ++",'" ++ (value as String) ++ "')"  */
+            else
+                if (upper(key) == "CENTRALPHONENUMBER")
+                    "CentralPhoneNumber eq '" ++ (value as String) ++ "'"
+                else if (upper(key) == "CUSTOMERID")
+                    "CorpAddressId eq '" ++ (value as String) ++ "'"
+                else if (upper(key) == "PHYSADDRESS1")
+                    "startswith(PhysAddress1,'" ++ (value as String) ++ "')"
+                else
+                    "substringof('" ++ (value as String) ++ "', " ++ key ++ ")"
+        )
+        filter ((item) -> item != "")
+        joinBy " and "
+    )
+}]]></ee:set-variable>
+						<ee:set-variable variableName="companyId" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.CompanyId]]></ee:set-variable>
+			</ee:variables>
+		
+</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="3e0b382b-fcde-442c-9202-cdae098b1fc6" message='#["Before p21 Search Customers Request call"]'/>
+				<choice doc:name="Choice" doc:id="8a5d5da3-2d09-4939-97ee-3698ffc8a9cc">
+					<when expression='#[!isEmpty(vars.companyId) and (vars.query.query contains "CustomerName")]'>
+						<try doc:name="Try" doc:id="54f5d4da-ac2b-4c88-8832-c7110d204aef" >
+							<logger level="INFO" doc:name="Logger" doc:id="e67bb6b2-dc1f-4323-9569-be06faaf3192" message='"PRINT": ${P21api.customerSearchPath} ++ ${P21api.host} ++ ${P21api.port}'/>
+							<http:request method="GET" doc:name="Customers Search Request call" doc:id="75ffb2e5-0fc7-4566-9a0f-87b704f1838e" config-ref="callReq_configuration" path="${P21api.customerSearchPath}" >
+								<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+								<http:query-params ><![CDATA[#[{
+	"\$query": vars.query.query
+}]]]></http:query-params>
+							</http:request>
+							<set-variable value="#[payload]" doc:name="Set Variable" doc:id="8a0ba1b6-07bf-45d9-933e-1e40091d7911" variableName="searchCustomerGetRes" />
+							<error-handler >
+								<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c7f4f81d-5cff-475d-b250-df34990ccf0e" type="ANY" >
+									<ee:transform doc:name="Error Data" doc:id="a8e38dda-eaf7-44bf-a884-ce98aed25261" >
+										<ee:message >
+											<ee:set-payload resource="dwl/errorResponse.dwl" />
+										</ee:message>
+									</ee:transform>
+								</on-error-propagate>
+							</error-handler>
+						</try>
+						<logger level="INFO" doc:name="After Req Logger" doc:id="e5e10128-2f9c-4f71-a409-37ffb875514c" message='#["After p21 Search Customers Request call"]' />
+						<choice doc:name="Choice" doc:id="a9a1f4e3-25c9-42a6-a7f0-5ee587176e76">
+							<when expression="#[vars.companyId == payload.CompanyId]">
+								<set-payload value="#[payload]" doc:name="Company Id Match" doc:id="12dd437b-6de2-4879-8feb-11a69143e850" />
+							</when>
+							<otherwise >
+								<logger level="INFO" doc:name="Company Id Not Match" doc:id="c4e3625a-01e7-440a-917b-28fa0ad81b8a" message='#["The Company ID" ++ (vars.companyId) ++ " does not match the Company ID associated with the customer record."]'/>
+							</otherwise>
+						</choice>
+						<ee:transform doc:name="Customer Search Response" doc:id="46c418a1-12b0-4413-b1c1-bd4c5891d0a8">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if (isEmpty(payload))
+    {
+        status: "Success",
+        results: " ",
+        correlationId: vars.correlationId,
+        message: "The Company ID provided does not match the Company ID associated with the customer record."
+    }
+else
+    {
+        status: "Success",
+        results: payload default " ",
+        correlationId: vars.correlationId
+    }]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<logger level="INFO" doc:name="Response Logger" doc:id="8c0fc24b-2dd0-4254-9f01-b616b9a30dd7" message='#["Search Customer Response"]' />
+					</when>
+					<when expression="#[!isEmpty(vars.companyId)]">
+						<try doc:name="Try" doc:id="bcf4ed04-db54-44c1-a329-fbce45d9aa46" >
+					<http:request method="GET" doc:name="Get Customer by Company Id" doc:id="1ef579f5-07d3-4f0e-9fb6-85b5459f3702" config-ref="callReq_configuration" path="${P21api.customerByCompanyIdPath}" >
+						<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+						<http:query-params ><![CDATA[#[{
+	"\$select": "customer_id, customer_name, company_id",
+	"\$filter": "company_id eq '" ++ (vars.companyId default "") ++ "'"
+	
+}]]]></http:query-params>
+					</http:request>
+					<set-variable value="#[payload]" doc:name="Set Variable" doc:id="1e2c32dd-92e4-442b-aef4-cafc36f9e448" variableName="customerByIdGetRes" mimeType="application/json" />
+					<error-handler >
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="3de81f62-d9b1-4313-bed8-70e4392878c8" type="ANY" >
+							<ee:transform doc:name="Error Data" doc:id="077b890b-f327-4087-8476-b4ca2cc59b50" >
+								<ee:message >
+									<ee:set-payload resource="dwl/errorResponse.dwl" />
+								</ee:message>
+							</ee:transform>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+				<logger level="INFO" doc:name="After Req Logger" doc:id="e356230e-fb14-4959-a6a3-d07febf07631" message='#[output application/java&#10;---&#10;"After p21 Search Customers by Company Id Request call" ++ (payload.CompanyId default "")]' />
+				<ee:transform doc:name="Customer Search Response" doc:id="da9beabe-765b-4ed0-8a84-4177d555f29b">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				<logger level="INFO" doc:name="Response Logger" doc:id="28326535-8b50-4541-bcb0-e5d14d16a9fb" message='#["Search Customer Response"]' />
+					</when>
+					<otherwise >
+						<raise-error doc:name="Raise error- No Company ID Found" doc:id="d2694b03-0537-4dd2-a3f7-a2d66159e647" type="SEARCH CUSTOMER: COMPANY ID NOT PASSED" description="Company ID is required " />
+						<async doc:name="Async" doc:id="a3b4e2ea-43be-4165-8d32-7a788b6fb55d" >
+							<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="565dfeaa-b13f-4889-a767-a06f1fdd5d81" name="errorEmailNotificationSubFlow" />
+						</async>
+					</otherwise>
+				</choice>
+			</otherwise>
+		</choice>
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="9cebf051-36da-4416-bbea-45bd151b447c" >
+				<async doc:name="Async" doc:id="39fabaca-bebf-465c-92c2-170423eaa923" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="86f4d666-f91a-4150-93c5-6129055446cf" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="contactsByCustomerIdSearchImplFlow" doc:id="6cf2d8b5-2232-41d0-bf84-72ee30127f02" >
+		<flow-ref doc:name="getToken-ref" doc:id="1ec2533a-1a1e-4ad6-b650-3a35546b6059" name="systemApiGetOautTokenSubFlow"/>
+		<ee:transform doc:name="Customer Id" doc:id="8e11f276-5e42-43c0-ac7a-1d2c86a2bcd3" >
+			<ee:message >
+			
+</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="customerId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.uriParams.'id']]></ee:set-variable>
+			</ee:variables>
+		
+</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="ffabc01d-36eb-42b3-8b52-d334752a7237" message='#["Before p21 Search Customers Request call"]'/>
+		<try doc:name="Try" doc:id="5f85d84d-86e6-44ae-b3b7-fda2310f682b" >
+			<http:request method="GET" doc:name="Get Customer by Customer Id" doc:id="de4b7dcc-0e4b-4142-8210-3c23d39b87e9" config-ref="callReq_configuration" path="#[p('P21api.customerSearchPath') ++ &quot;/&quot; ++ (vars.customerId default &quot;&quot;) ++ &quot;?extendedproperties=*&quot;]">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+				<http:query-params ><![CDATA[#[{
+	"\$query": vars.query.query
+}]]]></http:query-params>
+			
+</http:request>
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="44f0e3e1-ee08-4682-913b-274696c2050f" variableName="customerByIdGetRes" mimeType="application/json"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f5072c3e-02be-4b7d-8e4b-f60fa196a9fd" type="ANY">
+					<ee:transform doc:name="Error Data" doc:id="d556c419-28ef-49b7-9c42-1479cc729382" >
+						<ee:message >
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="httpStatus" ><![CDATA[if (error.errorType.identifier == 'NOT_FOUND') 404 else 500]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="ccbd058f-47d2-4c5e-a5d9-d708f3ce6a92" message='#["After p21 Search Customers Request call"]' />
+		<choice doc:name="Check for Contacts" doc:id="3365a24f-43ac-4921-9e58-6f524d5352b0" >
+			<when expression="#[output application/java&#10;---&#10;sizeOf(vars.customerByIdGetRes.CustomerContacts default []) &gt; 0]">
+				<set-variable value="#[[]]" doc:name="Empty Contact Array Variable" doc:id="b3a4ad87-2d28-4c70-8d91-4aaef43a4ee6" variableName="contactsArray"/>
+				<foreach doc:name="For Each" doc:id="eea6c7e0-7654-4e0d-bf91-a638de29acf0" collection="#[vars.customerByIdGetRes.CustomerContacts.list default []]">
+					<set-variable value="#[payload.ContactId]" doc:name="Contact Id" doc:id="8e451d60-2782-4aa2-8273-305202b6367c" variableName="contactId"/>
+					<logger level="INFO" doc:name="Log Contact Id" doc:id="7223f456-0f09-45c5-9eb1-2ec83dbafd58" message='#["Contact Id - " ++ (vars.contactId default "")]'/>
+					<choice doc:name="Check for Contact Id Value" doc:id="c764887a-82f2-4a55-9fe8-1840f58c6d33" >
+						<when expression="#[!isEmpty(vars.contactId)]">
+							<try doc:name="Try" doc:id="fcab889b-9ff1-46fc-ae6c-1dd06f1f9bab">
+								<http:request method="GET" doc:name="Get Contact by Contact Id" doc:id="c6f885c9-a165-42bd-9dee-3b1e18bc50e8" config-ref="callReq_configuration" path="#[p('P21api.contactEntityPath') ++ &quot;/&quot; ++ (vars.ContactId default &quot;&quot;)]">
+						<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+					</http:request>
+								<error-handler >
+									<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="61a935c2-0c38-4de9-8a39-ca5ff105b923" >
+										<logger level="INFO" doc:name="Log Error" doc:id="8c291924-62a0-4817-91e7-aeea27d33848" message='#[output application/java&#10;---&#10;"Error Occurred during Get Contact by Contact Id of contact - " ++ (vars.contactId) ++ " for Customer Id - " ++ (vars.customerId default "") ++ ". Error is " ++ (error.detailedDescription default error.description)]'/>
+										<set-payload value="#[output application/xml&#10;---&#10;{&#10;	Contact: {&#10;		Id: vars.contactId,&#10;		Error: error.detailedDescription default error.description&#10;	}&#10;}]" doc:name="Set Payload" doc:id="42d65b4a-9b48-4469-8fd2-ea7a4076d384" />
+									</on-error-continue>
+								</error-handler>
+							</try>
+							<set-variable value="#[output application/java&#10;---&#10;flatten(vars.contactsArray ++ [payload])]" doc:name="Add to Contacts Array" doc:id="7f67c6cc-fa73-44d9-8976-9684d1f39aca" variableName="contactsArray"/>
+						</when>
+						<otherwise >
+							<logger level="INFO" doc:name="Log Empty Contact Id Message" doc:id="1521c4ed-4af1-4f9b-8f13-5c56377e17c2" message='#[output application/java&#10;---&#10;"Contact Id is Empty for Contact No " ++ (vars.counter default "") ++ " of Customer Id " ++ (vars.customerId default "")]'/>
+						</otherwise>
+					</choice>
+				</foreach>
+				<ee:transform doc:name="List Contacts ResponseByCustomerID" doc:id="6dea0a5b-2881-4069-ab59-dc01bfa9613a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": vars.contactsArray,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="List Contacts Response Empty Array" doc:id="653298bc-6b17-43c8-9d19-b08b33ffbea0">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": [],
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			
+</ee:message>
+		</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Response Logger" doc:id="54d5150f-4cab-4384-89c0-76c34a10a5c2" message='#["List Contacts Response"]'/>
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="9e81e6d5-beff-40fe-b43a-5617b7dd8d25" >
+				<async doc:name="Async" doc:id="59fce9b6-b503-43df-87b3-3d4cbb10fda4" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="aa1d712f-72cf-4afb-b3d6-6617ef9bf31e" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="salesOrdersCreateFlow" doc:id="566270a2-97fe-42db-81d1-f5389256650a" >
+		<flow-ref doc:name="getToken-ref" doc:id="da7d73aa-e6f3-4940-b4b7-fb3818c4cb0c" name="systemApiGetOautTokenSubFlow"/>
+		<ee:transform doc:name="Service Order Create Request" doc:id="9ad9c9cd-561c-44a6-8951-6ed36e513a94" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.4
+output application/xml 
+
+fun orEmpty(v) = 
+    if (v ~= null or v ~= "") "" else v
+
+fun toYN(v) =
+    if (v is Boolean) 
+    (if (v) "Y" else "N")
+    else if (v ~= "true") "Y"
+    else if (v ~= "false") "N"
+    else v
+
+---
+{
+  Order @(
+    "xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"
+  ): {
+
+    Lines: {
+      OrderLine: (payload.lines default []) map (l, index) -> 
+      do {
+        var lineObj = l.orderLine
+        ---
+        {
+          Serials: orEmpty(lineObj.serials),
+          Lots: orEmpty(lineObj.lots),
+          Bins: orEmpty(lineObj.bins),
+          LotBins: orEmpty(lineObj.lotBins),
+          Notes: orEmpty(lineObj.notes),
+          LineRooms: orEmpty(lineObj.lineRooms),
+          LineNo: orEmpty(lineObj.lineNo),
+          ItemId: orEmpty(lineObj.itemId),
+          UnitQuantity: orEmpty(lineObj.unitQuantity),
+          UnitOfMeasure: orEmpty(lineObj.unitOfMeasure),
+          UnitPrice: orEmpty(lineObj.unitPrice),
+          SourceLocId: orEmpty(payload.sourceLocationID),
+          ShipLocId: orEmpty(payload.salesLocationID),
+          ProductGroupId: orEmpty(lineObj.productGroupId),        
+          SupplierId: orEmpty(lineObj.supplierId),
+          RequiredDate: orEmpty(lineObj.requiredDate),
+          ExpediteDate: orEmpty(lineObj.requiredDate),
+          WillCall: toYN(payload.willCall),
+          TaxItem: toYN(lineObj.taxItem),                         
+          PricingUnit: orEmpty(lineObj.pricingUnit),
+          CommissionCost: orEmpty(lineObj.commissionCost),
+          OtherCost: orEmpty(lineObj.otherCost),
+          PoCost: orEmpty(lineObj.poCost),
+          Disposition: orEmpty(lineObj.disposition),
+          ManualPriceOveride: toYN(lineObj.manualPriceOveride),
+          CaptureUsage: toYN(lineObj.captureUsage),
+          ContractBinId: orEmpty(lineObj.contractBinId),
+          JobNo: orEmpty(lineObj.jobNo),
+          PromiseDate: orEmpty(lineObj.promiseDate),
+          ExtendedPrice: orEmpty(lineObj.extendedPrice),
+          CompanyId: orEmpty(payload.companyID),
+          QtyOrdered: orEmpty(lineObj.qtyOrdered),
+          Delete: toYN(lineObj.delete),
+          Buy: toYN(lineObj.buy),
+          SecondaryUnitPrice: orEmpty(lineObj.secondaryUnitPrice),
+          SecondaryExtendedPrice: orEmpty(lineObj.secondaryExtendedPrice),
+          OtherCostEdited: orEmpty(lineObj.otherCostEdited),
+          CommissionCostEdited: orEmpty(lineObj.commissionCostEdited),
+          UserDefinedFields: orEmpty(lineObj.userDefinedFields)
+        }
+      }
+    },
+    Notes: orEmpty(payload.notes),
+    Salesreps: {
+      OrderSalesrep: (payload.salesreps default []) map (rep) ->
+      do {
+        var s = rep.orderSalesrep
+        ---
+        {
+          SalesrepId: orEmpty(s.salesrepId),
+          CommissionSplit: orEmpty(s.commissionSplit),
+          Delete: toYN(s.delete),
+          PrimarySalesrep: (s.primarySalesrep),
+          ExcludeSplitValidationFlag: (s.excludeSplitValidationFlag),
+          UserDefinedFields: orEmpty(s.userDefinedFields)
+        }
+      }
+    },
+
+    BuilderSelectionSheets: orEmpty(payload.builderSelectionSheets),
+    Samples: orEmpty(payload.samples),
+    CustomerId: orEmpty(payload.customerID),
+    CompanyId: orEmpty(payload.companyID),
+    LocationId: orEmpty(payload.salesLocationID),
+    PoNo: orEmpty(payload.customerPoNumber),
+    ContactId: orEmpty(payload.contactID),
+    Taker: orEmpty(payload.taker),
+    JobName: orEmpty(payload.jobName),
+    OrderDate: orEmpty(payload.orderDate),
+    RequestedDate: orEmpty(payload.requestedDate),
+    Approved: (payload.approved),
+    ShipToId: orEmpty(payload.shipToID),
+    ShipToName: orEmpty(payload.shipToName),
+    ShipToAddress1: orEmpty(payload.shipToAddress1),
+    ShipToAddress2: orEmpty(payload.shipToAddress2),
+    ShipToAddress3: orEmpty(payload.shipToAddress3),
+    ShipToCity: orEmpty(payload.shipToCity),
+    OeHdrShip2State: orEmpty(payload.shipToState),
+    ZipCode: orEmpty(payload.zipCode),
+    ShipToCountry: orEmpty(payload.shipToCountry),
+    ShipToMailAddress: orEmpty(payload.shipToMailAddress),
+    SourceLocationId: orEmpty(payload.sourceLocationID),
+    CarrierId: orEmpty(payload.carrierID),
+    Route: orEmpty(payload.route),
+    PackingBasis: orEmpty(payload.packingBasis),
+    DeliveryInstructions: orEmpty(payload.deliveryInstructions),
+    Terms: orEmpty(payload.terms),
+    WillCall: toYN(payload.willCall),
+    Class1id: orEmpty(payload.class1id),
+    Class2id: orEmpty(payload.class2id),
+    Class3id: orEmpty(payload.class3id),
+    Class4id: orEmpty(payload.class4id),
+    Class5id: orEmpty(payload.class5id),
+    RMA: toYN(payload.rmaFlag),
+    FreightCd: orEmpty(payload.freightCode),
+    BillingDescription: orEmpty(payload.billingDescription),
+    CaptureUsage: (payload.captureUsage),
+    JobNo: orEmpty(payload.jobNo),
+    InvoiceBatchNumber: orEmpty(payload.invoiceBatchNumber),
+    InvoiceExchangeRateSource: orEmpty(payload.invoiceExchangeRateSource),
+    ShipToPhone: orEmpty(payload.shipToPhone),
+    ApplyBuilderAllowanceFlag: toYN(payload.applyBuilderAllowanceFlag),
+    QuoteExpirationDate: orEmpty(payload.quoteExpirationDate),
+    PromiseDate: orEmpty(payload.promiseDate),
+    CreateInvoice: (payload.createInvoice),
+    CStrategicPriceLibraryId: orEmpty(payload.cStrategicPriceLibraryId),
+    MerchandiseCreditFlag: toYN(payload.merchandiseCreditFlag),
+    OrderPriorityId: orEmpty(payload.orderPriorityId),
+    UpsCode: orEmpty(payload.upsCode),
+    PlacedByName: orEmpty(payload.placedByName),
+    RequiredPaymentUponRelease: toYN(payload.reqPymentUponRelease),
+    FreightOut: orEmpty(payload.freightOut),
+    PickTicketType: orEmpty(payload.pickTicketType),
+    ThirdPartyBilling: orEmpty(payload.thirdPartyBillingFlagDesc),
+    UserDefinedFields: orEmpty(payload.userDefinedFields),
+    CurrencyID: orEmpty(payload.currencyID),
+    Completed: toYN(payload.completed),
+    Quote: toYN(payload.quote),
+    DeletedFlag: toYN(payload.deletedFlag),
+    CancelledFlag: toYN(payload.cancelledFlag),
+    InvoiceNo: orEmpty(payload.invoiceNo),
+    QuoteType @('xsi:nil': "true"): null,
+    WebReferenceNo: orEmpty(payload.webReferenceNo)
+  }
+}
+]]></ee:set-payload>
+
+			
+</ee:message>
+			<ee:variables >
+			</ee:variables>
+		
+</ee:transform>
+		<logger level="INFO" doc:name="Before Call" doc:id="35d4b2af-a7aa-4e8e-b483-dc1771719941" message='#["Before Sales order creation call"]' />
+		<try doc:name="Try" doc:id="22b10d91-22b1-4171-a4e6-c9e98380af17">
+			<http:request method="POST" doc:name="Sales Orders Create Request call" doc:id="32c0bd10-1351-46dd-9100-b5e316cf2d20" config-ref="callReq_configuration" path="${P21api.salesOrdersCreatePath}">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+			
+</http:request>
+			<error-handler>
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d75a1a74-99e2-475f-af5a-16aa8e1e1f2b" type="ANY">
+					<ee:transform doc:name="Error Data" doc:id="1a1168dd-f8e7-40a5-8e2d-42d1cf3ce2c7">
+						<ee:message>
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Call" doc:id="bfeaf3fd-6f84-4339-8fdc-27eb77b0cb54" message='#["After Sales order create call"]' />
+		<ee:transform doc:name="Sales Order Response" doc:id="a4149cdd-c67a-40e0-b413-fec698a086dc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "result": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			
+</ee:message>
+		</ee:transform>
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<logger level="INFO" doc:name="Response Logger" doc:id="70e6e57e-f0d3-4c1d-9d52-f20fcfb2310b" message='#["Sales Order Response"]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d7c225b5-d97b-4a41-a06f-49d144a14fc1" >
+				<async doc:name="Async" doc:id="af89dbd2-b0d0-44b1-b444-7a6f4ba7e1c6" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="eddfbe6d-71f3-4fbc-822d-6fb84394e20d" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="supplierSearchImplFlow" doc:id="ad206122-4360-4b0a-9bc8-24c5ace758aa" >
+		<flow-ref doc:name="getToken-ref" doc:id="e7b327dc-777f-4ae1-af80-7c470eb78b8c" name="systemApiGetOautTokenSubFlow" />
+		<ee:transform doc:name="Search Supplier Request" doc:id="4dee1206-f2ff-4c88-8d54-d2f62b7b4ced" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="filter" ><![CDATA[%dw 2.0
+output application/java
+var SupplierName = attributes.queryParams.SupplierName default ""
+---
+{
+    filter: if(!isEmpty(SupplierName)) ("supplier_name eq'" ++ (SupplierName) ++ "'") else "supplier_name ne null"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="316b46e2-1874-4a2c-ad13-81a3b08480f1" message='#["Before p21 Search Suppliers Request call"]' />
+		<try doc:name="Try" doc:id="d4c05c8f-679b-4582-83da-011fe58bca4d" >
+			<http:request method="GET" doc:name="Supplier Search Request call" doc:id="07fbf73e-b007-4879-979b-e8422398de35" config-ref="callReq_configuration" path="${P21api.supplierSearchPath}">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+				<http:query-params ><![CDATA[#[{
+	"\$filter": vars.filter.filter
+	
+}]]]></http:query-params>
+			
+</http:request>
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="785babdc-0192-427e-bbfb-7cb41a792704" variableName="searchCustomerGetRes"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0c756733-65a5-469b-b71d-4dadf6faf434" type="ANY">
+					<ee:transform doc:name="Error Data" doc:id="eac7d31e-dbce-42a1-834c-2db923fda2bc" >
+						<ee:message >
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="1f0fdd65-3ee9-4e79-93a9-9578a63a2348" message='#["After p21 Search Suppliers Request call"]' />
+		<ee:transform doc:name="Supplier Search Response" doc:id="bada19b8-3367-4860-bb13-301618ab224a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload.value,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			
+</ee:message>
+		</ee:transform>
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<logger level="INFO" doc:name="Response Logger" doc:id="25c75d13-3486-4dde-b477-9920297d3ad3" message='#["Search Supplier Response"]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="244a7f8e-a42f-47e2-bfbe-a8a21e706d14" >
+				<async doc:name="Async" doc:id="9f726ddd-57dc-4525-b656-625561f95dbd" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="c1775b32-c722-422e-b166-d4fe27740820" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="productGroupsImplFlow" doc:id="6bbf0a17-0689-4a2f-87cd-699718b7e999" >
+		<flow-ref doc:name="getToken-ref" doc:id="9878784a-1a0f-4c1d-9d4f-3f5800971fce" name="systemApiGetOautTokenSubFlow"/>
+		<ee:transform doc:name="CompanyID" doc:id="243055fe-f671-422f-813e-cc39a7155269">
+					<ee:message />
+					<ee:variables>
+				<ee:set-variable variableName="company_id" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+  filter:
+    if (attributes.queryParams.companyId != null) attributes.queryParams.companyId 
+    else null
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="13d5089d-3d76-4057-8766-2aa1caf0445d" message='#["Before P21 Product Group Search API call using companyID"]' />
+		<try doc:name="Try" doc:id="93a959a9-043b-4980-acd0-d74f028663af">
+					<http:request method="GET" doc:name="Product Group Request call" doc:id="9fd3ff8d-7685-4b8b-a232-fd514ef6ba40" config-ref="callReq_configuration" path="${P21api.productGroup}">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+				<http:query-params><![CDATA[#[{
+	"\$filter": "company_id eq " ++ vars.company_id.filter
+}]]]></http:query-params>
+			
+</http:request>
+			<error-handler>
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a43e058f-0ef2-4732-9f34-4cd1ea55d3ee" type="ANY">
+					<ee:transform doc:name="Error Data" doc:id="d6fe899f-3028-477d-b23b-99658cc4688f">
+						<ee:message>
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="75d6e8a2-9189-44a3-ac4b-21b625b523f8" message='#["After P21 Product Group Search API call using companyID"]' />
+		<ee:transform doc:name="Product Group Response" doc:id="b7d51001-e02e-4bcd-8a26-bfb08bd8ecb3">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload.value,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+		<logger level="INFO" doc:name="Response Logger" doc:id="37491f90-d981-4521-96cc-10735f2ff31d" message='#["Search Product Group Response"]' />
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f345c4b5-4044-4288-98ea-07dcdbf29c71" >
+				<async doc:name="Async" doc:id="81564fff-325d-4527-ad47-2d4a16537054" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="47d66763-e7ff-4592-99fb-701ce83d5f70" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="customersCreateImplFlow" doc:id="187bfa7f-46a4-479b-b8da-05fef627b9e7" >
+		<flow-ref doc:name="getToken-ref" doc:id="dab3f14a-908b-41fb-b4f3-cd4c4595c8cb" name="systemApiGetOautTokenSubFlow"/>
+		<ee:transform doc:name="Customer Create Request" doc:id="be0d246d-b8c8-49be-8417-2cce44d7ea86" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+fun cust(name, value) =
+  {
+    Name: name,
+    Value: (value default "") as String,
+    IgnoreIfEmpty: true
+  }
+---
+{
+  Name: "Customer",
+  Description: null,
+  UseCodeValues: true,
+  IgnoreDisabled: true,
+  Transactions: [
+    {
+      Status: "New",
+      DataElements: [
+        {
+          Name: "TABPAGE_1.tp_1_dw_1",
+          BusinessObjectName: null,
+          Type: "Form",
+          Keys: ["company_id", "customer_id"],
+          Rows: [
+            {
+              Edits:  ([
+                 cust("company_id", payload.companyId),
+                 cust("customer_id", payload.customerId),
+                 cust("customer_name", payload.customerName),
+                 cust("mail_address1", payload.mailingAddress.address1),
+                 cust("mail_address2", payload.mailingAddress.address2),
+                 cust("mail_city", payload.mailingAddress.city),
+                 cust("mail_state", payload.mailingAddress.state),
+                 cust("mail_postal_code", payload.mailingAddress.postalCode),               
+                 cust("customer_cod_payloaduired_flag", payload.customerCodpayloaduiredFlag  ),
+                 cust("mail_country", payload.mailingAddress.country),
+                 cust("customer_fob_payloaduired_flag", payload.customerFobpayloaduiredFlag ),
+                 cust("salesrep_id", (payload.customerSalesReps[0].salesrepId default payload.salesrepId)),
+                 cust("customer_type_cd", payload.customerTypeCd  ), 
+                 cust("lead_source_id", payload.leadSourceId  ),
+                 cust("wee_taxable_flag", payload.weeTaxableFlag ),
+                   cust("wee_collected_account_no", payload.weeCollectedAccountNo ),
+                   cust("corp_address_id", payload.corpAddressId ),
+                 cust("billing_address_id", payload.billingAddressId ),
+                 cust("terms_id", payload.termsId ),
+                 cust("service_terms_id", payload.serviceTermsId),
+                 cust("shipping_address", payload.shippingAddress),
+                 cust("delete_flag", payload.deleteFlag),
+                 cust("currency_id", payload.currencyId),
+                 cust("date_acct_opened", payload.dateAcctOpened),
+                 cust("consolidated_ship_to_id", payload.consolidatedShipToId),
+                 cust("parker_customer_cd", payload.parkerCustomerCd),
+                 cust("web_enabled_flag", payload.webEnabledFlag),
+                 cust("pedigree_customer", payload.pedigreeCustomer),
+                 cust("last_hard_touch_date", payload.lastHardTouchDate),
+                 cust("national_flag", payload.nationalFlag),
+                 cust("legal_name", payload.legalName),
+                 cust("ufc_customer_ud_salesforce_id", payload.ufcCustomerUdSalesforceId),
+                 cust("ufc_customer_ud_charge_handling", payload.ufcCustomerUdChargeHandling),
+                 cust("ufc_customer_ud_sf_account_id", payload.ufcCustomerUdSfAccountId),
+                 cust("ufc_customer_ud_sf_last_sync", payload.ufcCustomerUdSfLastSync),
+                 cust("salesrep_name", payload.salesrepName),
+                 cust("company_name", payload.companyName),
+                 cust("source_description", payload.sourceDescription),
+                 cust("ufc_customer_legacy_id", payload.ufcCustomerLegacyId)
+              ]),
+              RelativeDateEdits: []
+            }
+          ]
+        },
+        {
+          Name: "TABPAGE_5.tp_5_dw_5",
+          BusinessObjectName: null,
+          Type: "Form",
+          Keys: [],
+          Rows: [
+            {
+              Edits:  ([
+                 cust("phys_address1", payload.physicalAddress.address1),
+                 cust("phys_address2", payload.physicalAddress.address2),
+                 cust("phys_city", payload.physicalAddress.city),
+                 cust("phys_state", payload.physicalAddress.state),
+                 cust("phys_postal_code", payload.physicalAddress.postalCode),
+                 cust("phys_country", payload.physicalAddress.country),
+                 cust("central_phone_number", payload.physicalAddress.phone),
+                 cust("central_fax_number", 
+                payload.physicalAddress.fax),
+                 cust("central_watts_number", payload.physicalAddress.watts),
+                      cust("email_address", payload.physicalAddress.email),
+                 cust("url", payload.physicalAddress.url)
+              ]),
+              RelativeDateEdits: []
+            }
+          ]
+        },
+        {
+          Name: "SHIP_TO_GENERAL.ship_to_general",
+          BusinessObjectName: null,
+          Type: "Form",
+          Keys: [],
+          Rows: [
+            {
+              Edits:  ([
+                 cust("default_branch", payload.shipToGeneral.defaultBranch),
+                 cust("freight_cd", payload.shipToGeneral.freightCd),
+                 cust("packing_basis", payload.shipToGeneral.packingBasis)
+              ]),
+              RelativeDateEdits: []
+            }
+          ]
+        },
+        {
+          Name: "TABPAGE_7.tp_7_dw_price_library",
+          BusinessObjectName: null,
+          Type: "List",
+          Keys: ["price_library_id"],
+          Rows: (payload.priceLibraries default []) map (pl) -> {
+            Edits:  ([
+               cust("price_library_id", pl.priceLibraryId),
+               cust("sequence_number", pl.sequenceNumber),
+               cust("row_status_flag", pl.rowStatusFlag),
+               cust("description", pl.description)
+            ]),
+            RelativeDateEdits: []
+          }
+        },
+        {
+          Name: "LINKS.links",
+          BusinessObjectName: null,
+          Type: "List",
+          Keys: ["contact_id", "contact_type_cd"],
+          Rows: (payload.contacts default []) map (l) -> {
+            Edits:  ([
+               cust("contact_id", l.contactId),
+               cust("contact_type_cd", l.contactTypeCd),
+               cust("email_address", l.email),
+               cust("statement_contact", l.statementContact),
+               cust("row_status_flag", l.rowStatusFlag),
+               cust("pedigree_contact", l.pedigreeContact),
+               cust("contact_link_name", l.contactLinkName),
+               cust("title", l.title),
+               cust("direct_phone", l.directPhone),
+               cust("phone_ext", l.phoneExt),
+               cust("direct_fax", l.directFax),
+               cust("fax_ext", l.faxExt),
+               cust("last_hard_touch_date", l.lastHardTouchDate),
+               cust("contacts_delete_flag", l.contactsDeleteFlag),
+               cust("cf_spaces", l.cfSpaces),
+               cust("cf_contact_name", l.cfContactName)
+            ]),
+            RelativeDateEdits: []
+          }
+        },
+        {
+          Name: "SHIP_TOS.ship_tos",
+          BusinessObjectName: null,
+          Type: "List",
+          Keys: ["ship_to_id"],
+          Rows: (payload.shipTos default []) map (st) -> {
+            Edits:  ([
+               cust("ship_to_id", st.shipToId),
+               cust("name", st.name),
+               cust("last_hard_touch_date", st.lastHardTouchDate),
+               cust("ufc_address_phys_address1", st.address1),
+               cust("ufc_address_phys_address2", st.address2),
+               cust("ufc_address_phys_city", st.city),
+               cust("ufc_address_phys_state", st.state),
+               cust("ufc_address_phys_postal_code", st.postalCode)
+            ]),
+            RelativeDateEdits: []
+          }
+        },
+        {
+          Name: "CUSTOMERSALESREP.customersalesrep",
+          BusinessObjectName: null,
+          Type: "List",
+          Keys: ["salesrep_id"],
+          Rows: (payload.customerSalesReps default []) map (si) -> {
+            Edits:  ([
+               cust("salesrep_id", si.salesrepId),
+               cust("salesrep_name", si.salesrepName),
+               cust("commission_percentage", si.commissionPercentage),
+               cust("primary_salesrep_flag", si.primaryFlag),
+               cust("row_status_flag", si.rowStatusFlag),
+               cust("compute_1", si.compute1)
+            ]),
+            RelativeDateEdits: []
+          }
+        }
+      ],
+      Documents: null
+    }
+  ]
+}]]></ee:set-payload>
+
+			
+</ee:message>
+			<ee:variables >
+			</ee:variables>
+		
+</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="6c14c656-d0b6-41ce-a7c6-051e2b69a2f7" message='#["Before Customer Create Request call"]'/>
+		<try doc:name="Try" doc:id="14c459a2-1334-4aaa-ae36-9f84d8c572b9" >
+			<http:request method="POST" doc:name="Customer Create Request call" doc:id="f7fdddc4-2bbe-4fac-9b3d-52c17573e2c4" config-ref="callReq_configuration" path="${P21api.createCustomer}">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+			
+</http:request>
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="7cd5279d-54fa-4a28-8f8a-103b072c4d6e" variableName="searchCustomerGetRes"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e0633433-3a39-4ea7-86bd-737bb5bcebb4" type="ANY">
+					<ee:transform doc:name="Error Data" doc:id="ad2874ce-2185-4e4e-a3ee-7864cb95fc1b" >
+						<ee:message >
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="ea558a0b-3bae-41da-a277-c4474636317f" message='#["After Customer Create Request call"]' />
+		<ee:transform doc:name="Customer Create Response" doc:id="82f0ba76-1c6d-48b0-bac1-5ed06f801099" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "result": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			
+</ee:message>
+		</ee:transform>
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<logger level="INFO" doc:name="Response Logger" doc:id="73bbba48-6343-4762-bdd3-34db9e5d543f" message='#["Create Customer Response"]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7ea7a1a2-b905-4f7f-960c-b183a36b0d62" >
+				<async doc:name="Async" doc:id="72530b89-3312-453e-b63e-43dfc41ce9b3" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="1d8d24f8-ab75-42cc-8a28-d4a9bf74390f" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="createItemFlow" doc:id="d1040a47-08a3-4835-8c54-0ca6d1b1f76c" >
+		<flow-ref doc:name="getToken-ref" doc:id="a21fd3c7-a519-44c0-8f37-84eac707d9f6" name="systemApiGetOautTokenSubFlow"/>
+		<ee:transform doc:name="Create Item Request" doc:id="81704462-43e2-4474-a11e-8dc8d87d906b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.4
+output application/json
+---
+payload]]></ee:set-payload>
+
+			
+</ee:message>
+			<ee:variables >
+			</ee:variables>
+		
+</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="a8d3dd3b-ffb0-4a0c-abfa-9888509aa3f3" message='#["Before Create Item Request call"]'/>
+		<try doc:name="Try" doc:id="be99d68e-ab6f-4cb3-920d-4ac63f4871c2" >
+			<http:request method="POST" doc:name="Create Item Request call" doc:id="a2924f69-5185-4264-8854-49a9ae9a4d41" config-ref="callReq_configuration" path="${P21api.itemCreatePath}">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+			
+</http:request>
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="187d63e3-d2e3-49d4-8932-876e226e4339" variableName="searchCustomerGetRes"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1594f373-aefc-4c57-bbda-d2037f474fea" type="ANY">
+					<ee:transform doc:name="Error Data" doc:id="b2bbece1-8d3d-4df8-8b3d-d03462fd1622" >
+						<ee:message >
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="038f13af-ad3d-4f6a-9d2b-b060b6393662" message='#["After Create Item Request call"]' />
+		<ee:transform doc:name="Create Item Response" doc:id="9499db84-77e3-48f2-bc33-2a7fd69fccf5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "result": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			
+</ee:message>
+		</ee:transform>
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<logger level="INFO" doc:name="Response Logger" doc:id="f96c96a8-b66c-4e2e-9f5b-029b20ae5623" message='#["Create Item Response"]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4728b0e8-0b1f-413a-9273-bd5f0936c4e0" >
+				<async doc:name="Async" doc:id="3fe1e15b-8d79-4e55-83c4-4fc7cbb4d9e6" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="ab009e80-b48e-4c9a-a5e7-a5d98f76bd66" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="customerByContactDetailsSearchFlow" doc:id="f2d83d2a-03a0-4b3a-8839-8004981a80f8" >
+		<flow-ref doc:name="getToken-ref" doc:id="90e38149-1c37-49d3-87b9-cdebd9a011e7" name="systemApiGetOautTokenSubFlow" />
+		<ee:transform doc:name="Search Customer Request" doc:id="d4cc5106-9986-4e02-9c11-6fae0196c6fa" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="filter" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+    filter: (
+        payload 
+        filterObject ((value, key) -> !isEmpty(value))
+        pluck ((value, key) -> 
+            if (key as String == "CompanyName")
+				"company_name eq '" ++ (value as String) ++ "'"
+            else if (key as String == "CompanyId")
+	            "company_id eq '" ++ (value as String) ++ "'"
+	        else if (key as String == "CentralPhoneNumber")
+	            "direct_phone eq '" ++ (value as String) ++ "'"
+	        else if (key as String  == "PhysAddress1")
+	            "phys_address1 eq '" ++ (value as String) ++ "'"
+	        else if (key as String == "EmailAddress")
+	            "email_address eq '" ++ (value as String) ++ "'"
+	        else if (key as String == "CustomerId")
+	            "customer_id eq '" ++ (value as String) ++ "'"
+	        else if (key as String == "FirstName")
+	            "first_name eq '" ++ (value as String) ++ "'"
+	        else if (key as String == "LastName")
+	            "last_name eq '" ++ (value as String) ++ "'"
+	        else
+	            (key as String) ++ " eq '" ++ (value as String) ++ "'"
+        )
+        filter ((item) -> item != "")
+        joinBy " and "
+    )
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="f2caafda-5ddb-4bc2-8896-8716819baa4a" message='#["Before p21 Search Customers Request call"]' />
+		<try doc:name="Try" doc:id="0719b7a4-1444-4e83-bae4-86f12b02ce94" >
+			<http:request method="GET" doc:name="Customers Search By Contact Details Request call" doc:id="f879a464-76b2-4473-9789-05cf84944d13" config-ref="callReq_configuration" path="${P21api.customerByContactSearchPath}">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+				<http:query-params ><![CDATA[#[{
+	"\$filter": vars.filter.filter
+}]]]></http:query-params>
+			
+</http:request>
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="ffd79b54-b505-47b7-914b-ea912d4e7686" variableName="searchCustomerGetRes"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e93f5aef-83a7-405c-ad06-26844e83fcf8" type="ANY">
+					<ee:transform doc:name="Error Data" doc:id="d19b7cf0-3bae-467a-aafc-f0a316b7a505" >
+						<ee:message >
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="7e2250e8-76bc-4a2a-863b-0ff17f23defe" message='#["After p21 Search Customers Request call"]' />
+		<ee:transform doc:name="Customer Search Response" doc:id="e5aaa73d-17ee-4b9b-9f44-7b09be628c68" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Response Logger" doc:id="74aa2038-f871-4d20-9f0b-04ee533d81eb" message='#["Customer Search Response"]' />
+		
+	</flow>
+	<flow name="itemIdSearchImplFlow" doc:id="5fb8f691-4550-4967-9107-1b17f30b2941" >
+		<flow-ref doc:name="getToken-ref" doc:id="a7af66c9-60aa-42c3-8508-1d1706098a93" name="systemApiGetOautTokenSubFlow"/>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="852f58fe-1183-4403-883e-a75114a0f050" message='#["Before P21 Item Search API call using Item ID"]' />
+		<ee:transform doc:name="Transform Message" doc:id="13a9ba6f-9797-452e-a2d7-4847102ac2c6" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="ItemId" ><![CDATA[%dw 2.0
+output application/java
+var inputId = attributes.queryParams.itemId default ""
+---
+(inputId default "") replace /^(#)/ with "%23"
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<try doc:name="Try" doc:id="b956a386-3fbd-4fcf-a44e-c614b52c5384">
+			<http:request method="GET" doc:name="Get Items ExtendedProperties Request call" doc:id="abdbd9d1-9627-4b8c-a6ac-92e421341f21" config-ref="callReq_configuration" path="#[p('P21api.itemId') ++ &quot;/&quot; ++ (vars.ItemId default &quot;&quot;) ++ &quot;?extendedproperties=*&quot;]">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+			</http:request>
+			<error-handler>
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="9a9e2836-a4db-4055-892c-5f9663dea2a6" type="ANY">
+					<ee:transform doc:name="Error Data" doc:id="d61351a4-fb6d-4bdb-9aa8-9ecaa9e42b49">
+						<ee:message>
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="httpStatus" ><![CDATA[error.exception.errorMessage.attributes.statusCode default 500]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="3ea980c4-8fce-41cb-97e2-f22ae548e208" message='#["After P21 Item Search API call using Item ID"]' />
+		<ee:transform doc:name="Item Search Response" doc:id="f2e4e827-d802-45fc-a7ad-38ad96e72410">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Response Logger" doc:id="31b3a112-af0d-4a04-be8f-37ba29c7153c" message='#["Search Item with extendedProperties Response"]' />
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ba9e9868-2440-49a9-bc92-ef3688f4a385" >
+				<async doc:name="Async" doc:id="456a31dc-d4da-44fc-9814-b5ad118c0473" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="48221dd5-2747-432b-85b2-17c98eaaf714" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="itemSearchImplFlow" doc:id="c6f9e39e-53c6-48a8-8aee-8c4a4d3d6f8c" >
+		<flow-ref doc:name="getToken-ref" doc:id="b31a441a-aa34-4f1a-9252-f3566447eae3" name="systemApiGetOautTokenSubFlow"/>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="c966d024-fd16-4e31-9c00-166c2e0425f8" message='#["Before P21 Inventory Search API call using Item Part ID"]' />
+		<ee:transform doc:name="Item Part ID" doc:id="d5bd2ae0-379a-4de9-b9b8-1f61e5a40923">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="PartID"><![CDATA[%dw 2.0
+output application/java
+---
+attributes.queryParams.partSearch
+]]></ee:set-variable>
+				<ee:set-variable variableName="filter" ><![CDATA[%dw 2.0
+output application/java
+var partNum = attributes.queryParams.partSearch default ""
+fun normalizeInput(s) = (s default "") replace /[- _'"]/ with ""
+---
+{
+	"filter": "contains(SuppPartNorm,'" ++ normalizeInput(partNum) ++ "') or supplier_part_no eq '" ++ partNum ++ "' or contains(ItemNorm,'" ++ normalizeInput(partNum) ++ "') or item_id eq '" ++ partNum ++ "'"
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+		<try doc:name="Try" doc:id="7282b09c-7cf5-4ab1-8d5e-ffe48da1f260">
+					<http:request method="GET" doc:name="Get Items Request call" doc:id="4ae61343-7878-4982-a1de-a3e85b50497c" config-ref="callReq_configuration" path="${P21api.itemPartId}">
+						<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+				<http:query-params ><![CDATA[#[output application/java
+---
+//attributes.queryParams
+{
+	"\$filter": vars.filter.filter
+}]]]></http:query-params>
+					</http:request>
+					<error-handler>
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ef67a000-daab-41ab-ab66-f07b744f65ab" type="ANY">
+							<ee:transform doc:name="Error Data" doc:id="4fe81617-9cfa-47f9-9884-128079b2a813">
+								<ee:message>
+									<ee:set-payload resource="dwl/errorResponse.dwl" />
+								</ee:message>
+							</ee:transform>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="8ef9d9b2-b167-49c7-894c-1baf52d0955a" message='#["After P21 Inventory Search API call using Item Part ID"]' />
+		<ee:transform doc:name="Inventory Search Response" doc:id="b94de2f4-10e2-4088-a898-2c67f5895cb6">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": ({"@odata.context": payload.'@odata.context',
+value: payload.value map ((item, index) -> item -- ['ItemNorm','SuppPartNorm']) }),
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+		<logger level="INFO" doc:name="Response Logger" doc:id="26c54f87-caa1-49bd-8e2d-7e38bcc7f31f" message='#["Search Item Response"]' />
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b437a0db-24c5-45a4-8770-598d762d4086" >
+				<async doc:name="Async" doc:id="37a7ed51-0293-41c5-9488-090fc7b5f37e" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="e5292051-ab19-4305-9bab-a16ddafb0ea9" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="addContactImplFlow" doc:id="c195cd5f-208d-4f2d-98d3-1bd8d592283d">
+		<flow-ref doc:name="getToken-ref" doc:id="2bc20ed6-8385-4e26-b519-bc34931d180e" name="systemApiGetOautTokenSubFlow" />
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="71b7f2bb-bfca-4f8c-b643-891aa9b9ed4d" message='#["Before P21 Add Contact API call"]' />
+		<ee:transform doc:name="" doc:id="a6ddc317-8bcb-4130-af1b-f42a2f4281a2">
+					<ee:message>
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+					</ee:variables>
+				</ee:transform>
+		<try doc:name="Try" doc:id="0eb7b9cb-798d-43dc-9843-7294c220f1a8">
+					<http:request method="POST" doc:name="Post Contact Request call" doc:id="f173bdab-e370-4e8e-a0cb-2ba5bf32b58a" config-ref="callReq_configuration" path="${P21api.contactEntityPath}">
+						<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+					</http:request>
+					<error-handler>
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8f1e65e6-af9e-4bc6-b2de-2ab8910c3661" type="ANY">
+							<ee:transform doc:name="Error Data" doc:id="b2628461-2dc0-4a54-88a4-35099130e186">
+								<ee:message>
+									<ee:set-payload resource="dwl/errorResponse.dwl" />
+								</ee:message>
+							</ee:transform>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="c799166e-94f2-4bff-9746-09d4f65dab5d" message='#["After P21 Add Contact API call"]' />
+		<ee:transform doc:name="Post Contact Response" doc:id="734c5626-0d02-4f67-b437-0fcef64be6fc">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+		<logger level="INFO" doc:name="Response Logger" doc:id="b6f85f8d-91c8-4749-9705-38f8081c1ac6" message='#["Created Contact Id for Customer"]' />
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7bf066d3-d38d-44e7-8e9a-e423e0140247" >
+				<async doc:name="Async" doc:id="75bcb8ba-6818-4300-a634-25a233c5a582" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="1e3026b0-17bc-4f49-881e-77c53c5e4c81" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="updateCustomerContactImplFlow" doc:id="941d7a59-49a2-4635-a775-35809d30d837">
+		<flow-ref doc:name="getToken-ref" doc:id="a1dd7fb8-2d90-412f-b895-4d27239dde72" name="systemApiGetOautTokenSubFlow" />
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="7d2c472c-bb92-4a15-9f36-67881dd0fd4c" message='#["Before P21 Updating Customer with Contact ID API call"]' />
+		<ee:transform doc:name="Contact Update" doc:id="07aa0b51-302d-476b-936c-9f9bdc77415a">
+					<ee:message>
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var customer = payload
+---
+{
+    Name: "Customer",
+    Description: null,
+    UseCodeValues: false,
+    IgnoreDisabled: true,
+    Transactions: [
+        {
+            Status: "New",
+            DataElements: [
+                {
+                    Name: "TABPAGE_1.tp_1_dw_1",
+                    BusinessObjectName: null,
+                    Type: "Form",
+                    Keys: ["company_id", "customer_id"],
+                    Rows: [
+                        {
+                            Edits: [
+                                {
+                                    Name: "company_id",
+                                    Value: customer.CompanyId default "",
+                                    IgnoreIfEmpty: true
+                                },
+                                {
+                                    Name: "customer_id",
+                                    Value: customer.CustomerId default "",
+                                    IgnoreIfEmpty: true
+                                }
+                            ],
+                            RelativeDateEdits: []
+                        }
+                    ]
+                },
+                {
+                    Name: "LINKS.links",
+                    BusinessObjectName: null,
+                    Type: "List",
+                    Keys: ["contact_id", "contact_type_cd", "contact_link_id"],
+                    Rows: 
+                        
+                        (customer.CustomerContacts.OEContactsCustomer default [])
+                        map (contact) -> {
+                            Edits: [
+                                {
+                                    Name: "contact_id",
+                                    Value: contact.ContactId default "",
+                                    IgnoreIfEmpty: true
+                                },
+                                {
+                                    Name: "contact_type_cd",
+                                    Value: "Customer",
+                                    IgnoreIfEmpty: true
+                                },
+                                {
+                                    Name: "contact_link_id",
+                                    Value: contact.CustomerId default "",
+                                    IgnoreIfEmpty: true
+                                }
+                            ],
+                            RelativeDateEdits: []
+                        }
+                }
+            ],
+            Documents: null
+        }
+    ]
+}
+]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+				<ee:set-variable variableName="customerId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.queryParams.companyId ++ "_" ++ attributes.queryParams.customerId]]></ee:set-variable>
+				<ee:set-variable variableName="contactId" ><![CDATA[%dw 2.0
+output application/xml
+ns xsi http://www.w3.org/2001/XMLSchema-instance
+ns xsd http://www.w3.org/2001/XMLSchema
+
+var c = payload
+
+fun nilOrValue(fieldName: String, value) =
+  if ( value == null
+    or (value is Boolean and value == true)
+    or (value == "true")
+    or (value is String and isEmpty(trim(value)))
+  )
+    { (fieldName) @("xsi:nil": "true"): null }
+  else
+    { (fieldName): value }
+---
+{
+  Customer @(
+    "xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"
+  ): {
+
+    CustomerAddress: {
+      CorpAddressId: c.CustomerAddress.CorpAddressId,
+      MailAddress1: (c.CustomerAddress default {}).MailAddress1,
+      MailAddress2: (c.CustomerAddress default {}).MailAddress2,
+      MailAddress3: (c.CustomerAddress default {}).MailAddress3,
+      MailCity: (c.CustomerAddress default {}).MailCity,
+      MailState: (c.CustomerAddress default {}).MailState,
+      MailPostalCode: (c.CustomerAddress default {}).MailPostalCode,
+      MailCountry: (c.CustomerAddress default {}).MailCountry,
+      CentralPhoneNumber: (c.CustomerAddress default {}).CentralPhoneNumber,
+      CentralFaxNumber: (c.CustomerAddress default {}).CentralFaxNumber,
+      Alternative1099Name: (c.CustomerAddress default {}).Alternative1099Name,
+      NameControl: (c.CustomerAddress default {}).NameControl,
+      PhysAddress1: (c.CustomerAddress default {}).PhysAddress1,
+      PhysAddress2: (c.CustomerAddress default {}).PhysAddress2,
+      PhysAddress3: (c.CustomerAddress default {}).PhysAddress3,
+      PhysCity: (c.CustomerAddress default {}).PhysCity,
+      PhysState: (c.CustomerAddress default {}).PhysState,
+      PhysPostalCode: (c.CustomerAddress default {}).PhysPostalCode,
+      PhysCountry: (c.CustomerAddress default {}).PhysCountry,
+      Incorporated: (c.CustomerAddress default {}).Incorporated,
+      EmailAddress: (c.CustomerAddress default {}).EmailAddress,
+      Url: (c.CustomerAddress default {}).Url,
+      AddressId: (c.CustomerAddress default {}).AddressId,
+      Name: (c.CustomerAddress default {}).Name,
+      PhysCounty: (c.CustomerAddress default {}).PhysCounty,
+      UserDefinedFields: (c.CustomerAddress default {}).UserDefinedFields default {}
+    },
+
+    CustomerEDITransactions: c.CustomerEDITransactions default {},
+
+    CustomerSalesreps: {
+      CustomerSalesrep:
+        (c.CustomerSalesreps.CustomerSalesrep default []) map (sr) -> {
+          SalesrepId: sr.SalesrepId,
+          PrimarySalesrep: sr.PrimarySalesrep,
+          CommissionPercentage: sr.CommissionPercentage,
+          Status: sr.Status,
+          CompanyId: sr.CompanyId,
+          CustomerId: sr.CustomerId,
+          CustomerSalesrepUid: sr.CustomerSalesrepUid,
+          UserDefinedFields: sr.UserDefinedFields default {}
+        }
+    },
+    CustomerDealerTypes: c.CustomerDealerTypes default {},
+    CustomerContacts: {
+      OEContactsCustomer:
+        (c.CustomerContacts.OEContactsCustomer default []) map (ct) -> {
+          CompanyId: ct.CompanyId,
+          CustomerId: ct.CustomerId,
+          ContactId: ct.ContactId,
+          Delete: ct.Delete,
+          UserDefinedFields: ct.UserDefinedFields default {}
+        }
+    },
+
+    CustomerShipTos: {
+      ShipTo:
+        (c.CustomerShipTos.ShipTo default []) map (s) -> {
+          ShipToAddress: {
+            CorpAddressId: (s.ShipToAddress default {}).CorpAddressId,
+            MailAddress1: (s.ShipToAddress default {}).MailAddress1,
+            MailAddress2: (s.ShipToAddress default {}).MailAddress2,
+            MailAddress3: (s.ShipToAddress default {}).MailAddress3,
+            MailCity: (s.ShipToAddress default {}).MailCity,
+            MailState: (s.ShipToAddress default {}).MailState,
+            MailPostalCode: (s.ShipToAddress default {}).MailPostalCode,
+            MailCountry: (s.ShipToAddress default {}).MailCountry,
+            CentralPhoneNumber: (s.ShipToAddress default {}).CentralPhoneNumber,
+            CentralFaxNumber: (s.ShipToAddress default {}).CentralFaxNumber,
+            Alternative1099Name: (s.ShipToAddress default {}).Alternative1099Name,
+            NameControl: (s.ShipToAddress default {}).NameControl,
+            PhysAddress1: (s.ShipToAddress default {}).PhysAddress1,
+            PhysAddress2: (s.ShipToAddress default {}).PhysAddress2,
+            PhysAddress3: (s.ShipToAddress default {}).PhysAddress3,
+            PhysCity: (s.ShipToAddress default {}).PhysCity,
+            PhysState: (s.ShipToAddress default {}).PhysState,
+            PhysPostalCode: (s.ShipToAddress default {}).PhysPostalCode,
+            PhysCountry: (s.ShipToAddress default {}).PhysCountry,
+            Incorporated: (s.ShipToAddress default {}).Incorporated,
+            EmailAddress: (s.ShipToAddress default {}).EmailAddress,
+            Url: (s.ShipToAddress default {}).Url,
+            AddressId: (s.ShipToAddress default {}).AddressId,
+            Name: (s.ShipToAddress default {}).Name,
+            PhysCounty: (s.ShipToAddress default {}).PhysCounty,
+            UserDefinedFields: (s.ShipToAddress default {}).UserDefinedFields default {}
+          },
+
+          CompanyId: s.CompanyId,
+          ShipToName: s.ShipToName,
+          CustomerId: s.CustomerId,
+          DefaultBranch: s.DefaultBranch,
+          TaxGroupId: s.TaxGroupId,
+          TermsId: s.TermsId,
+          InvoiceType: s.InvoiceType,
+          StateExemptionNumber: s.StateExemptionNumber,
+          StateExciseTaxExemptionNo: s.StateExciseTaxExemptionNo,
+          FederalExemptionNumber: s.FederalExemptionNumber,
+          OtherExemptionNumber: s.OtherExemptionNumber,
+          DefaultSourceLocationId: s.DefaultSourceLocationId,
+          PackingBasis: s.PackingBasis,
+          PickTicketType: s.PickTicketType,
+         (nilOrValue("DefaultCarrierId", s.DefaultCarrierId)),
+          DeliveryInstructions: s.DeliveryInstructions,
+          RouteCode: s.RouteCode,
+          AcceptPartialOrders: s.AcceptPartialOrders,
+          HandlingCharge: s.HandlingCharge,
+          Class1Id: s.Class1Id,
+          Class2Id: s.Class2Id,
+          Class3Id: s.Class3Id,
+          Class4Id: s.Class4Id,
+          Class5Id: s.Class5Id,
+          FreightCd: s.FreightCd,
+          ExcludeCanceldFromPickTix: s.ExcludeCanceldFromPickTix,
+          ExcludeCanceldFromPackList: s.ExcludeCanceldFromPackList,
+          PrintPricesOnPackinglist: s.PrintPricesOnPackinglist,
+          PrintPackinglistInShipping: s.PrintPackinglistInShipping,
+          ServiceTermsId: s.ServiceTermsId,
+          OrderPriorityId: s.OrderPriorityId,
+          FreightChargeId: s.FreightChargeId,
+          UseCustomerUPSHandlingCharge: s.UseCustomerUPSHandlingCharge,
+          UpsHandlingCharge: s.UpsHandlingCharge,
+          UpsThirdPartyBillingNo: s.UpsThirdPartyBillingNo,
+          IncludeNonAllocOnPickTix: s.IncludeNonAllocOnPickTix,
+          IncludeNonAllocOnPackList: s.IncludeNonAllocOnPackList,
+          ShipToId: s.ShipToId,
+          Delete: s.Delete,
+          DefaultShipTime @("xsi:nil": "true"): null,
+          MorningBegDelivery @("xsi:nil": "true"): null,
+          MorningEndDelivery @("xsi:nil": "true"): null,
+          EveningBegDelivery @("xsi:nil": "true"): null,
+          EveningEndDelivery @("xsi:nil": "true"): null,
+          ThirdPartyBillingFlag: s.ThirdPartyBillingFlag,
+          SendOutsideUseDocs: s.SendOutsideUseDocs,
+          SendOutsideUsePrint: s.SendOutsideUsePrint,
+          SendOutsideUseFax: s.SendOutsideUseFax,
+          SendOutsideUseEmail: s.SendOutsideUseEmail,
+          SalesrepId: s.SalesrepId,
+          UserDefinedFields: s.UserDefinedFields default {}
+        }
+    },
+    CustomerPriceLibraries: {
+      CustomerPriceLibrary:
+        (c.CustomerPriceLibraries.CustomerPriceLibrary default []) map (pl) -> {
+          PriceLibraryId: pl.PriceLibraryId,
+          SequenceNumber: pl.SequenceNumber,
+          RowStatus: pl.RowStatus,
+          Uid: pl.Uid,
+          UserDefinedFields: pl.UserDefinedFields default {}
+        }
+    },
+    CompanyId: c.CompanyId,
+    CustomerId: c.CustomerId,
+    CustomerName: c.CustomerName,
+    SalesrepId: c.SalesrepId,
+    TermsId: c.TermsId,
+    CodRequiredFlag: c.CodRequiredFlag,
+    GenerateFinanceCharges: c.GenerateFinanceCharges,
+    FcCycle: c.FcCycle,
+    MinimumFinanceCharge: c.MinimumFinanceCharge,
+    FinanceChargeShipToId @("xsi:nil": "true"): null,
+    FcGraceDays: c.FcGraceDays,
+    FcPercentage: c.FcPercentage,
+    LastFcDate @("xsi:nil": "true"): null,
+    CreditStatus: c.CreditStatus,
+    CreditLimit: c.CreditLimit,
+    CreditLimitPerOrder: c.CreditLimitPerOrder,
+    CreditLimitCheckAtShipment: c.CreditLimitCheckAtShipment,
+    OverrideRevenueByItem: c.OverrideRevenueByItem,
+    OrderAcknowledgments: c.OrderAcknowledgments,
+    PoNoRequired: c.PoNoRequired,
+    LimitMaxShipmentsPerOrder: c.LimitMaxShipmentsPerOrder,
+    MinimumOrderDollarAmount: c.MinimumOrderDollarAmount,
+    PickTicketType: c.PickTicketType,
+    DefaultDisposition: c.DefaultDisposition,
+    BillToContactId: c.BillToContactId,
+    InvoicePrintQty: c.InvoicePrintQty,
+    GenerateCustomerStatements: c.GenerateCustomerStatements,
+    Taxable: c.Taxable,
+    StatementBalance: c.StatementBalance,
+    SicCode @("xsi:nil": "true"): null,
+    Class1id: c.Class1id,
+    Class2id: c.Class2id,
+    Class3id: c.Class3id,
+    Class4id: c.Class4id,
+    Class5id: c.Class5id,
+    StateSalesTaxExemptionNo: c.StateSalesTaxExemptionNo,
+    StateExciseTaxExemptionNo: c.StateExciseTaxExemptionNo,
+    FederalExemptionNumber: c.FederalExemptionNumber,
+    OtherExemptionNumber: c.OtherExemptionNumber,
+    SecurityInfo: c.SecurityInfo,
+    InterchgReceiverId: c.InterchgReceiverId,
+    InternationalSAN: c.InternationalSAN,
+    TradingPartnerName: c.TradingPartnerName,
+    PrintPricesOnPackinglist: c.PrintPricesOnPackinglist,
+    InvoiceBatchNumber: c.InvoiceBatchNumber,
+    StatementBatchNumber: c.StatementBatchNumber,
+    JobPricing: c.JobPricing,
+    DefaultRebateLocationId @("xsi:nil": "true"): null,
+    CurrencyId: c.CurrencyId,
+    OverrideProfitLimit: c.OverrideProfitLimit,
+    MinimumOrderLineProfit @("xsi:nil": "true"): null,
+    MaximumOrderLineProfit @("xsi:nil": "true"): null,
+    MinimumOrderProfit @("xsi:nil": "true"): null,
+    MaximumOrderProfit @("xsi:nil": "true"): null,
+    (nilOrValue("DateAcctOpened", c.DateAcctOpened)),
+    PrintPackinglistInShipping: c.PrintPackinglistInShipping,
+    InclNonAllocOnTixText: c.InclNonAllocOnTixText,
+    ExcludeCanceldFromPickTix: c.ExcludeCanceldFromPickTix,
+    InclNonAllocOnListText: c.InclNonAllocOnListText,
+    ExcludeCanceldFromPackList: c.ExcludeCanceldFromPackList,
+    AlwaysUseJobPrice: c.AlwaysUseJobPrice,
+    AllowNonJobItem: c.AllowNonJobItem,
+    PromptForNonJobItem: c.PromptForNonJobItem,
+    AllowExceedJobQty: c.AllowExceedJobQty,
+    PrintLotAttribOnInvoice: c.PrintLotAttribOnInvoice,
+    PrintLotAttribOnPacklist: c.PrintLotAttribOnPacklist,
+    OverTolerancePercentage @("xsi:nil": "true"): null,
+    UnderTolerancePercentage @("xsi:nil": "true"): null,
+    CustomerType: c.CustomerType,
+    LeadSourceId: c.LeadSourceId,
+    UseAllContracts: c.UseAllContracts,
+    JobNumberRequired: c.JobNumberRequired,
+    (nilOrValue("PromiseDateBuffer", c.PromiseDateBuffer)),
+    FreightChargeId: c.FreightChargeId,
+    OrderPriorityId: c.OrderPriorityId,
+    UseSystemUPSHandlingCharge: c.UseSystemUPSHandlingCharge,
+    UpsHandlingCharge: c.UpsHandlingCharge,
+    DaysOverdueForCreditHold @("xsi:nil": "true"): null,
+    Delete: c.Delete,
+    SendOutsideUseDocs: c.SendOutsideUseDocs,
+    SendOutsideUsePrint: c.SendOutsideUsePrint,
+    SendOutsideUseFax: c.SendOutsideUseFax,
+    SendOutsideUseEmail: c.SendOutsideUseEmail,
+    LegacyId: c.LegacyId,
+    PricingMethod: c.PricingMethod,
+    RequirePaymentUponReleaseOfItems:   c.RequirePaymentUponReleaseOfItems,
+    CreditLimitUsed: c.CreditLimitUsed,
+    CreditLimitAvailable: c.CreditLimitAvailable,
+    CorporateCreditLimit: c.CorporateCreditLimit,
+    CorporateCreditLimitAvailable: c.CorporateCreditLimitAvailable,
+    WebEnabledFlag: c.WebEnabledFlag,
+    UserDefinedFields: c.UserDefinedFields default {}
+  }
+}
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+		<try doc:name="Try" doc:id="22bfb0fe-8fbf-4a12-80f9-fd500b9316f2">
+					<http:request method="POST" doc:name="Link Contact to Customer" doc:id="61c636ed-0488-44a8-8c37-23c805fa53ac" config-ref="callReq_configuration" path="#[p('P21api.itemCreatePath')]">
+						<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+					</http:request>
+					<error-handler>
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="56044312-4052-4089-8f84-e0371bebda69" type="ANY">
+							<ee:transform doc:name="Error Data" doc:id="7b0daa4c-e282-4701-be8d-a7c4095962cd">
+								<ee:message>
+									<ee:set-payload resource="dwl/errorResponse.dwl" />
+								</ee:message>
+							</ee:transform>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="eaed6918-2ab5-4627-a2d0-a613989b38b9" message='#["After P21 Updating Customer with Contact ID API call"]' />
+		<ee:transform doc:name="Update Customer With Contact Response" doc:id="a8e9ab8c-fe8f-4d7a-bc53-a6baa294e418">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+		<logger level="INFO" doc:name="Response Logger" doc:id="9b4c1765-f156-436b-8c95-8479590248a5" message='#["Updated Contact Id for Customer"]' />
+		<!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="45fcdc19-553e-42bd-add4-66dacfcdd71a" >
+				<async doc:name="Async" doc:id="3030dc8f-5fe6-460c-a870-dfa1200e69ff" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="41231d46-bccf-458e-bb3c-02fd7a2f6588" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="shipToImplFlow" doc:id="035601f3-8327-44eb-801c-62baf603f303" >
+		<flow-ref doc:name="getToken-ref" doc:id="553fd23a-36a7-402f-a2e9-abc460d622f1" name="systemApiGetOautTokenSubFlow" />
+		<ee:transform doc:name="P21 Ship To Request" doc:id="25167dfb-7729-4898-b3e8-7480256c81fd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="customerId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.queryParams.CustomerId]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="ef28cf28-802e-4a74-9dc4-c61a02631f1c" message='#["Before P21 Customer Shop To API call"]' />
+		<try doc:name="Try" doc:id="4af037d8-842c-4a50-921a-c90aa2ac6ae3" >
+			<http:request method="POST" doc:name="Post Ship To Request call" doc:id="f173bdab-e370-4e8e-a0cb-2ba5bf32b58a" config-ref="callReq_configuration" path="${P21api.shipToEntityPath}">
+						<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+				<http:query-params><![CDATA[#[{
+	
+"CustomerId": vars.customerId
+
+}]]]></http:query-params>
+					</http:request>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="41c36c7b-dc28-4600-b745-d00c7793796e" message='#["After P21 Customer Ship To API call"]' />
+		<ee:transform doc:name="Ship To Response" doc:id="59443da2-3feb-4d14-bba5-5aee9d7a0b71" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Response Logger" doc:id="309b4286-2de2-40b1-800c-103adba8387b" message='#["Completed Creating Ship To for Customer"]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="638d7bc0-cdd2-40ee-a3e1-528d2813ef11" >
+				<async doc:name="Async" doc:id="3cdc40d7-0dc7-4e38-93c2-7f71d41b661f" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="42a5fc22-6cdd-47e5-afdd-64172cce779f" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="locationFlow" doc:id="e95a75da-7e63-4ffa-a668-d99c2122910a" >
+		<flow-ref doc:name="getToken-ref" doc:id="675500ff-b8e8-4752-a8ab-3fea72451741" name="systemApiGetOautTokenSubFlow" />
+		<ee:transform doc:name="CompanyID" doc:id="98ccc25a-568e-4b83-9ed8-bf8bed09eedc" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="company_id" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+  filter:
+    if (attributes.queryParams.companyId != null) "company_id eq '" ++ attributes.queryParams.companyId ++ "'"
+    else null
+}
+
+    
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="51c22310-8a9d-4743-95f7-c3f8ab52e4e3" message='#["Before P21 Location Search API call using companyID"]' />
+		<try doc:name="Try" doc:id="4da8d0bc-e528-4317-9703-9151a8d7267a" >
+			<http:request method="GET" doc:name="Location Request call" doc:id="b34fe7b8-2434-4170-93fe-ef9d7f41ed2a" config-ref="callReq_configuration" path="${P21api.location}" >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+				<http:query-params ><![CDATA[#[{
+	"\$filter": vars.company_id.filter
+}]]]></http:query-params>
+			</http:request>
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="0a463eb7-3ff6-4265-8f3b-293ed56fa12a" variableName="locationGetRes "/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="358b638a-7bd7-4379-91a7-671916581b52" type="ANY" >
+					<ee:transform doc:name="Error Data" doc:id="994ea58f-ba03-4f4a-897b-50bc64b0a7d7" >
+						<ee:message >
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="77ce0861-5835-4d86-8254-4d8a9c0864d0" message='#["After P21 Location Search API call using companyID"]' />
+		<ee:transform doc:name="Location Response" doc:id="cf69d27b-adb5-4ce0-8c58-d1a7cc8e4a4d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": payload.value,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Response Logger" doc:id="9b12a0cf-aa93-4a46-b36f-afb6d9e4bf72" message='#["Completed retrieving Location information by Company Id"]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="03f76d50-173e-459a-a10f-fabc4aa127e0" >
+				<async doc:name="Async" doc:id="94761a33-bf95-421a-8d2d-57d33efc2d15" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="22722cd3-3133-420e-90da-7457d20ac6ce" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="listOfUserFlow" doc:id="73d06e0e-de61-490f-9405-841348910f7a" >
+		<flow-ref doc:name="getToken-ref" doc:id="fd7a1f0e-d853-45cb-8245-3ba10d1ce26c" name="systemApiGetOautTokenSubFlow" />
+		<ee:transform doc:name="CompanyID" doc:id="c59bc72b-dd35-4579-87a5-232b1937cff9" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="company_id" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+  filter:
+    if (attributes.queryParams.companyId != null) "company_id eq '" ++ attributes.queryParams.companyId ++ "'"
+    else null
+}
+
+    
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Before Req Logger" doc:id="1aef263b-c127-4fea-96f1-f6f6d77212b6" message='#["Before P21 List of Users Search API call using companyID"]' />
+		<try doc:name="Try" doc:id="7b9eeca7-25e3-45bf-a747-cdd8a3892324" >
+			<http:request method="GET" doc:name="Users Request call" doc:id="cf177de4-f8ce-41e8-80fd-22e32c347beb" config-ref="callReq_configuration" path="${P21api.user}" >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.authToken default ""),
+	"Accept" : "application/json"
+}]]]></http:headers>
+				<http:query-params ><![CDATA[#[{
+	"\$filter": vars.company_id.filter
+}]]]></http:query-params>
+			</http:request>
+			<set-variable value="#[payload.value]" doc:name="Set Variable" doc:id="b62c5358-e514-42c2-884b-4decc1bef675" variableName="userList" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="58474f9b-1abb-456b-82d5-1686a14c6f7f" type="ANY" >
+					<ee:transform doc:name="Error Data" doc:id="a60c366d-a6e7-444e-83e1-40c94294329c" >
+						<ee:message >
+							<ee:set-payload resource="dwl/errorResponse.dwl" />
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="After Req Logger" doc:id="6d4e3f93-5ac8-48de-9e48-8f43141f579d" message='#["After P21 List of Users Search API call using companyID"]' />
+		<ee:transform doc:name="List Of Users Response" doc:id="5a73b3f6-87ef-40eb-bb95-face9e163beb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+    "results": vars.userList,
+	"correlationId": vars.correlationId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Response Logger" doc:id="d0d9ffa5-305c-4412-abfe-bf6e6957e5b2" message='#["Completed retrieving List of Users by Company Id"]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b6a7108e-1ab6-4e36-bc32-2977d7fb3d23" >
+				<async doc:name="Async" doc:id="e6d59586-c68a-47a0-937f-9cb4bb3df044" >
+					<flow-ref doc:name="errorEmailNotificationSubFlow" doc:id="20e226e4-761f-4efb-a785-900e9d47bf9e" name="errorEmailNotificationSubFlow" />
+				</async>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	
+</mule>

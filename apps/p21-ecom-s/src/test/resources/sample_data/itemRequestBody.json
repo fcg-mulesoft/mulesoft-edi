@@ -1,0 +1,561 @@
+{
+	"Name": "Item",
+	"UseCodeValues": true,
+	"IgnoreDisabled": true,
+	"Transactions": [
+
+		{
+			"Status": "New",
+			"DataElements": [
+
+				{
+					"Name": "TABPAGE_1.tp_1_dw_1",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [
+						"item_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "item_id",
+									"Value": "ADEMOLA-TAPI_ECOM",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "item_desc",
+									"Value": "ADEMOLA-TAPI_ECOM DESC",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "sales_discount_group_id",
+									"Value": "TMM_SP4",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "purchase_discount_group_id",
+									"Value": "TMM_SP4",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "short_code",
+									"Value": "EDIT SHORT CODE",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "extended_desc",
+									"Value": "ADEMOLA ext desc",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_2.tp_2_dw_2",
+					"BusinessObjectName": null,
+					"Type": "List",
+					"Keys": [],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "unit_id",
+									"Value": "EA",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "unit_size",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "default_sales_unit",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "sales_pricing_unit",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "default_purchasing_unit",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "purchase_pricing_unit",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "base_unit_flag",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "base_unit_is_item_uom",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						},
+
+						{
+							"Edits": [
+
+								{
+									"Name": "unit_id",
+									"Value": "BX",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "unit_size",
+									"Value": "10",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "default_sales_unit",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "sales_pricing_unit",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "default_purchasing_unit",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "purchase_pricing_unit",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "base_unit_flag",
+									"Value": "N",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "base_unit_is_item_uom",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_6.tp_6_dw_6",
+					"BusinessObjectName": null,
+					"Type": "List",
+					"Keys": [
+						"supplier_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "supplier_id",
+									"Value": "343384",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "division_id",
+									"Value": "343384",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "delete_flag",
+									"Value": "N",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_7.tp_7_dw_7",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [
+						"supplier_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "supplier_id",
+									"Value": "343384",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "manufacturing_class_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "supplier_part_no",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "catalog_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "inventory_supplier_catalog_page",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "list_price",
+									"Value": "2.500000000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "cost",
+									"Value": "2.600000000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "supplier_sort_code",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "upc_code",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "ean_code",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_17.invloclist",
+					"BusinessObjectName": null,
+					"Type": "List",
+					"Keys": [
+						"location_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "location_id",
+									"Value": "20000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "stockable",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "sellable",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "buy",
+									"Value": "Y",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "make",
+									"Value": "N",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "requisition",
+									"Value": "N",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "periods_to_supply_max",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "periods_to_supply_min",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "discontinued",
+									"Value": "N",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "delete_flag",
+									"Value": "N",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "location_name",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_18.inv_loc_detail",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [
+						"location_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "product_group_id",
+									"Value": "LIGHTING",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "sales_discount_group_id",
+									"Value": "TMM_SP4",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "purchase_discount_group_id",
+									"Value": "TMM_SP4",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "tax_group_id",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "track_bins",
+									"Value": "N",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "bin",
+									"Value": "",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_23.tp_23_dw_23",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [
+						"location_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "replenishment_location_id",
+									"Value": "20000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "location_id",
+									"Value": "20000",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "TABPAGE_24.inv_loc_accounts",
+					"BusinessObjectName": null,
+					"Type": "Form",
+					"Keys": [
+						"location_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "gl_account_no",
+									"Value": "12000000000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "revenue_account_no",
+									"Value": "40000000000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "cos_account_no",
+									"Value": "50000000000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "location_id",
+									"Value": "20000",
+									"IgnoreIfEmpty": true
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				},
+
+				{
+					"Name": "SUPPLIER_X_LOCATION.supplier_x_location",
+					"BusinessObjectName": null,
+					"Type": "List",
+					"Keys": [
+						"location_id"
+					],
+					"Rows": [
+
+						{
+							"Edits": [
+
+								{
+									"Name": "location_id",
+									"Value": "20000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "supplier_id",
+									"Value": "343384",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "division_id",
+									"Value": "343384",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "average_lead_time",
+									"Value": "0",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "loc_list_price",
+									"Value": "0.000000000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "loc_cost",
+									"Value": "0.000000000",
+									"IgnoreIfEmpty": true
+								},
+
+								{
+									"Name": "primary_supplier",
+									"Value": "Y",
+									"IgnoreIfEmpty": false
+								}
+							],
+							"RelativeDateEdits": []
+						}
+					]
+				}
+			],
+			"Documents": null
+		}
+	]
+}

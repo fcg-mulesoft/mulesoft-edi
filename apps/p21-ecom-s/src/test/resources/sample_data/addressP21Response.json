@@ -1,0 +1,31 @@
+[
+	{
+		"CorpAddressId": 123432,
+		"MailAddress1": "65 PRINTWORKS DR PO BOX 126",
+		"MailAddress2": "",
+		"MailAddress3": "",
+		"MailCity": "ADAMS",
+		"MailState": "MA",
+		"MailPostalCode": "01220",
+		"MailCountry": "US",
+		"CentralPhoneNumber": "413-743-2308",
+		"CentralFaxNumber": "",
+		"Alternative1099Name": "",
+		"NameControl": "",
+		"PhysAddress1": "65 PRINT WORKS DRIVE",
+		"PhysAddress2": "ADAMS PLUMBING & HEATING",
+		"PhysAddress3": "",
+		"PhysCity": "ADAMS",
+		"PhysState": "MA",
+		"PhysPostalCode": "01220",
+		"PhysCountry": "US",
+		"Incorporated": "N",
+		"EmailAddress": "krysten@adamsphinc.com",
+		"Url": "",
+		"AddressId": 123432,
+		"Name": "ADAMS PLUMBING & HEATING, INC.",
+		"PhysCounty": "",
+		"UserDefinedFields": {},
+		"ObjectName": "address"
+	}
+]

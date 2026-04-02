@@ -1,0 +1,10 @@
+[
+	{
+		"ErrorProcedure": "FCG_sf_insert_so_hdrnote_sp",
+ 		"ErrorMessage": ["Text Already Matches what is currently stored. No Update"],
+ 		"ErrorLine": 50,
+ 		"ErrorSeverity": 16,
+ 		"ErrorState": 1,
+ 		"ErrorNumber": 50000
+ 	}
+]

@@ -1,0 +1,33 @@
+{
+	"status": "Success",
+	"results": {
+		"@odata.context": "https://p21-dev04api.flowcontrolgroup.com:3443/odataservice/odata/view/$metadata#multi_company_customer_contact_master_view_v2",
+		"value": [
+
+			{
+				"company_id": "TMM",
+				"customer_id": 701283,
+				"contact_id": "298487",
+				"contact_type": "Customer Contact",
+				"first_name": "JJ",
+				"last_name": "Stevenson",
+				"title": "Chief Executive Officer",
+				"direct_phone": "303-645-3935",
+				"phone_ext": null,
+				"direct_fax": null,
+				"fax_ext": null,
+				"email_address": "jstevenson@deltechfurnaces.com",
+				"phys_city": "Denver",
+				"phys_state": "CO",
+				"phys_postal_code": "80229",
+				"name": "Deltech Furnaces",
+				"phys_address1": "1007 E. 75th Ave",
+				"phys_country": "US",
+				"company_name": "(FCG_Dev4) TMMI, LLC",
+				"cellular": null,
+				"cellular_ext": null
+			}
+		]
+	},
+	"correlationId": "1234-rtyu"
+}

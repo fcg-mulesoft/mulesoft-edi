@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=" http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd  http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd">
+    <global-property doc:name="Global Property" doc:id="6aae05de-3d5d-4a06-8c51-0ab17eddd5cb" name="mule.env" value="dev" />
+    <http:listener-config name="ecom_e_httpListenerConfig">
+        <http:listener-connection host="${https.host}" port="${https.private.port}" protocol="HTTPS" connectionIdleTimeout="${https.connectionIdleTimeOut}">
+            <tls:context>
+                <tls:key-store type="jks" path="${https.keystore.path}" alias="${https.keystore.alias}" keyPassword="${secure::https.key.password}" password="${secure::https.keystore.password}" />
+            </tls:context>
+        </http:listener-connection>
+    </http:listener-config>
+    <configuration-properties doc:name="Configuration properties" doc:id="cdd3a8df-4beb-4733-a75b-1d6f379ceab5" file="properties/${mule.env}-properties.yaml" />
+    <configuration doc:name="Configuration" doc:id="1c60dc3d-b4a7-45f8-8600-e4d70a11fe54" defaultErrorHandler-ref="global-error-handlingError_Handler" />
+    <http:request-config name="callReq_configuration" doc:name="HTTP Request configuration" doc:id="65d5fe79-a97d-44a8-923a-41c174ac4fc9" responseTimeout="${P21eComSystemapi.responseTimeout}" basePath="${P21eComSystemapi.basePath}">
+        <http:request-connection host="${P21eComSystemapi.host}" port="${P21eComSystemapi.port}" protocol="HTTPS" connectionIdleTimeout="${P21eComSystemapi.connectionIdleTimeOut}">
+            <reconnection>
+                <reconnect frequency="${reconnection.frequency}" count="${reconnection.attempts}" />
+            </reconnection>
+            <tls:context>
+                <tls:trust-store insecure="true" />
+            </tls:context>
+            <http:client-socket-properties>
+                <sockets:tcp-client-socket-properties connectionTimeout="${P21eComSystemapi.connectionTimeOut}" />
+            </http:client-socket-properties>
+        </http:request-connection>
+        <http:default-headers>
+            <http:default-header key="client_id" value="${P21eComSystemapi.clientId}" />
+            <http:default-header key="client_secret" value="${secure::P21eComSystemapi.clientSecret}" />
+        </http:default-headers>
+    </http:request-config>
+    <secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="1a26924c-5674-497d-9d2b-a20c16e5f99a" file="properties/${mule.env}-secure-properties.yaml" key="${mule.key}" />
+    <global-property doc:name="Global Property" doc:id="12882a61-a2b7-40cc-ba22-2edc0fc7fe5b" name="mule.key" value="${env.key}" />
+    <api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="e68a89be-25e6-44d9-9769-8e6ee71ddee2" flowRef="ecom_e-main" />
+    <apikit:config name="ecom_e" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:order-processing-api:1.0.21:raml:zip:order-processing-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+</mule>

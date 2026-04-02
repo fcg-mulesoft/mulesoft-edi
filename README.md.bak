@@ -1,4 +1,0 @@
-# Mulesoft Common Project
-The MuleSoft Common Project is a centralized repository that contains reusable MuleSoft APIs, shared connectors, utility modules, templates, and core integration components used across multiple business domains and application projects.
-The purpose of this project is to promote consistency, reduce code duplication, enforce standards, and accelerate the development of integration solutions in a scalable and maintainable way.
-This repository should serve as the source of truth for reusable integration logic that adheres to the organization’s API-Led Connectivity principles.

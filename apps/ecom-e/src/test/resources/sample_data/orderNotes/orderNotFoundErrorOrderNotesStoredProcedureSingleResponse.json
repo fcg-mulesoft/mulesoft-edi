@@ -1,0 +1,10 @@
+[
+	{
+		"ErrorProcedure": "FCG_sf_insert_so_hdrnote_sp",
+ 		"ErrorMessage": ["Order Number: 10499705 was not found in P21, Unable to Add Note"],
+ 		"ErrorLine": 50,
+ 		"ErrorSeverity": 16,
+ 		"ErrorState": 1,
+ 		"ErrorNumber": 50000
+ 	}
+]

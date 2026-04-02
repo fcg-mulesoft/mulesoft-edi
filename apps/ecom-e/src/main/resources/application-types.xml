@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="serviceOrderCompleteInputPayload" format="json">
+      <types:shape format="weave" example="examples/serviceOrdersCompleteExampleInput.json"><![CDATA[%dw 2.0
+
+type serviceOrderCompleteInputPayload = {|
+  serviceOrderNo: String, 
+  sfLastSync: String, 
+  userDefinedFields: {|
+    udUid: String, 
+    salesforceId: String, 
+    sendToSalesforce: String, 
+    multiVisitsNeeded: String, 
+    purchaseOrderNumber: String, 
+    completeInSalesforce: String
+  |}
+|} {"example": "{\\\"serviceOrderNo\\\":\\\"12345\\\",\\\"sfLastSync\\\":\\\"2025-01-01 11:12:13.000\\\",\\\"userDefinedFields\\\":{\\\"udUid\\\":\\\"\\\",\\\"salesforceId\\\":\\\"ASD345ASDD324V31PNXX\\\",\\\"sendToSalesforce\\\":\\\"N\\\",\\\"multiVisitsNeeded\\\":\\\"Y\\\",\\\"purchaseOrderNumber\\\":\\\"Salesforce PO Number\\\",\\\"completeInSalesforce\\\":\\\"Y\\\"}}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="string" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: string]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#28441018-52e2-4285-827a-50341bb1b977">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="serviceOrderCompleteInputPayload"/>
+        </types:message>
+        <types:variables>
+          <types:variable name="correlationId" type="string"/>
+          <types:variable name="id" type="string"/>
+        </types:variables>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

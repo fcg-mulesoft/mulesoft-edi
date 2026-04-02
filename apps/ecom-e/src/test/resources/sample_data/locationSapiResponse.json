@@ -1,0 +1,67 @@
+[
+
+
+	{
+		"company_id": "AIR",
+		"location_id": 14000,
+		"location_name": "Air Energy Group LLC",
+		"phys_address1": "105 Industrial Blvd",
+		"phys_address2": "",
+		"phys_city": "Brockton",
+		"phys_state": "MA",
+		"phys_postal_code": "02301-7331",
+		"phys_country": "US"
+	},
+
+
+	{
+		"company_id": "AIR",
+		"location_id": 14005,
+		"location_name": "Air Energy - Service Dept",
+		"phys_address1": "6 Norfolk Ave",
+		"phys_address2": null,
+		"phys_city": "South Easton",
+		"phys_state": "MA",
+		"phys_postal_code": "02375",
+		"phys_country": "US"
+	},
+
+
+	{
+		"company_id": "AIR",
+		"location_id": 14010,
+		"location_name": "Pneumatic Systems",
+		"phys_address1": "64 Cody St",
+		"phys_address2": "",
+		"phys_city": "West Hartford",
+		"phys_state": "CT",
+		"phys_postal_code": "06110-1904",
+		"phys_country": "US"
+	},
+
+
+	{
+		"company_id": "AIR",
+		"location_id": 14020,
+		"location_name": "Air Energy Group LLC",
+		"phys_address1": "105 Industrial Blvd.",
+		"phys_address2": null,
+		"phys_city": "Brockton",
+		"phys_state": "MA",
+		"phys_postal_code": "02301",
+		"phys_country": "US"
+	},
+
+
+	{
+		"company_id": "AIR",
+		"location_id": 14030,
+		"location_name": "AIR - Rochester",
+		"phys_address1": "110 Elmgrove Park",
+		"phys_address2": null,
+		"phys_city": "Rochester",
+		"phys_state": "NY",
+		"phys_postal_code": "14624",
+		"phys_country": "US"
+	}
+]

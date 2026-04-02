@@ -1,0 +1,16 @@
+anypoint:
+  platform:
+    client_secret: "![mF2e+ptRTLpL9iUGopeSubj7DRNg3M5Oool13PpnvtP32twc1mgodZNoykbfrbdx]"
+https:
+  key:
+    password: "![PBUn8Z4M8PzkYOUGWbxIXw==]"
+  keystore:
+    password: "![PBUn8Z4M8PzkYOUGWbxIXw==]"
+  truststore:
+    password: "![PBUn8Z4M8PzkYOUGWbxIXw==]"
+P21api:
+  password: "![I1YykZtm2XiILFUz2hYCFw==]"
+p21Db:
+  password: "![I1YykZtm2XiILFUz2hYCFw==]"
+email:
+  password: "![BSIHrxauyp4OUmWUL5rqC8t+9UPK6S4tI2On9RSmzJo=]"

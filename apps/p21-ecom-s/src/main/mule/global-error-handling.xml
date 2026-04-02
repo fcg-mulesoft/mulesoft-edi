@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<sub-flow name="errorEmailNotificationSubFlow" doc:id="26760e66-c13c-470c-8d27-8917cb26e64b" >
+		<logger level="ERROR" doc:name="logError" doc:id="ff54713b-e3ac-4b97-9a7e-54ed147c2820" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"message": "An error has occurred while sending a request to P21",&#10;	"error": error -- ["cause", "exception"] // suppressing these fields to prevent serialization errors&#10;}]' />
+		<set-variable value="#[%dw 2.0&#10;output application/json&#10;import dwl::utils&#10;&#10;var errorDescription = &quot;Error: &quot; ++ error.detailedDescription as String&#10;var errorTime = &quot;Time: &quot; ++ ((now() &gt;&gt; &quot;America/New_York&quot;) as String replace &quot;T&quot; with &quot; &quot;)&#10;//var url = &quot;URL: https://&quot; ++ vars.context.host as String ++ vars.context.path as String&#10;var messageDetails = [errorDescription, errorTime] joinBy '\n'&#10;var attachments = vars.context.payload&#10;---&#10;{&#10;	subject: upper(p('mule.env')) ++ &quot; - &quot; ++ (app.name default &quot;Unknown App&quot;) ++ ' - ' ++ p('email.httpError.subject'),&#10;	from: p('email.username'),&#10;	toList: p('email.supportGroups.mulesoft') splitBy &quot;,&quot;,&#10;	ccList: p('email.supportGroups.mulesoft') splitBy &quot;,&quot;,&#10;	message: &quot;Hello,The application has encountered an error.&quot; ++ messageDetails,&#10;	attachments: attachments&#10;}]" doc:name="email" doc:id="fe6cc773-3ec0-4470-bfdf-068f7f9e0fd9" variableName="email" />
+		<email:send doc:id="78ea2848-692b-4909-8e64-c489384bb117" config-ref="Email_SMTP" fromAddress="#[vars.email.from]" subject="#[vars.email.subject]" toAddresses="#[vars.email.toList]" ccAddresses="#[vars.email.ccList]" doc:name="sendErrorAlertEmail">
+					<email:body>
+					<email:content><![CDATA[#[%dw 2.0
+output text/plain
+---
+vars.email.message]]]></email:content>
+				</email:body>
+				<email:attachments><![CDATA[#[{
+	("AffectedRecords.json": write(vars.email.attachments, 'application/json')) if (!isEmpty(vars.email.attachments))
+}]]]></email:attachments>
+				</email:send>
+		<remove-variable doc:name="email" doc:id="2348bf6b-7185-4ab6-aabb-ca29d30da3c7" variableName="email" />
+	</sub-flow>
+	<error-handler name="global-error-handlingError_Handler" doc:id="329d7660-c582-4672-ac99-d35c2acea780" >
+		<on-error-propagate type="APIKIT:BAD_REQUEST">
+			<ee:transform>
+                    <ee:message >
+					<ee:set-payload resource="dwl/errorResponse.dwl" />
+				</ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<logger level="ERROR" doc:name="errorDetails" doc:id="31717f44-43c0-41d8-8e6e-c4ce37de8c21" message="#[payload]"/>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+			<ee:transform>
+                    <ee:message>
+                    <ee:set-payload resource="dwl/errorResponse.dwl" />
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<logger level="ERROR" doc:name="errorDetails" doc:id="89fff646-b55b-4c10-8f61-96fa025b5c6e" message="#[payload]" />
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+			<ee:transform>
+                    <ee:message>
+                    <ee:set-payload resource="dwl/errorResponse.dwl" />
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[405]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<logger level="ERROR" doc:name="errorDetails" doc:id="53930988-e0f7-42b8-898d-ce7d9f1b0e42" message="#[payload]" />
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+			<ee:transform>
+                    <ee:message>
+                    <ee:set-payload resource="dwl/errorResponse.dwl" />
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[406]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<logger level="ERROR" doc:name="errorDetails" doc:id="45e57197-6ecd-43de-a460-46c9d69c65cd" message="#[payload]" />
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+			<ee:transform>
+                    <ee:message>
+                    <ee:set-payload resource="dwl/errorResponse.dwl" />
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[415]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<logger level="ERROR" doc:name="errorDetails" doc:id="4f79a827-33bc-49bf-a85d-143beb1daf35" message="#[payload]" />
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+			<ee:transform>
+                    <ee:message>
+                    <ee:set-payload resource="dwl/errorResponse.dwl" />
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[501]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<logger level="ERROR" doc:name="errorDetails" doc:id="13251398-a502-4556-8bf7-1423fa05281f" message="#[payload]" />
+            </on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="15751a74-eaac-4658-89fb-b7c3e98fac59" type="ANY">
+			<ee:transform doc:name="Transform Message" doc:id="0419502b-08a4-4145-b512-a0303f06b138" >
+				<ee:message >
+					<ee:set-payload resource="dwl/errorResponse.dwl" />
+				</ee:message>
+			</ee:transform>
+			<logger level="ERROR" doc:name="errorDetails" doc:id="b664d1c0-4129-417f-b6dc-924e9aa37be0" message="#[payload]" />
+		</on-error-propagate>
+	</error-handler>
+</mule>

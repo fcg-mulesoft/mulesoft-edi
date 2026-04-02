@@ -1,0 +1,73 @@
+{
+	"approved": false,
+	"carrierID": 228727,
+	"carrierName": "FedEx",
+	"companyID": "TMM",
+	"contactID": "6707762",
+	"contactName": "Karyn Elsenheimer",
+	"currencyID": 1,
+	"customerID": 343698,
+	"customerName": "bioMerieux Inc",
+	"customerPoNumber": "1074933",
+	"deliveryInstructions": null,
+	"freightCode": "CPO",
+	"freightOut": null,
+	"importAsQuote": false,
+	"lines": [
+
+		{
+			"orderLine": {
+				"disposition": "B",
+				"extendedDesc": "INOR ICON-X Ex-Certified Configuration Kit. Complete kit for configuration of all INOR PC programmable transmitters.\n",
+				"extendedPrice": 435,
+				"itemId": "70CFGUSX01",
+				"lineNo": 1,
+				"manualPriceOveride": false,
+				"pricingUnit": null,
+				"qtyOrdered": 1,
+				"requiredDate": null,
+				"supplierId": 343384,
+				"unitOfMeasure": "EA",
+				"unitPrice": 435,
+				"unitQuantity": 0
+			}
+		}
+	],
+	"orderDate": "2025-07-11T10:04:00",
+	"packingBasis": "Complete",
+	"quote": false,
+	"quoteExpirationDate": "2025-08-16T00:00:00-04:00",
+	"quoteNumber": null,
+	"reqPymentUponRelease": true,
+	"requestedDate": null,
+	"rmaFlag": false,
+	"salesLocationID": 20000,
+	"salesreps": [
+
+		{
+			"orderSalesrep": {
+				"commissionSplit": 100,
+				"delete": false,
+				"excludeSplitValidationFlag": false,
+				"primarySalesrep": true,
+				"salesrepId": 62735
+			}
+		}
+	],
+	"shipToAddress1": "100 Rodolphe Street",
+	"shipToAddress2": "Rm 703",
+	"shipToCity": "Durham",
+	"shipToCountry": "US",
+	"shipToEmailAddress": "karyn.elsenheimer@biomerieux.com",
+	"shipToID": 344891,
+	"shipToName": "Tony Dube",
+	"shipToPhone": "19196205647",
+	"shipToState": "NC",
+	"sourceLocationID": 20000,
+	"taker": "ADEMOLAATIBA",
+	"terms": "16",
+	"termsDesc": "CreditCard",
+	"thirdPartyBillingFlagDesc": "R",
+	"upsCode": "294018360",
+	"willCall": false
+}

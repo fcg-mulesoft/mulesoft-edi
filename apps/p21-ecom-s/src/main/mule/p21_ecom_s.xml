@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tracing="http://www.mulesoft.org/schema/mule/tracing" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/tracing http://www.mulesoft.org/schema/mule/tracing/current/mule-tracing.xsd">
+    <flow name="p21_ecom_s-main">
+        <http:listener config-ref="p21_ecom_s_httpListenerConfig" path="${https.basePath}">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <set-variable value="#[attributes.queryParams.correlationId default correlationId]" doc:name="correlationId" doc:id="7132980f-4e30-4561-92cc-a64e28084fa8" variableName="correlationId" />
+        <tracing:with-correlation-id doc:name="With CorrelationID" doc:id="60b44a79-81f5-4569-aefb-672612283d8a" correlationId="#[vars.correlationId]">
+            <logger level="INFO" doc:name="p21sRequestLogger" doc:id="343e3230-39db-4c25-906f-018eb5715146" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;&#xA;{&#xA; &quot;message&quot;:&quot;Request Received to p21-s&quot;,&#xA; &quot;tracePoint&quot;: &quot;START&quot;,&#xA; &quot;correlationId&quot;: vars.correlationId default &quot;&quot;,&#xA; &quot;details&quot;: &quot;Request received&quot;&#xA;}]" />
+            <apikit:router config-ref="p21_ecom_s" />
+            <logger level="INFO" doc:name="p21sResponseLogger" doc:id="52ee1c7c-0ab4-4ba2-8db0-f616aa2c8fb4" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;&#xA;{&#xA; &quot;message&quot;:&quot;Response Sent From p21-s&quot;,&#xA; &quot;tracePoint&quot;: &quot;END&quot;,&#xA; &quot;correlationId&quot;: vars.correlationId default &quot;&quot;,&#xA; &quot;details&quot;: {&#xA;  &quot;payload&quot;: payload&#xA; }&#xA;}]" />
+        </tracing:with-correlation-id>
+        <!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+    </flow>
+    <flow name="get:\healthcheck:p21_ecom_s">
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  application: "p21_ecom_s",
+  status: "success"
+} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\info:p21_ecom_s">
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "Ok"
+} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\customer:application\json:p21_ecom_s" doc:id="dd612947-f3ca-4f49-9835-c2b717bf69cf">
+        <flow-ref doc:name="customersCreateFlow" doc:id="74edc08a-8b93-4173-abaf-00c88adb24ca" name="customersCreateImplFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="post:\customer\search:application\json:p21_ecom_s">
+        <flow-ref doc:name="customersSearchImplFlow" doc:id="0e2e7df5-54cf-410d-aa87-5396aadf3c3f" name="customersSearchImplFlow" />
+        <!-- <error-handler ref="global-error-handlingError_Handler" /> -->
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="post:\sales-order:application\json:p21_ecom_s">
+        <flow-ref doc:name="salesOrdersCreateFlow" doc:id="281b5247-77de-474c-b8d8-4062a9f3adad" name="salesOrdersCreateFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\productGroups:p21_ecom_s" doc:id="6ef78ae2-cb0a-48fa-b561-d66d4a621fae">
+        <flow-ref doc:name="productGroupsImplFlow" doc:id="b8cd7b12-f0bf-40f1-81c3-16f1057fbbb0" name="productGroupsImplFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\supplier\search:p21_ecom_s">
+        <flow-ref doc:name="supplierSearchImplFlow" doc:id="e702f3b7-b5b6-4f9b-a0b2-a47d19e44e2b" name="supplierSearchImplFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\customer\(id)\contact:p21_ecom_s">
+        <flow-ref doc:name="contactsByCustomerIdSearchImplFlow" doc:id="57159cfa-140d-4b29-8915-ea81730f14c8" name="contactsByCustomerIdSearchImplFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="post:\item:application\json:p21_ecom_s">
+        <flow-ref doc:name="createItemFlow" doc:id="f5887c06-2d62-4a56-ad53-6ef1c429f31f" name="createItemFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="post:\customerbycontact\search:application\json:p21_ecom_s">
+        <flow-ref doc:name="customerByContactDetailsSearchFlow" doc:id="2af417e9-e47d-456e-8c74-74c57fa3f663" name="customerByContactDetailsSearchFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\item\part:p21_ecom_s" doc:id="74c420a0-4cfe-438b-accf-c2f4f132c81a">
+        <flow-ref doc:name="ItemSearchImplFlow" doc:id="aad0306b-092a-420b-984a-2fe760699fce" name="itemSearchImplFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\items\parts\(id):p21_ecom_s">
+        <flow-ref doc:name="ItemIdSearchImplFlow" doc:id="a8ba2f0e-13da-4718-b8bf-0a2370d93644" name="itemIdSearchImplFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="put:\contact\add:application\json:p21_ecom_s">
+        <flow-ref doc:name="updateCustomerContactImplFlow" doc:id="a3d62488-a415-4519-9d3c-f6863110452c" name="updateCustomerContactImplFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="post:\contact:application\json:p21_ecom_s">
+        <flow-ref doc:name="addContactImplFlow" doc:id="3ed41dee-4242-4bdf-bacb-ee8278eeea44" name="addContactImplFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="post:\customer\shipTo:application\json:p21_ecom_s">
+        <flow-ref doc:name="shipToImplFlow" doc:id="716254c9-a623-407f-ba4d-30f44ac6fde8" name="shipToImplFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\locations:p21_ecom_s">
+        <flow-ref doc:name="locationFlow" doc:id="4c8bb13f-f6be-4aa1-8d9c-f5f2b8a10e8d" name="locationFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\users:p21_ecom_s">
+        <flow-ref doc:name="listOfUserFlow" doc:id="ab00ef37-26a8-4ce3-b3d8-6f9ba0a89698" name="listOfUserFlow" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\item\part\details:p21_ecom_s">
+		<flow-ref doc:name="ItemIdSearchImplFlow" doc:id="5a3a70f2-3b8c-4fa2-957b-03208a093bcd" name="itemIdSearchImplFlow" />
+    </flow>
+</mule>

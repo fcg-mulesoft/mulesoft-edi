@@ -1,0 +1,12 @@
+{
+	"serviceOrderNo": "12345",
+	"sfLastSync": "2025-01-01 11:12:13.000",
+	"userDefinedFields": {
+    "udUid": "",
+		"salesforceId": "ASD345ASDD324V31PNXX",
+		"sendToSalesforce": "N",
+		"multiVisitsNeeded": "Y",
+		"purchaseOrderNumber": "Salesforce PO Number",
+		"completeInSalesforce": "Y"
+	}
+}	

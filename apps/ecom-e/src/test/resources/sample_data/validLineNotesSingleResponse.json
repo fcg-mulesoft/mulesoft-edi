@@ -1,0 +1,14 @@
+[
+    {
+      "status": "Success",
+      "details": {
+        "record": {
+          "orderNo": "10405771",
+          "assetId": "200DHA",
+          "serialNumber": "JLM-2",
+          "topic": "Additional Product",
+          "note": "\nPart_Number:jas100-bProduct_Name:Elbow\nProduct_Description:\nType:Consumable\nQuantity_Purchased:1\nNotes:s"
+        }
+      }
+    }
+]

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tracing="http://www.mulesoft.org/schema/mule/tracing" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/tracing http://www.mulesoft.org/schema/mule/tracing/current/mule-tracing.xsd">
+    <flow name="ecom_e-main">
+        <http:listener config-ref="ecom_e_httpListenerConfig" path="${https.basePath}">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <set-variable value="#[attributes.queryParams.correlationId default correlationId]" doc:name="correlationId" doc:id="7132980f-4e30-4561-92cc-a64e28084fa8" variableName="correlationId" />
+        <tracing:with-correlation-id doc:name="With CorrelationID" doc:id="60b44a79-81f5-4569-aefb-672612283d8a" correlationId="#[vars.correlationId]">
+            <logger level="INFO" doc:name="p21sRequestLogger" doc:id="343e3230-39db-4c25-906f-018eb5715146" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;&#xA;{&#xA; &quot;message&quot;:&quot;Request Received to p21-s&quot;,&#xA; &quot;tracePoint&quot;: &quot;START&quot;,&#xA; &quot;correlationId&quot;: vars.correlationId default &quot;&quot;,&#xA; &quot;details&quot;: &quot;Request received&quot;&#xA;}]" />
+            <apikit:router config-ref="ecom_e" />
+            <logger level="INFO" doc:name="p21sResponseLogger" doc:id="52ee1c7c-0ab4-4ba2-8db0-f616aa2c8fb4" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;&#xA;{&#xA; &quot;message&quot;:&quot;Response Sent From p21-s&quot;,&#xA; &quot;tracePoint&quot;: &quot;END&quot;,&#xA; &quot;correlationId&quot;: vars.correlationId default &quot;&quot;,&#xA; &quot;details&quot;: {&#xA;  &quot;payload&quot;: payload&#xA; }&#xA;}]" />
+        </tracing:with-correlation-id>
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\customer\contact\list:ecom_e">
+        <set-variable value="#[output application/java&#xA;---&#xA;&quot;customer/&quot; ++ attributes.queryParams.companyId ++ &quot;_&quot; ++ attributes.queryParams.customerId ++ &quot;/contact&quot;]" doc:name="Set Resource Path" doc:id="f6d4e4c8-a962-4f3d-bb51-95e3de9b690c" variableName="resourcePath" />
+        <set-variable value="GET" doc:name="Set HTTP Method" doc:id="4d2a8157-3fb2-4b6f-b32a-359db2409cd3" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="fa5632cc-95cc-44d7-965f-732cc32d20d3" name="p21SystemAPICallFlow" />
+        <set-variable value="200" doc:name="Set HTTP Status Code" doc:id="e78a3816-501d-45a5-97e8-1cea512ab1a0" variableName="httpStatus" />
+        <error-handler ref="global-error-handlingError_Handler" />
+    </flow>
+    <flow name="get:\healthcheck:ecom_e">
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  application: "ecom_e",
+  status: "success"
+} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <set-variable value="200" doc:name="Set HTTP Status Code" doc:id="74209676-97b8-4817-aeac-a590b5afc1fa" variableName="httpStatus" />
+    </flow>
+    <flow name="get:\info:ecom_e">
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "Ok"
+} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <set-variable value="200" doc:name="Set HTTP Status Code" doc:id="f6f75632-a153-4b5c-bc19-93a2c43cd28b" variableName="httpStatus" />
+    </flow>
+    <flow name="post:\customer\search:application\json:ecom_e">
+        <choice doc:name="Choice" doc:id="a717fd10-b405-4356-94bc-a1eba22c14cd">
+            <when expression="#[output application/java&#xA;---&#xA;!isEmpty(payload.CompanyId)]">
+                <set-variable value="customer/search" doc:name="Set Resource Path" doc:id="0928756d-e023-4913-afe0-74a9a7c7ea13" variableName="resourcePath" />
+                <set-variable value="POST" doc:name="Set HTTP Method" doc:id="1bedfe60-b367-4062-a59d-e788e51a26a5" variableName="httpMethod" />
+                <flow-ref doc:name="customersSearchImplFlow" doc:id="0e2e7df5-54cf-410d-aa87-5396aadf3c3f" name="p21SystemAPICallFlow" />
+            </when>
+            <otherwise>
+                <ee:transform doc:name="Validation Error Response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  errorDetails: {
+    applicationName: app.name,
+    errorCode: "400",
+    errorType: "SEARCH CUSTOMER: COMPANY ID NOT PASSED",
+    errorMessage: "Company ID is required"
+     
+  }
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
+output application/java
+---
+ "400"]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </otherwise>
+        </choice>
+    </flow>
+    <flow name="post:\sales-order:application\json:ecom_e">
+        <set-variable value="sales-order" doc:name="Set Resource Path" doc:id="4b89b7ed-dd50-4c2d-88f6-65930ece193e" variableName="resourcePath" />
+        <set-variable value="POST" doc:name="Set HTTP Method" doc:id="1cb30dc3-66cd-4371-b439-a3355b7961d7" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="281b5247-77de-474c-b8d8-4062a9f3adad" name="p21SystemAPICallFlow" />
+    </flow>
+    <flow name="get:\supplier\search:ecom_e">
+        <set-variable value="supplier/search" doc:name="Set Resource Path" doc:id="b4184781-d4ba-4612-81d7-5874055e657a" variableName="resourcePath" />
+        <set-variable value="GET" doc:name="Set HTTP Method" doc:id="fc8fc84d-de99-4e44-8ecc-4478fa92dc27" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="75bbebee-1f70-44f7-9893-44bf96727a7f" name="p21SystemAPICallFlow" />
+        <set-variable value="200" doc:name="Set HTTP Status Code" doc:id="cc472ef7-971e-4d08-bcb4-db17e435d4ed" variableName="httpStatus" />
+    </flow>
+    <flow name="get:\productGroups:ecom_e">
+        <set-variable value="#[&quot;productGroups&quot; ++ '?companyId=' ++ &quot;'&quot; ++ attributes.queryParams.companyId ++ &quot;'&quot;]" doc:name="Set Resource Path" doc:id="03a3d626-f3fa-4287-8f0b-d08042d5093e" variableName="resourcePath" />
+        <set-variable value="GET" doc:name="Set HTTP Method" doc:id="cf60b5d5-8ac3-445b-a9da-b52994ad8e93" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="25177c21-37b3-4ed3-8729-d71d6a1f5c10" name="p21SystemAPICallFlow" />
+        <set-variable value="200" doc:name="Set HTTP Status Code" doc:id="1e4cdf27-a08e-460f-9728-4cf2c01609ff" variableName="httpStatus" />
+    </flow>
+    <flow name="post:\customer:application\json:ecom_e">
+        <set-variable value="customer" doc:name="Set Resource Path" doc:id="55ad2ca2-4606-458c-9ba8-055209da349e" variableName="resourcePath" />
+        <set-variable value="POST" doc:name="Set HTTP Method" doc:id="57b53bde-af1e-4291-9535-678d6d1d4917" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="9f4db772-d2c1-4e1d-9b01-e47432db7dae" name="p21SystemAPICallFlow" />
+    </flow>
+    <flow name="post:\customerbycontact\search:application\json:ecom_e">
+        <set-variable value="customerbycontact/search" doc:name="Set Resource Path" doc:id="dbafd507-5c6c-4729-a3ba-36f415cf56b0" variableName="resourcePath" />
+        <set-variable value="POST" doc:name="Set HTTP Method" doc:id="990357a6-5dc6-4099-8d61-38b3739d9cfb" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="b3ef869c-131c-4026-8ccb-9c08b4b6c98b" name="p21SystemAPICallFlow" />
+        <set-variable value="200" doc:name="Set HTTP Status Code" doc:id="88914851-7194-4bc7-8183-8c67829fb38c" variableName="httpStatus" />
+    </flow>
+    <flow name="post:\item:application\json:ecom_e">
+        <set-variable value="item" doc:name="Set Resource Path" doc:id="9b02d343-aab6-47d6-a4a2-61692dd03d34" variableName="resourcePath" />
+        <set-variable value="POST" doc:name="Set HTTP Method" doc:id="6d0b4670-334e-43a0-acd9-ea2a3ebbcd0d" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="6347d98d-6fa9-494b-948d-f024af6cf5f0" name="p21SystemAPICallFlow" />
+    </flow>
+    <flow name="get:\item\part:ecom_e">
+		<set-variable value='#[%dw 2.0&#10;import encodeURIComponent from dw::core::URL&#10;output application/java&#10;---&#10;"item/part?partSearch=" ++ encodeURIComponent(attributes.queryParams.partSearch)]' doc:name="Set Resource Path" doc:id="fa2dc4b8-3ca6-4e1f-af24-94c942bf0bf3" variableName="resourcePath" />
+        <set-variable value="GET" doc:name="Set HTTP Method" doc:id="e0c2ae7c-4584-484e-a8ca-c66b7d2afadc" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="86337d59-1ddb-4285-97ef-87923f7590ea" name="p21SystemAPICallFlow" />
+        <set-variable value="200" doc:name="Set HTTP Status Code" doc:id="2a3ed95f-ef86-4396-b7ec-ada0f472b9b6" variableName="httpStatus" />
+    </flow>
+    <!-- [STUDIO:"get:\items\parts\(id):ecom_e"]<flow name="get:\items\parts\(id):ecom_e">
+        <set-variable value="#[%dw 2.0&#xA;output application/java&#xA;&#45;&#45;-&#xA;&quot;items/parts&quot; ++ &quot;/&quot; ++ (attributes.uriParams.id)&#93;" doc:name="Set Resource Path" doc:id="048f611f-b34b-43fd-b0ce-5eba1cd3dd08" variableName="resourcePath" />
+        <set-variable value="GET" doc:name="Set HTTP Method" doc:id="79aea697-2b4d-4f3c-8c84-f6d784d142f9" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="5b727a70-5ac1-462a-8e25-235519f0f286" name="p21SystemAPICallFlow" />
+        <set-variable value="200" doc:name="Set HTTP Status Code" doc:id="b3d17917-22e6-462a-b000-9d9692f409b5" variableName="httpStatus" />
+    </flow> [STUDIO] -->
+    <flow name="put:\contact\add:application\json:ecom_e">
+        <set-variable value="#[%dw 2.0&#xA;output application/java&#xA;---&#xA;&quot;contact/add?companyId=&quot; ++ (attributes.queryParams.companyId) ++ &quot;&amp;customerId=&quot; ++ (attributes.queryParams.customerId)]" doc:name="Set Resource Path" doc:id="2eaad7e3-6a1b-4d2a-9102-6ba34117ac79" variableName="resourcePath" />
+        <set-variable value="PUT" doc:name="Set HTTP Method" doc:id="2edbe636-f1f6-4889-a34e-b990d74a7869" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="e1a7b742-5cba-4a37-bfbd-6c5f7f32e22e" name="p21SystemAPICallFlow" />
+    </flow>
+    <flow name="post:\contact:application\json:ecom_e">
+        <set-variable value="contact" doc:name="Set Resource Path" doc:id="a7fff41b-9bce-43db-aa6e-c1750aa9022d" variableName="resourcePath" />
+        <set-variable value="POST" doc:name="Set HTTP Method" doc:id="40ad0a9f-f758-4561-b8d7-09f360ea6a8b" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="b85895f4-2034-4ab0-8c63-d824ead4bbde" name="p21SystemAPICallFlow" />
+    </flow>
+    <flow name="post:\shipTo:application\json:ecom_e" doc:id="81499967-e5c7-47e2-9e16-3cf8d0eb70c6">
+        <set-variable value="shipTo" doc:name="Set Resource Path" doc:id="03b2ba26-3ef3-4bdd-ab11-19f6af7bec96" variableName="resourcePath" />
+        <set-variable value="POST" doc:name="Set HTTP Method" doc:id="e00f5b7c-654b-4cfd-8650-aa84b802df24" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="12daeec8-8695-4d32-a159-6ca70f45b28c" name="p21SystemAPICallFlow" />
+    </flow>
+    <flow name="get:\locations:ecom_e">
+        <set-variable value="#[output application/java&#xA;---&#xA;&quot;locations&quot; ++ &quot;?companyId=&quot; ++ attributes.queryParams.companyId]" doc:name="Set Resource Path" doc:id="45b438bc-2b85-4a37-9db2-d1b312649b7b" variableName="resourcePath" />
+        <set-variable value="GET" doc:name="Set HTTP Method" doc:id="cea6357f-8004-44b4-9c67-8f3e81067025" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="34ea0fac-9df6-4e62-9e3e-054a9d493dc1" name="p21SystemAPICallFlow" />
+    </flow>
+    <flow name="get:\users:ecom_e">
+        <set-variable value="#[output application/java&#xA;---&#xA;&quot;users&quot; ++ &quot;?companyId=&quot; ++ attributes.queryParams.companyId]" doc:name="Set Resource Path" doc:id="0c4f13bf-6db5-4b0a-9bf2-d9859764d0ab" variableName="resourcePath" />
+        <set-variable value="GET" doc:name="Set HTTP Method" doc:id="9bcc297b-2eec-41f7-895a-3068c88de506" variableName="httpMethod" />
+        <flow-ref doc:name="p21SystemAPICallFlow" doc:id="266cb778-4216-48ee-8e92-46537ee12967" name="p21SystemAPICallFlow" />
+    </flow>
+    <flow name="get:\item\part\details:ecom_e">
+		<set-variable value='item/part/details' doc:name="Set Resource Path" doc:id="d60926aa-1cb5-4085-88a0-80d6c19d6c12" variableName="resourcePath" />
+		<set-variable value="GET" doc:name="Set HTTP Method" doc:id="a1d2bb4f-ff91-4d73-90f5-ba6e13fec970" variableName="httpMethod" />
+		<flow-ref doc:name="p21SystemAPICallFlow" doc:id="58a29445-ffe9-4560-9f71-f009d6b03e16" name="p21SystemAPICallFlow" />
+		<set-variable value="200" doc:name="Set HTTP Status Code" doc:id="3bb208e3-43a0-4f34-b63c-7b2fa1266982" variableName="httpStatus" />
+    </flow>
+</mule>

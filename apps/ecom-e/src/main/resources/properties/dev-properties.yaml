@@ -1,0 +1,53 @@
+api:
+  id: "20578416"  # Auto-discovery
+  
+anypoint:
+  platform:
+    client_id: "a092f4b49f334ece9ea521bd8bb17230"
+    config:
+      analytics:
+        agent:
+          enabled: "true"
+#listener properties
+https:
+  host: "0.0.0.0"
+  port: "8082"
+  timeout:
+    connection-idle: "600000"
+  private:
+    port: "8092"
+  connectionIdleTimeOut: "30000"  
+  responseBufferSize: "1024"
+  responseTimeout: "40000"
+  basePath: "/api/v1/*"
+  keystore:
+    path: "keystore.jks"
+    alias: "fcg-mule-cert"
+
+#P21 eCommerce System API
+P21eComSystemapi:                
+  host: "ecom-p21-s-zrx5fd.y7366p.usa-e1.cloudhub.io"
+  port: "443"
+  basePath: "/api/v1"
+  username: "mulesoftint"
+  truststore:
+    path: "truststore.jks"
+  connectionIdleTimeOut: "120000"
+  connectionTimeOut: "120000"
+  responseTimeout: "120000"
+  clientId: "60c77df8a43a41e2a7d2d93029c8d3f3"
+  reconnection: 
+    frequency: "3000"
+    retries: "3"    
+
+inbound:
+  request: "Request Received, correlationId: "
+  response: "Response Sent, correlationId: "
+  
+errorCodes:
+  connectivity: "5001"
+  other: "9999"
+
+reconnection:
+  frequency: "2000"
+  attempts: "3"
