@@ -1,4 +1,0 @@
-%dw 2.0
-
-type auto_08a7e569_feb6_4bcf_894e_8d11ad4da2d9_Output_Variables_orderNotesRequest = Any
-

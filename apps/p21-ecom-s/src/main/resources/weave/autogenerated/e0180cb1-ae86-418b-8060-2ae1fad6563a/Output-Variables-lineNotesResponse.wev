@@ -1,4 +1,0 @@
-%dw 2.0
-
-type auto_e0180cb1_ae86_418b_8060_2ae1fad6563a_Output_Variables_lineNotesResponse = Array<Nothing>
-
