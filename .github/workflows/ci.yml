@@ -1,0 +1,115 @@
+name: ci-build
+
+on:
+  pull_request:
+    branches:
+      - 'dev'
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests:
+        read
+    outputs:
+      apps: ${{ steps.filter.outputs.changes }}
+    steps:
+      - name: Detect Changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+
+
+  build-and-test:
+    needs: changes
+    if: ${{ fromJson(needs.changes.outputs.apps)[0] != null }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: ${{ fromJson(needs.changes.outputs.apps) }}
+    steps:
+      - name: Setup Maven Environment
+        uses: s4u/setup-maven-action@v1.19.0
+        with:
+          java-version: 17
+          maven-version: 3.9.6
+          settings-servers: |
+            [{
+              "id": "MuleRepository",
+              "username": "${{ secrets.NEXUS_USERNAME }}",
+              "password": "${{ secrets.NEXUS_PASSWORD }}"
+            },
+            {
+              "id": "anypoint-exchange-private",
+              "username": "~~~Client~~~",
+              "password": "${{ secrets.ANYPOINT_EXCHANGE_CLIENT_ID }}~?~${{ secrets.ANYPOINT_EXCHANGE_CLIENT_SECRET }}"
+            },
+            {
+              "id": "anypoint-exchange-public",
+              "username": "~~~Client~~~",
+              "password": "${{ secrets.ANYPOINT_EXCHANGE_CLIENT_ID }}~?~${{ secrets.ANYPOINT_EXCHANGE_CLIENT_SECRET }}"
+            }]
+          settings-repositories: |
+            [{
+              "id":"mule-public",
+              "name": "Mulesoft Public Repository",
+              "url":"https://repository.mulesoft.org/nexus/content/repositories/public",
+              "layout": "default"
+             },
+             {
+              "id":"MuleRepository",
+              "name": "Mulesoft EE Repository",
+              "url":"https://repository.mulesoft.org/nexus-ee/content/repositories/releases-ee/",
+              "layout": "default",
+              "snapshots": {
+                "enabled": true
+              },
+              "releases": {
+                "enabled": true
+              }
+             },
+             {
+              "id":"anypoint-exchange-private",
+              "name": "FCG Mulesoft Repository",
+              "url": "https://maven.anypoint.mulesoft.com/api/v3/organizations/d239ff40-5b13-47be-9bb0-a029a64dac2c/maven"
+             },
+             {
+              "id":"anypoint-exchange-public",
+              "name": "Anypoint Exchange",
+              "url": "https://maven.anypoint.mulesoft.com/api/v3/maven"
+             } ]
+          settings-pluginRepositories: |
+            [{
+              "id":"mule-public",
+              "name": "Mulesoft Public Repository",
+              "url":"https://repository.mulesoft.org/nexus/content/repositories/public"
+             }]
+
+      - name: Determine Version Number for ${{ matrix.app }}
+        id: app
+        working-directory: ./apps/${{ matrix.app }}
+        run: echo "version=$(mvn -q help:evaluate -Dexpression=project.version -q -DforceStdout)" >> "$GITHUB_OUTPUT"
+
+      - name: Determine If ${{ matrix.app }}-v${{ steps.app.outputs.version }} Release Exists in GitHub
+        id: check_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+        shell: bash
+        run: |
+           if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release '$TAG' already exists in $REPO. Failing this job."
+            exit 1
+           else
+            echo "exists=false" >> "GITHUB_OUTPUT"
+            echo "No Release named '$TAG' found. Continuing."
+           fi
+
+      - name: Build ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+        id: build-release
+        if: ${{steps.check_release.outputs.exists == false }}
+        working-directory: ./apps/${{ matrix.app }}
+        run: mvn clean test -Dmule.env="test" -Dmule.key="${{ secrets.MULE_CI_KEY }}"
