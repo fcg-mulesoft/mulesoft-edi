@@ -1,1 +1,2 @@
-Repo for EDI mulesoft applications
+# Mulesoft EDI Project
+This is a Project for EDI.
