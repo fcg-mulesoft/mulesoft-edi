@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<email:smtp-config name="Email_SMTP"
+		doc:name="Email SMTP" doc:id="6649ebb9-582b-4747-9e42-f19c8e34c0e6">
+		<email:smtp-connection host="#[Mule::p('email.host')]"
+			connectionTimeout="${email.conn.timeout}"
+			readTimeout="${email.read.timeout}"
+			writeTimeout="${email.write.timeout}" port="#[Mule::p('email.port')]" user="#[Mule::p('email.user')]" password="${secure::email.password}">
+			<email:properties >
+				<email:property key="mail.smtp.starttls.enable" value="true" />
+			</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+	<error-handler name="global-common-error-handler" doc:id="ba8becab-5e3f-4fe4-8740-e92411c2bfe0" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="APIKIT Errors" doc:id="a3f1f9ac-e3cc-4472-a732-7404eeb59bce" when='#[error.errorType.namespace == "APIKIT"]'>
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="99bfcb80-6777-4c96-b850-81c999aa1095" message="Start: Global Error Handler: APIKIT ERROR"/>
+			<ee:transform doc:name="Status code generator" doc:id="96529d0a-81da-4c26-958e-ac7be35d8a7d" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/json
+---
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:BAD_REQUEST") (400) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_FOUND") (404) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:METHOD_NOT_ALLOWED") (405) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_ACCEPTABLE") (406) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:UNSUPPORTED_MEDIA_TYPE") (415) else (500)]]></ee:set-variable>
+				
+</ee:variables>
+			</ee:transform>
+			<ee:transform doc:name="Response payload" doc:id="66303c17-0114-4390-99d1-a7882c650044">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable variableName="errorResponseHtml"><![CDATA[%dw 2.0
+output text/plain
+---
+"Correlation Id: " ++ (correlationId default uuid()) ++ "<br>" ++
+  "Status Code: " ++ vars.httpStatus ++ "<br>" ++
+  "Status Message: " ++ (error.errorType.namespace ++ ":" ++ error.errorType.identifier) ++ "<br>" ++
+  "Description: " ++ (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription) ++ "<br>" ++
+  "Timestamp: " ++ (now() as String {
+	format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC"
+]]></ee:set-variable>
+					<ee:set-variable variableName="systemInformation"><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+{
+	"source": vars.integration.source,
+	"target": vars.integration.target,
+	"env": capitalize(p('mule.env')),	
+	"integration": vars.integration.information
+	
+}]]></ee:set-variable>
+					<ee:set-variable variableName="errorResponse"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationId": (correlationId default uuid()),
+	"statusCode": vars.httpStatus,
+	"statusMessage": (error.errorType.namespace ++ ":" ++ error.errorType.identifier),
+	"description": if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription,
+	"timestamp": (((now() >> "UTC")  as String {
+		format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC"),
+	notificationRequired: true
+}]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<!-- [STUDIO:"send-email-subflow"]<flow-ref doc:name="send-email-subflow" doc:id="da143965-7bb3-4094-b171-0a9311723485" name="send-email-subflow" /> [STUDIO] -->
+			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="54654679-c19c-4c3f-8fec-abb7e9038cc5" />
+			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="1e2a87b5-10d1-43a6-80a6-df8bfdec061c" category="com.apikit.errors" message="#[vars.errorResponse]"/>
+		
+</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="Generic" doc:id="f2b554b2-5998-440a-b4b1-3aaf404df4e8" >
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="14c027bd-c84a-45f0-8f1c-c874389ca4a1" message="Start: Global Error Handler: GENERIC ERROR"/>
+			<ee:transform doc:name="Status code generator" doc:id="f2195660-36e3-403c-964c-6ba18fc237e2">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/json
+---
+if(error.errorType.identifier == "BAD_REQUEST") (400) else
+if(error.errorType.identifier == "NOT_FOUND" and !isEmpty(error.errorMessage.payload))(404) else
+if(error.errorType.identifier == "NOT_FOUND" and isEmpty(error.errorMessage.payload))(504) else
+if(error.errorType.identifier == "METHOD_NOT_ALLOWED") (405) else
+if(error.errorType.identifier == "UNAUTHORIZED" or error.errorType.identifier == "FORBIDDEN") (401) else
+if(error.errorType.identifier == "GATEWAY_TIMEOUT") (504) else
+if(error.errorType.identifier == "BAD_GATEWAY") (502) else
+if (!isEmpty(error.errorMessage.attributes.statusCode default ""))(error.errorMessage.attributes.statusCode) else
+if (!isEmpty(attributes.statusCode))(attributes.statusCode) else
+(500)]]></ee:set-variable>
+				
+</ee:variables>
+			</ee:transform>
+			<ee:transform doc:name="Response payload" doc:id="99784093-f66c-4f3c-b952-3b95e13a147d" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="errorResponseHtml" ><![CDATA[%dw 2.0
+output text/plain
+var explictHandlerCodes = [504,502]
+---
+"Correlation Id: " ++ (correlationId default uuid()) ++ "<br>" ++
+  "Status Code: " ++ ((if ( explictHandlerCodes contains vars.httpStatus ) (vars.httpStatus) else (error.errorMessage.payload.errorCode default vars.httpStatus)) default 500) ++ "<br>" ++
+  "Status Message: " ++ ((if ( explictHandlerCodes contains vars.httpStatus ) ((error.errorType.namespace ++ ":" ++ error.errorType.identifier)) else (error.errorMessage.payload.errorType)) default (error.errorType.namespace ++ ":" ++ error.errorType.identifier)) ++ "<br>" ++
+  "Description: " ++ ((if ( explictHandlerCodes contains vars.httpStatus ) (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription) else (error.errorMessage.payload.errorMessage)) default (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription)) ++ "<br>" ++
+  "Timestamp: " ++ ((if ( explictHandlerCodes contains vars.httpStatus ) (((now() >> "UTC")  as String {
+		format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC") else (error.errorMessage.payload.errorDateTime)) default (((now() >> "UTC")  as String {
+		format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC"))]]></ee:set-variable>
+					<ee:set-variable variableName="systemInformation" ><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+{
+	"source": vars.integration.source,
+	"target": vars.integration.target,
+	"env": capitalize(p('mule.env')),	
+	"integration": vars.integration.information
+	
+}]]></ee:set-variable>
+					<ee:set-variable variableName="errorResponse" ><![CDATA[%dw 2.0
+output application/json
+var explictHandlerCodes = p('explicitcodes')
+---
+{
+	"correlationId": correlationId default uuid(),
+	"statusCode": (if ( explictHandlerCodes contains vars.httpStatus ) (vars.httpStatus) else (error.errorMessage.payload.statusCode default vars.httpStatus)) default 500,
+	"statusMessage": (if ( explictHandlerCodes contains vars.httpStatus ) ((error.errorType.namespace ++ ":" ++ error.errorType.identifier)) else (error.errorMessage.payload.statusMessage)) default (error.errorType.namespace ++ ":" ++ error.errorType.identifier),
+	"description": (if ( explictHandlerCodes contains vars.httpStatus ) (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription) else (error.errorMessage.payload.description)) default (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription),
+	"timestamp": (if(explictHandlerCodes contains vars.httpStatus) ((now() as String {format : "yyyy/MM/dd HH:mm:ss"}) ++ " UTC") else (error.errorMessage.payload.errorDateTime)) default ((now() as String {format : "yyyy/MM/dd HH:mm:ss"}) ++ " UTC"),
+    "notificationRequired": if (Mule::p('api.name') contains "sys-")(false) else (if ( (explictHandlerCodes contains vars.httpStatus) and (!(isEmpty(error.errorMessage) or (error.errorMessage.attributes.reasonPhrase ~= "BAD GATEWAY" or error.errorMessage.attributes.reasonPhrase ~= "NOT FOUND")))) (false) else if ( (explictHandlerCodes contains vars.httpStatus) and isEmpty(error.errorMessage) ) (true) else if ( !(explictHandlerCodes contains vars.httpStatus) and (!isEmpty(error.errorMessage.payload.notificationRequired )) ) (!(error.errorMessage.payload.notificationRequired))  else true)
+}
+]]></ee:set-variable>
+				
+</ee:variables>
+			</ee:transform>
+			<!-- [STUDIO:"CHECK IF: Email notification is required?"]<choice doc:name="CHECK IF: Email notification is required?" doc:id="cc308732-ab87-4a60-b37e-aab37b1b65bf" >
+				<when expression="#[vars.errorResponse.notificationRequired&#93;">
+					<flow-ref doc:name="send-email-subflow" doc:id="d27d5484-4fee-4f0f-a586-76ed35805771" name="send-email-subflow" />
+				</when>
+				<otherwise >
+					<logger level="DEBUG" doc:name="LOG DEBUG: Notification not required" doc:id="38001e6c-f44c-45d3-ab6e-fe4c8c4bdb96" message='#["Email notification sent via the downstream API!"&#93;'/>
+				</otherwise>
+			</choice> [STUDIO] -->
+			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="5a9d8498-5085-44a7-9bcd-1094f3fdcf8f" />
+			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="a8ffcc12-6fb4-4243-b017-fa5d3da97dd8" message="#[vars.errorResponse]" category="com.generic.errors" />
+		</on-error-propagate>
+	</error-handler>
+	<sub-flow name="send-email-subflow" doc:id="3d59fe17-1c36-4b61-9db9-b7b28bb43b26" >
+		<parse-template doc:name="Parse Email Template" doc:id="3dfbb507-ef28-4b08-9a89-4e5f23b831f6">
+			<content >&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;table style=&quot;background-color: #cbe2a6;&quot;&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;
+          &lt;td style=&quot;width: 100%;&quot;&gt;
+            &lt;h2 style=&quot;text-align: left; text-indent: 20px;font-family:'Franklin Gothic Medium',Arial,sans-serif; font-size:30pt;color:#085E2C ;width: 100%;&quot;&gt; IT Notification&lt;/h2&gt;
+            &lt;h4 style=&quot;text-align: left; text-indent: 30px;font-family:'Franklin Gothic Medium',Arial,sans-serif; font-size:15pt;color:#085E2C ;width: 100%;&quot;&gt; Integration Services - MuleSoft&lt;/h4&gt;
+          &lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+          &lt;td style=&quot;text-align: right; padding-right: 20px;width: 100%;&quot;&gt;
+            &lt;img src=&quot;https://upload.wikimedia.org/wikipedia/en/8/81/Freshpet_logo1.png&quot; alt=&quot;Freshpet Logo&quot; height=&quot;80&quot; /&gt;
+          &lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;&lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+    &lt;table style=&quot;background-color: #085E2C ;width: 100%;&quot;&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/table&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div id=&quot;body&quot;&gt;
+      &lt;div style=&quot;height: 5%;&quot;&gt;
+        &lt;h3 style=&quot;text-decoration: underline; font-weight: bold;&quot;&gt;System Information:&lt;/h3&gt;
+      &lt;/div&gt;
+      &lt;div id=&quot;innerbody&quot; style=&quot;height: 50%; width: 100%; text-align: left;&quot;&gt;
+        &lt;table style=&quot;width: 100%; height: 10%; float: left;&quot;&gt;
+          &lt;tbody&gt;
+            &lt;tr&gt;
+              &lt;td&gt;
+                &lt;strong&gt;Source System :&lt;/strong&gt;
+              &lt;/td&gt;
+              &lt;td style=&quot;width: 80%; height: 80%;&quot;&gt;#[output application/java --- vars.'systemInformation'.'source']&lt;/td&gt;
+            &lt;/tr&gt;
+            &lt;tr&gt;
+              &lt;td&gt;
+                &lt;strong&gt;Target System :&lt;/strong&gt;
+              &lt;/td&gt;
+              &lt;td style=&quot;width: 80%; height: 80%;&quot;&gt;#[output application/java --- vars.'systemInformation'.'target']&lt;/td&gt;
+            &lt;/tr&gt;
+            &lt;tr&gt;
+              &lt;td&gt;
+                &lt;strong&gt;Environment :&lt;/strong&gt;
+              &lt;/td&gt;
+              &lt;td style=&quot;width: 80%; height: 80%;&quot;&gt;#[output application/java --- vars.'systemInformation'.'env']&lt;/td&gt;
+            &lt;/tr&gt;
+          &lt;/tbody&gt;
+        &lt;/table&gt;
+        &lt;hr /&gt;
+        &lt;div&gt;
+          &lt;h3 style=&quot;font-weight: bold; text-decoration: underline;&quot;&gt;MuleSoft Integration Information :&lt;/h3&gt;
+          &lt;label&gt;#[output application/java --- vars.'systemInformation'.'integration']&lt;/label&gt;
+        &lt;/div&gt;
+        &lt;hr /&gt;
+        &lt;p&gt;#[output application/java --- vars.'errorResponseHtml']&lt;/p&gt;
+      &lt;/div&gt;
+      &lt;div id=&quot;footer&quot;&gt;
+        &lt;small style=&quot;height: 3%; color: #2C414D;&quot;&gt;CONFIDENTIALITY NOTICE: This e-mail message, including any attachments, is for the sole use of the intended recipients and may contain confidential and privileged information or otherwise protected by law. Any unauthorized review, use, disclosure or distribution is prohibited. If you are not the intended recipient, please contat the sender by reply e-mail and destroy all copies of the original message.&lt;/small&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</content>
+
+		</parse-template>
+		<logger level="INFO" doc:name="LOG DEBUG: Before Email" doc:id="865780b6-1c95-48f3-89fe-5d69039fbf73" message="Start: Email Alert" />
+		<choice doc:name="CHECK IF: Environment is Local?" doc:id="ac42f1fc-1a48-43d9-a1aa-4c125cf06790">
+				<when expression="#[p('mule.env') != &quot;local&quot;]">
+				<email:send doc:name="Send Email" doc:id="d7d7b632-9777-49d7-831b-2e0f3baf73ea" config-ref="Email_SMTP" fromAddress="${email.sender}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('api.name'))]" toAddresses="#[p('email.receivers') splitBy(&quot;,&quot;)]">
+				<reconnect />
+				<email:body contentType="text/html">
+				</email:body>
+			</email:send>
+				
+</when>
+				<otherwise>
+					<logger level="DEBUG" doc:name="LOG DEBUG: Dummy Email Sent" doc:id="a4a4b42e-9cf4-4384-90e7-0b2e65f7ba94" message="Email Sent!" />
+				</otherwise>
+			</choice>
+		<logger level="INFO" doc:name="LOG DEBUG: After Email" doc:id="41279bcd-987d-40cc-b2cb-aad726c95f6d" message="End: Email Alert" />
+	
+</sub-flow>
+</mule>

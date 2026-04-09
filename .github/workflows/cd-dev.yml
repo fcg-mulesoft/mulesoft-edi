@@ -22,6 +22,9 @@ jobs:
         id: filter
         with:
           filters: |
+            b2b-payload-storage-api: 'apps/b2b-payload-storage-api/**'
+            b2b-process-api: 'apps/b2b-process-api/**'
+            b2b-p21-sys-api: 'apps/b2b-p21-sys-api/**'
             
 
   check-release:
