@@ -8,7 +8,7 @@
 		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
 		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
 	<munit:config name="post-content-sub-flow-test-suite.xml" />	
-	<munit:test name="post-content-sub-flow-test-suite-post-content-sub-flowTest-JSON" doc:id="5627b75c-bdc6-49c6-8122-b483ff5ac193" description="Test" ignore="true">
+	<munit:test name="post-content-sub-flow-test-suite-post-content-sub-flowTest-JSON" doc:id="5627b75c-bdc6-49c6-8122-b483ff5ac193" description="Test">
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Mock : azure-storage:upload-blob" doc:id="534fa56b-2512-4bf7-aad3-5ee068a52b0e" processor="azure-storage:upload-blob">
 				<munit-tools:with-attributes >
@@ -29,7 +29,7 @@
 		</munit:validation>
 	
 </munit:test>
-	<munit:test name="post-content-sub-flow-test-suite-post-content-sub-flowTest-XML" doc:id="18ff501c-15b7-4e55-b6e1-a6947e971479" description="Test" ignore="true">
+	<munit:test name="post-content-sub-flow-test-suite-post-content-sub-flowTest-XML" doc:id="18ff501c-15b7-4e55-b6e1-a6947e971479" description="Test">
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Mock : azure-storage:upload-blob" doc:id="c9c6c040-3d26-4eb1-a09e-2a0f8cdce26c" processor="azure-storage:upload-blob" >
 				<munit-tools:with-attributes >
@@ -48,7 +48,7 @@
 			</munit-tools:verify-call>
 		</munit:validation>
 	</munit:test>
-	<munit:test name="post-content-sub-flow-test-suite-post-content-sub-flowTest-textPlain" doc:id="f8f7d7d8-b42e-470c-9edc-9ff430fea3b8" description="Test" ignore="true">
+	<munit:test name="post-content-sub-flow-test-suite-post-content-sub-flowTest-textPlain" doc:id="f8f7d7d8-b42e-470c-9edc-9ff430fea3b8" description="Test">
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Mock : azure-storage:upload-blob" doc:id="13095046-a042-4e6b-85e5-a79076cc46f1" processor="azure-storage:upload-blob" >
 				<munit-tools:with-attributes >

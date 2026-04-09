@@ -8,7 +8,7 @@
 		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
 		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
 	<munit:config name="b2b-payload-storage-api-test-suite.xml" />
-	<munit:test name="b2b-payload-storage-api-test-suite-b2b-payload-storage-api-mainTest-ANY" doc:id="9e6abf13-03c2-4ceb-8dab-96ff6be3171b" description="Test" expectedErrorType="ANY" ignore="true">
+	<munit:test name="b2b-payload-storage-api-test-suite-b2b-payload-storage-api-mainTest-ANY" doc:id="9e6abf13-03c2-4ceb-8dab-96ff6be3171b" description="Test" expectedErrorType="ANY">
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Mock : apikit:router" doc:id="fddce50b-7356-47b4-887d-26216d848825" processor="apikit:router" >
 				<munit-tools:with-attributes >
@@ -26,7 +26,7 @@
 			<munit-tools:assert-that doc:name="Assert Payload" doc:id="a7750574-ed72-46aa-b7c6-4b18409f481a" expression="#[payload]" is="#[MunitTools::notNullValue()]" />
 		</munit:validation>
 	</munit:test>
-	<munit:test name="b2b-payload-storage-api-test-suite-b2b-payload-storage-api-mainTest-APIKIT" doc:id="2bffe419-ac2d-4944-9a42-db73d028bcc5" description="Test" expectedErrorType="APIKIT:BAD_REQUEST" ignore="true">
+	<munit:test name="b2b-payload-storage-api-test-suite-b2b-payload-storage-api-mainTest-APIKIT" doc:id="2bffe419-ac2d-4944-9a42-db73d028bcc5" description="Test" expectedErrorType="APIKIT:BAD_REQUEST">
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Mock : apikit:router" doc:id="72f17870-0784-4767-b7b7-4529a135315b" processor="apikit:router" >
 				<munit-tools:with-attributes >

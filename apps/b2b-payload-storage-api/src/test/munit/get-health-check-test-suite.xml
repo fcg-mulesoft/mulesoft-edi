@@ -8,7 +8,7 @@
 		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
 		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
 	<munit:config name="get-health-check-test-suite.xml" />
-	<munit:test name="get-health-check-test-suite-health-check-sub-flowTest" doc:id="cbc5b0c7-a4bd-413c-b317-b6fcf2812d7e" description="Test" ignore="true">
+	<munit:test name="get-health-check-test-suite-health-check-sub-flowTest" doc:id="cbc5b0c7-a4bd-413c-b317-b6fcf2812d7e" description="Test">
 		<munit:execution >
 			<flow-ref doc:name="Flow-ref to get:\healthCheck:b2b-payload-storage-api-spec-config" doc:id="8ff5035b-8645-4347-988d-cc77af2e949c" name="get:\healthCheck:b2b-payload-storage-api-spec-config"/>
 		</munit:execution>

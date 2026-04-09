@@ -60,25 +60,15 @@
 				<groupId>com.mulesoft.munit.tools</groupId>
 				<artifactId>munit-maven-plugin</artifactId>
 				<version>${munit.version}</version>
-
-				<configuration>
-					<coverage>
-						<ignoreFiles>
-							<ignoreFile>implementation/get-content.xml</ignoreFile>
-							<ignoreFile>implementation/post-content.xml</ignoreFile>
-							<ignoreFile>common/common-error-handler.xml</ignoreFile>
-							<ignoreFile>common/get-health-check.xml</ignoreFile>
-							<ignoreFile>b2b-payload-storage-api.xml</ignoreFile>
-						</ignoreFiles>
-						<ignoreFlows>
-							<ignoreFlow>get:\organizations\(orgId)\environments\(envId)\contents\(contentRecordId):b2b-payload-storage-api-spec-config</ignoreFlow>
-							<ignoreFlow>post:\organizations\(orgId)\environments\(envId)\contents:application\json:b2b-payload-storage-api-spec-config</ignoreFlow>
-							<ignoreFlow>post:\organizations\(orgId)\environments\(envId)\contents:application\xml:b2b-payload-storage-api-spec-config</ignoreFlow>
-							<ignoreFlow>post:\organizations\(orgId)\environments\(envId)\contents:text\plain:b2b-payload-storage-api-spec-config</ignoreFlow>
-							<ignoreFlow>get:\healthCheck:b2b-payload-storage-api-spec-config</ignoreFlow>
-						</ignoreFlows>
-					</coverage>
-				</configuration>
+				<executions>
+				   <execution>
+				     <id>test</id>
+				     <phase>test</phase>
+				     <goals>
+				       <goal>test</goal>
+				     </goals>
+				   </execution>
+				 </executions>
 			</plugin>
 		</plugins>
 	</build>
