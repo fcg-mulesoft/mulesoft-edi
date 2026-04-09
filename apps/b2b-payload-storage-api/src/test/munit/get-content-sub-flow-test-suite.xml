@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="get-content-sub-flow-test-suite.xml" />
+	<munit:test name="get-content-sub-flow-test-suite-get-content-sub-flowTest" doc:id="c7955d5d-dfb4-4752-83b4-1190c3d3f005" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock : azure-storage:download-blob" doc:id="ae2736c4-f881-4525-83f4-9b06723122c9" processor="azure-storage:download-blob">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="1b52762d-356f-4b88-a478-08fd595c3edc" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="get:\organizations\(orgId)\environments\(envId)\contents\(contentRecordId):b2b-payload-storage-api-spec-config" doc:id="36e283c1-57e1-400c-8879-f7a903c38de6" name="get:\organizations\(orgId)\environments\(envId)\contents\(contentRecordId):b2b-payload-storage-api-spec-config"/>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:verify-call doc:name="Verify call" doc:id="1a9c5504-4871-4201-8d2a-f40aa02de1a5" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="12ebcc0b-d494-414b-82c3-0663dbd38c71" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+
+		</munit:validation>
+	
+</munit:test>
+
+
+</mule>

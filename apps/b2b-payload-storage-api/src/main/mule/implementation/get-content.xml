@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:azure-storage="http://www.mulesoft.org/schema/mule/azure-storage"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema/mule/azure-storage/current/mule-azure-storage.xsd">
+		<sub-flow name="get-content-sub-flow" doc:id="d0ec83eb-63aa-461f-948e-9eadd91d6eda">
+		<logger level="INFO" doc:name="START" doc:id="9de00cc9-4d19-4a21-943e-ad211462ac08" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: vars.correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;,&#10;	&quot;target&quot;: &quot;Azure&quot;,&#10;	&quot;message&quot;: &quot;Get Content Sub Flow &quot; &#10;}]" />
+		<ee:transform doc:name="Variables : parameter" doc:id="b2424625-79d3-4362-8108-58db058b6aeb">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="parameter"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	envId: attributes.uriParams.envId,
+	contentrecordid:attributes.uriParams.contentRecordId ,
+	orgId: attributes.uriParams.orgId
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="DEBUG" doc:name="Log : Parameters" doc:id="af6d766a-17e6-4fba-a1da-074a88f7b4ed" message='#[%dw 2.0&#10;output application/json&#10;import * from dw::util::Values&#10;---&#10;vars.parameter mask field ("envId") with "************" mask field ("orgId") with "**************"]' />
+		<azure-storage:download-blob doc:name="Download Transaction Payload" doc:id="1b52762d-356f-4b88-a478-08fd595c3edc" config-ref="Azure_Storage_Config">
+			<azure-storage:blob container="#[Mule::p('azure.container')]" fileName="#[Mule::p('azure.foldername')++ &quot;/&quot; ++ &quot;263bad84-ac67-4a46-a56b-2c0ed3c6006b&quot; ++ &quot;.txt&quot;]" />
+		</azure-storage:download-blob>
+		<logger level="DEBUG" doc:name="Log : Payload" doc:id="52834110-6ec0-4c58-9f42-80d3918324ab" message="#[payload]"/>
+		<logger level="INFO" doc:name="END" doc:id="12ebcc0b-d494-414b-82c3-0663dbd38c71" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: vars.correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;,&#10;	&quot;target&quot;: &quot;Azure&quot;,&#10;	&quot;message&quot;: &quot;Get Content Sub Flow &quot; &#10;}]" />
+		
+</sub-flow>
+	
+</mule>

@@ -1,0 +1,9 @@
+# Dev Secure Configuration
+
+# Azure Configuration
+azure:
+ sastoken: "![xsc8nLgpfcC9TgP4B8nAyIQFFV0I9SqV7CoLnyefCLSx6sxxhlTpwmikMarR3I5IbRu4zeG9HwbnRvPJTUpIfobLArXo+m20AU6MIE+XiUUU3Sk7QnfNrUKZu/bW4ofrecuOL9T1dyrdHe0hFMLjqEtgB6E0Mi1DAfy3yVINsxOoAcasQ/1LU6tzHCWF0lvJpWLXplqpZqwPQpUdO39Ujg==]"
+ 
+# SMTP Configuration
+email: 
+    password: ""
