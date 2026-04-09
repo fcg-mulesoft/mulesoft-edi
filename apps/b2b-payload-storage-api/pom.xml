@@ -69,6 +69,13 @@
 				     </goals>
 				   </execution>
 				 </executions>
+				 <configuration>
+					<coverage>
+						<ignoreFiles>
+							<ignoreFile>common/common-error-handler.xml</ignoreFile>
+						</ignoreFiles>
+				 	</coverage>
+			  	</configuration>		 
 			</plugin>
 		</plugins>
 	</build>
