@@ -1,0 +1,21 @@
+# Test Configuration
+
+# Azure Configuration
+azure:
+ accountname: "stfcgmulesoftteus2"
+ container: "test"
+ foldername: "/transition_payload"
+ 
+# SMTP Configuration
+email: 
+    read: 
+        timeout: "30"
+    conn: 
+        timeout: "30"
+    write:  
+        timeout: "30"
+    host: "smtp.office365.com"
+    port: "587"
+    user: ""
+    sender: ""
+    receivers: ""
