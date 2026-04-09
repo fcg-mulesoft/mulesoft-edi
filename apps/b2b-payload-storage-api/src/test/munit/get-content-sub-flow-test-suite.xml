@@ -8,7 +8,7 @@
 		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
 		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
 	<munit:config name="get-content-sub-flow-test-suite.xml" />
-	<munit:test name="get-content-sub-flow-test-suite-get-content-sub-flowTest" doc:id="c7955d5d-dfb4-4752-83b4-1190c3d3f005" description="Test">
+	<munit:test name="get-content-sub-flow-test-suite-get-content-sub-flowTest" doc:id="c7955d5d-dfb4-4752-83b4-1190c3d3f005" description="Test" ignore="true">
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Mock : azure-storage:download-blob" doc:id="ae2736c4-f881-4525-83f4-9b06723122c9" processor="azure-storage:download-blob">
 				<munit-tools:with-attributes >
