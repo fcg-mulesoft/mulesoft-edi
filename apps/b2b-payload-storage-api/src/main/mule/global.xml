@@ -10,4 +10,5 @@
 	<configuration-properties doc:name="Environment Configuration Properties" doc:id="fff9e392-f1cb-4554-bff3-b745d6ce2f17" file="properties/${mule.env}-properties.yaml" />
 	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="4ba3848d-b71d-422c-82db-ede2e2fe24e7" file="properties\secure\\${mule.env}-secure-properties.yaml" key="${mule.key}" />
 	<configuration-properties doc:name="Common Configuration Properties" doc:id="003d42b1-ec82-4fb6-9f9e-99cbae2ea6f3" file="properties\common\common-properties.yaml" />
+	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="d91614fc-b05f-406b-9cbf-cf4405a20924" flowRef="b2b-payload-storage-api-spec-main" />
 </mule>
