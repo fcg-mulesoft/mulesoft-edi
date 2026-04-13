@@ -1,5 +1,9 @@
 # Test Configuration
 
+# API Autodiscovery
+api:
+  id: "20843776"
+  
 # Azure Configuration
 azure:
  accountname: "stfcgmulesoftteus2"
