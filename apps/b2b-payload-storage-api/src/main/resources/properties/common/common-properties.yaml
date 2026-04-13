@@ -1,15 +1,16 @@
 # Common Configuration
-# Listener Configuration
-http:
-  host: "0.0.0.0"
-  readTimeout: "30000"
-  port: "8081"
-  private:
-    port: "8091"
-    
+# Listener Properties
 https:
   host: "0.0.0.0"
-  readTimeout: "30000"
   port: "8082"
+  timeout:
+    connection-idle: "600000"
+  connectionIdleTimeOut: "30000"
+  responseBufferSize: "1024"
+  responseTimeout: "40000"
+  basePath: "/api/v1/*"
   private:
     port: "8092"
+  keystore:
+    path: "keystore.jks"
+    alias: "fcg-mule-cert"
