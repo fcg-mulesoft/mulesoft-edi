@@ -46,7 +46,7 @@ import toBase64 from dw::core::Binaries
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable resource="classpath://dwl/post-inbound-invoice-subflow/v_isValid.dwl" variableName="isValid" />
+				<ee:set-variable resource="dwl/post-inbound-invoice-subflow/v_isValid.dwl" variableName="isValid" />
 			</ee:variables>
 		</ee:transform>
 		<choice doc:name="isValid Invoice?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
