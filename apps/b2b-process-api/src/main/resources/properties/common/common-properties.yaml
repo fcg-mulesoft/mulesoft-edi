@@ -12,3 +12,19 @@ explicitcodes: "502,504,413"
 untilsuccessful:
   maxRetries: "5"
   interval: "5000"
+  
+# Listener Properties
+https:
+  host: "0.0.0.0"
+  port: "8082"
+  timeout:
+    connection-idle: "600000"
+  connectionIdleTimeOut: "30000"
+  responseBufferSize: "1024"
+  responseTimeout: "40000"
+  basePath: "/api/v1/*"
+  private:
+    port: "8092"
+  keystore:
+    path: "keystore.jks"
+    alias: "fcg-mule-cert"

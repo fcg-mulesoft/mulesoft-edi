@@ -3,11 +3,16 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
-	<artifactId>fcg-prc-api</artifactId>
+	<artifactId>fcg-prc-api-app</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
+	<parent>
+		<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
+		<artifactId>integration-parent-pom</artifactId>
+		<version>1.0.5</version>
+	</parent>
 
-	<name>b2b-process-api</name>
+	<name>b2b-process-api-app</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
