@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+
+
+	<sub-flow name="system-api-get-oauth-token-subflow"
+		doc:id="ffa28338-27b7-40e2-8442-fea049621475">
+		<os:contains doc:name="Contains Auth Token" doc:id="8b664e29-a8ee-4f75-8996-cf9e70e54fd1" key="token" objectStore="Auth_Token_Object_Store" target="accessToken"/>
+		<choice doc:name="Choice"
+			doc:id="826a8f60-225c-4cd5-a5bb-c80c606f12fe">
+			<when expression="#[vars.accessToken != false]">
+				<os:retrieve doc:name="Retrieve accessToken" doc:id="63fd4d8a-27be-411f-8884-d35d24482d42" key="token" objectStore="Auth_Token_Object_Store"/>
+
+			</when>
+			<otherwise>
+				<logger level="DEBUG" doc:name="Before Token Request Logger"
+					doc:id="d771052c-3f62-4e3a-a43f-0f642473ba02"
+					message="#[import p from Mule&#10;output application/json&#10;---&#10;&#10;{&#10;	&quot;message&quot;:&quot;Begin P21 auth token request.&quot;,&#10;	&quot;tracePoint&quot;: &quot;BEFORE_REQUEST&quot;,&#10;	&quot;correlationId&quot;: correlationId,&#10;	&quot;details&quot;: &quot;tokenRequestUrl: HTTPS://&quot; ++ p('P21api.host') ++ &quot;:&quot; ++ p('P21api.port') ++ p('P21api.tokenRequestUrl') ++ &quot;username:&quot; ++ p('P21api.username'),&#10;}]" />
+				<http:request doc:name="Request for Auth Token"
+					doc:id="56a0be28-ecea-4404-80b6-04d522090b84" method="POST"
+					url="https://p21-dev12api.flowcontrolgroup.com:3443/api/security/token/?username=mulesoftint&amp;password=1XxnyPs%40QH%5E1" />
+				<logger level="DEBUG" doc:name="After Token Request Logger"
+					doc:id="5e2e860c-8b69-4b53-b444-9de8bb1ee274"
+					message='#[%dw 2.0 &#10;output application/json&#10;---&#10;&#10;{&#10;	"message":"End P21 auth token request.",&#10;	"tracePoint": "AFTER_REQUEST",&#10;	"correlationId": correlationId,&#10;	"authToken": vars.authToken&#10;}]' />
+				<os:store doc:name="Store Auth token" doc:id="ee3bd015-8284-4832-92ff-995bc862e9e5" key="token" objectStore="Auth_Token_Object_Store"/>
+			
+</otherwise>
+		</choice>
+	</sub-flow>
+</mule>

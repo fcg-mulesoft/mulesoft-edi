@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<sub-flow name="b2b-p21-views-subflow"
+		doc:id="50af1ea5-d2bd-49e4-b199-82751711b830">
+		<logger level="INFO" doc:name="LOG INFO : START"
+			doc:id="8e64459d-1307-4dd0-a307-9eb37d2114e0"
+			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
+		<flow-ref doc:name="Flow Reference : Get  AuthToken"
+			doc:id="99556d9b-af95-4611-874c-e5d9b338f622"
+			name="system-api-get-oauth-token-subflow" target="accessToken" />
+		<ee:transform doc:name="var: httpOperation"
+			doc:id="3730c32e-f058-46b4-97c6-accf77af9adb">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="httpOperation"><![CDATA[%dw 2.0
+output application/json
+
+var transactionType = attributes.queryParams.transactionType
+var purpose = attributes.queryParams.purpose
+
+
+var poNumber =
+    (attributes.queryParams.businesskey default "")
+        splitBy ","
+        map (trim($))
+        filter ($ != "")
+        distinctBy $
+
+var routingConfig = {
+    purchaseOrder: {
+        total: {
+            view: Mule::p('viewNames.purchaseOrderOutbound'),
+            queryParams: {
+             
+            }
+        },
+        outbound: {
+            view: Mule::p('viewNames.purchaseOrderOutbound'),
+            queryParams: {
+                "\$filter": (poNumber map ("po_no eq " ++ $)) joinBy " or "
+            }
+        }
+    },
+
+    purchaseOrderAck: {
+        validation: {
+            view: Mule::p('viewNames.purchaseOrderAckInbound'),
+            queryParams: {
+                "\$filter": (poNumber map ("po_no eq " ++ $)) joinBy " or "
+            }
+        }
+    },
+
+    purchaseOrderInvoice: {
+        validation: {
+            view: Mule::p('viewNames.purchaseOrderInvoiceInbound'),
+            queryParams: {
+                "\$filter": (poNumber map ("po_no eq " ++ $)) joinBy " or "
+            }
+        }
+    },
+
+    purchaseOrderShipment: {
+        validation: {
+            view: "PURCHASE_ORDER_SHIPMENT_VALIDATION_VIEW",
+            queryParams: {
+                "\$filter": (poNumber map ("po_no eq " ++ $)) joinBy " or "
+            }
+        },
+        total: {
+            view: "PURCHASE_ORDER_SHIPMENT_TOTAL_VIEW",
+            queryParams: {
+                "\$filter": (poNumber map ("po_no eq " ++ $)) joinBy " or "
+            }
+        }
+    },
+
+    salesOrder: {
+        validation: {
+            view: "SALES_ORDER_VALIDATION_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        },
+        outbound: {
+            view: "SALES_ORDER_OUTBOUND_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        },
+        total: {
+            view: "SALES_ORDER_TOTAL_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        }
+    },
+
+    salesOrderAck: {
+        validation: {
+            view: "SALES_ORDER_ACK_VALIDATION_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        },
+        outbound: {
+            view: "SALES_ORDER_ACK_OUTBOUND_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        },
+        total: {
+            view: "SALES_ORDER_ACK_TOTAL_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        }
+    },
+
+    salesOrderInvoice: {
+        validation: {
+            view: "SALES_ORDER_INVOICE_VALIDATION_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        },
+        outbound: {
+            view: "SALES_ORDER_INVOICE_OUTBOUND_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        },
+        total: {
+            view: "SALES_ORDER_INVOICE_TOTAL_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        }
+    },
+
+    salesOrderShipment: {
+        validation: {
+            view: "SALES_ORDER_SHIPMENT_VALIDATION_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        },
+        outbound: {
+            view: "SALES_ORDER_SHIPMENT_OUTBOUND_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        },
+        total: {
+            view: "SALES_ORDER_SHIPMENT_TOTAL_VIEW",
+            queryParams: {
+                param1: "VALUE_PLACEHOLDER"
+            }
+        }
+    }
+}
+
+// Safe selection (prevents null crash)
+var selectedConfig =
+    (routingConfig[transactionType] default {})[purpose] default {}
+
+---
+
+{
+    method: Mule::p('p21.request.method.OData'),
+    host: Mule::p('p21.request.host'),
+    port: Mule::p('p21.request.port'),
+    basePath: Mule::p('p21.request.basePath.Odata'),
+
+    path: "/" ++ (selectedConfig.view default ""),
+
+    headers: {
+        Authorization: "Bearer "++ (vars.accessToken default "") ,
+        "Content-Type": "application/json"
+    },
+    retryMechanism: {
+    	"maxConcurrency": Mule::p('p21.request.reconnection.maxConcurrency.OData'),
+    	"retries":  Mule::p('p21.request.reconnection.retries.OData')
+    },
+    queryParams: selectedConfig.queryParams default {},
+
+    uriParams: {},
+
+    body: {   }
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference: Get View data"
+			doc:id="0b67aa1c-3aa2-4777-a4d9-4b72a2d44b61"
+			name="common-http-request-subflow" />
+		<ee:transform doc:name="Response Payload"
+			doc:id="218ce71b-27c7-418b-a660-eb27da1f0dcf">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="134ace73-d305-49a9-b801-f05190eb0490" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
+	
+</sub-flow>
+
+</mule>

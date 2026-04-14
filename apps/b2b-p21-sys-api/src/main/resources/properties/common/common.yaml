@@ -1,0 +1,52 @@
+# Common COnfiguration
+
+#Listener Configuration
+
+http:
+  protocol: "HTTP"
+  host: "0.0.0.0"
+  readTimeout: "30000"
+  port: "8081"
+  private:
+    port: "8091"
+  path:
+    listener: "/api/*"
+    
+https:
+  protocol: "HTTP"
+  host: "0.0.0.0"
+  readTimeout: "30000"
+  port: "8082"
+  private:
+    port: "8092"
+
+#Object Store Configuration
+objectstore:
+  token:
+    entryTTL: "11"
+    expirationInterval: "4"
+    maxEntries: "2"
+    
+#P21 configuration
+p21:
+  request:
+    host: "p21-dev12api.flowcontrolgroup.com"
+    port: "3443"
+    method:
+      OData: "GET"
+      transaction: "POST"
+    reconnection:
+      maxConcurrency:
+        transaction: "15000"
+        OData: "20000"
+      retries: 
+        transaction: "3"
+        OData: "3"
+      
+      
+#View Types
+
+viewNames:
+  purchaseOrderOutbound: "fcg_edi_po_850_outbound_export_vw"
+  purchaseOrderAckInbound: "fcg_po_hdr_line_udf_vw"
+  purchaseOrderInvoiceInbound: "fcg_po_hdr_line_udf_vw"
