@@ -5,3 +5,6 @@
 .project
 **/properties/*local*properties*
 **/target
+*.prefs
+*.md
+*.wev

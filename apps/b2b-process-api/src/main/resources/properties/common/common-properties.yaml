@@ -1,0 +1,14 @@
+#Common Properties
+
+
+freshpet: 
+    error: 
+        handler: 
+            debug: 
+                logs: ""
+                
+explicitcodes: "502,504,413"  
+
+untilsuccessful:
+  maxRetries: "5"
+  interval: "5000"

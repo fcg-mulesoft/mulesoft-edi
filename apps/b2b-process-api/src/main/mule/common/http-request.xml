@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<sub-flow name="common-http-request-subflow" doc:id="770cbece-0c38-467e-82ec-ed9d46c61331" >
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="208b755d-28d6-482c-96f6-e4f8c588ccfd" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
+		<until-successful maxRetries="#[Mule::p('untilsuccessful.maxRetries')]" doc:name="Until Successful" doc:id="cbe1174f-23ba-45ae-bec4-2b02fc685743" millisBetweenRetries="#[Mule::p('untilsuccessful.interval')]">
+			<http:request method="#[vars.httpOperation.method]" doc:name="Common HTTP Request " doc:id="b976f5d7-308c-4391-9d3e-e65db725d6d5" config-ref="HTTP_Request_configuration" path="#[vars.httpOperation.path]" responseTimeout="500000">
+				<http:body ><![CDATA[#[vars.httpOperation.body]]]></http:body>
+				<http:headers ><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
+				<http:query-params ><![CDATA[#[vars.httpOperation.queryParams]]]></http:query-params>
+			</http:request>
+		</until-successful>
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="fab713a1-b95a-477a-81df-e54430d91e55" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
+	</sub-flow>
+</mule>
