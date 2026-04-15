@@ -35,8 +35,8 @@ output application/json
             </ee:message>
         </ee:transform>
     </flow>
-    <flow name="post:\inboundTransactions:application\json:b2b-process-api-spec-config">
-        <ee:transform doc:name="var : integration">
+	<flow name="post:\inboundTransactions:application\json:b2b-process-api-spec-config">
+        <ee:transform doc:name="var : integration, initialPayload">
             <ee:message>
             </ee:message>
 			<ee:variables >
@@ -49,6 +49,10 @@ output application/json
 	"integration-type" : "Inbound " ++ attributes.queryParams."type",
 	"correlationId": correlationId
 }]]></ee:set-variable>
+				<ee:set-variable variableName="initialPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
 			</ee:variables>
         </ee:transform>
 		<flow-ref doc:name="Inbound Transaction Processing" doc:id="885af747-f4ce-47cd-bc6f-ea61768d6175" name='#["inbound-" ++ attributes.queryParams."type" ++ "-processing-subflow"]'/>

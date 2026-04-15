@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
 		<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="00ad5797-37c6-43f9-aa2b-0b7f69628685" doc:description="Common HTTP Request Configuration&#10;" basePath="#[vars.httpOperation.basePath]">
-		<http:request-connection host="#[vars.httpOperation.host]" port="#[vars.httpOperation.port]" />
+		<http:request-connection host="#[vars.httpOperation.host]" port="#[vars.httpOperation.port]" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+			</tls:context>
+		</http:request-connection>
 	</http:request-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="4100daf7-05f0-4add-9d25-6dbd8ce83162" file="properties/${mule.env}-properties.yaml" doc:description="Environment Specific Property File&#10;"/>
 	<configuration-properties doc:name="Configuration properties" doc:id="4543f32f-4c89-4629-bd06-fa5baa83d5b5" doc:description="Common Properties File" file="properties\common\common-properties.yaml" />

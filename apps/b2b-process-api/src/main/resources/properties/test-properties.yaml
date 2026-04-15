@@ -2,7 +2,7 @@
 
 b2b-p21-sys-api:
   host: 
-  basePath: "/api/v1/b2b-p21-sys-api"
+  basePath: "/api/"
   port: 
   view:
     path: "/view"

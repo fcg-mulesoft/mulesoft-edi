@@ -2,13 +2,13 @@
 
 b2b-p21-sys-api:
   host: 
-  basePath: "/api/v1/b2b-p21-sys-api"
+  basePath: "/api/"
   port: 
   view:
-    path: "/view"
+    path: "/views"
     method: "POST"
   transaction:
-    path: "/transaction"
+    path: "/transactions"
     method: "POST"
     
 email: 
