@@ -1,7 +1,7 @@
 #Common Properties
 
 
-freshpet: 
+common: 
     error: 
         handler: 
             debug: 

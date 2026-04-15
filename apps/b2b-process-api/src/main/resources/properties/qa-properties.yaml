@@ -1,4 +1,4 @@
-#UAT Environment Properties
+#QA Environment Properties
 
 b2b-p21-sys-api:
   host: 
