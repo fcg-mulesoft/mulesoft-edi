@@ -1,192 +1,161 @@
 %dw 2.0
-
 output application/json
- 
-var invoice = payload[0].b2bMessage default {}
 
+var invoice = vars.initialPayload[0].b2bMessage default {}
 var header = invoice.header default {}
-
 var summary = invoice.Summary default {}
+var refs = header.references default {}
 
+var p21Items = vars.purchaseOrderData.value default []
+var p21 = p21Items[0] default {}
+
+fun getVal(v) =
+    if (v is Array) v[0] else v
+
+fun formatDate(v) =
+    do {
+        var val = getVal(v)
+        ---
+        if (isEmpty(val)) ""
+        else (val as DateTime {format: "yyyy-MM-dd'T'HH:mm:ssXXX"})
+             as String {format: "MM/dd/yyyy"}
+    }
 var rawItems = invoice.data.invoice.itemDetails default []
- 
+
 var items =
-
-    if (sizeOf(rawItems) > 0 and rawItems[0] is Array)
-
-        flatten(rawItems)
-
+    if (isEmpty(rawItems)) []
+    else if (rawItems[0] is Array) flatten(rawItems)
     else rawItems
- 
-var billTo =
 
-    ((header.partyInformation default [])
-
-        filter ($.entityIdentifierCode == "BT"))[0] default {}
- 
-fun formatDate(dateStr) =
-
-    if (isEmpty(dateStr)) ""
-
-    else (dateStr as DateTime {format: "yyyy-MM-dd'T'HH:mm:ssXXX"}) 
-
-         as String {format: "MM/dd/yyyy"}
- 
 ---
-
 {
-
   Name: "VendorInvoice",
-
-  Description: null,
-
   UseCodeValues: true,
-
   IgnoreDisabled: true,
 
   Transactions: [
-
     {
-
       Status: "New",
 
       DataElements: [
 
         {
-
           Name: "TP_POHDR.tp_pohdr",
-
           Type: "Form",
-
           Keys: ["po_no"],
-
           Rows: [
-
             {
-
               Edits: [
 
                 { Name: "vendor_invoice_flag", Value: "Y" },
 
-                { Name: "po_no", Value: header.purchaseOrderNumber default "" },
+                { Name: "po_no", Value: getVal(header.purchaseOrderNumber) },
+
+                {
+                  Name: "external_po_no",
+                  Value:
+                    if ((p21.po_type default "") == "D")
+                        getVal(refs.purchaseOrderReference default header.purchaseOrderNumber)
+                    else "",
+                  IgnoreIfEmpty: true
+                },
 
                 { Name: "c_invoice_no", Value: header.invoiceNumber default "" },
 
                 { Name: "c_invoice_date", Value: formatDate(header.invoiceIssueDate) },
 
-                { Name: "vendor_name", Value: billTo.name default "", IgnoreIfEmpty: true },
+                { Name: "vendor_id", Value: refs.internalVendorId default "" },
 
-                { Name: "order_date", Value: formatDate(header.purchaseOrderDate), IgnoreIfEmpty: true },
+                { Name: "terms_id", Value: header.termsOfSale.typeCode default "" },
 
-                { Name: "required_date", Value: formatDate(header.deliveryRequestedDate), IgnoreIfEmpty: true },
+                { Name: "currency_code", Value: header.currencyCode default "" },
 
-                { Name: "external_po_no", Value: header.purchaseOrderNumber default "", IgnoreIfEmpty: true },
-
-                { Name: "terms_id", Value: header.termsOfSale.termsDescription default "", IgnoreIfEmpty: true },
+                { Name: "bill_of_lading", Value: refs.billOfLading default "" },
 
                 { Name: "cf_invoice_total", Value: summary.totalInvoiceAmount default 0 }
 
               ],
-
               RelativeDateEdits: []
-
             }
-
           ]
-
         },
 
         {
-
-          Name: "TP_CHARGES.tp_charges",
-
-          Type: "List",
-
-          Keys: [],
-
-          Rows:
-
-            if (isEmpty(summary.serviceAllowanceCharge default [])) []
-
-            else (summary.serviceAllowanceCharge default []) map (charge) -> {
-
-              Edits: [
-
-                { Name: "invoice_amt", Value: charge.SAC05 default "", IgnoreIfEmpty: true }
-
-              ],
-
-              RelativeDateEdits: []
-
-            }
-
-        },
-
-        {
-
           Name: "TP_POLINE.tp_poline",
-
           Type: "List",
-
           Keys: ["line_no"],
-
           Rows:
-
             if (isEmpty(items)) []
+            else items map (item) ->
+              do {
+                var itemId =
+                    item.buyerPartNumber
+                    default item.primaryItemNumber
+                    default item.vendorPartNumber
+                    default item.upcCode
+                    default ""
 
-            else items map (item) -> {
+                var qty =
+                    item.quantityInvoiced
+                    default item.quantityOrdered
+                    default 0
 
-              Edits: [
+                var uom =
+                    item.unitOfMeasurementCode
+                    default item.uom
+                    default ""
 
-                { Name: "c_select_flag", Value: "Y" },
+                var lineNo =
+                    item.assignedIdentification
+                    default item.lineNo
+                    default ""
 
-                { Name: "item_id", Value: item.buyerPartNumber default item.primaryItemNumber default "", IgnoreIfEmpty: true },
+                ---
+                {
+                  Edits: [
 
-                { Name: "unit_of_measure", Value: item.unitOfMeasurementCode default "" },
+                    { Name: "c_select_flag", Value: "Y" },
 
-                { Name: "unit_size", Value: 1 },
+                    { Name: "line_no", Value: lineNo },
 
-                { Name: "c_qty_to_invoice", Value: item.quantityInvoiced default 0 },
+                    { Name: "item_id", Value: itemId, IgnoreIfEmpty: true },
 
-                { Name: "pricing_unit", Value: item.unitOfMeasurementCode default "" },
+                    { Name: "unit_of_measure", Value: uom },
 
-                { Name: "pricing_unit_size", Value: 1 },
+                    { Name: "unit_size", Value: 1 },
 
-                { Name: "unit_price_display", Value: item.unitPrice default 0 },
+                    { Name: "c_qty_to_invoice", Value: qty },
 
-                { Name: "line_no", Value: item.assignedIdentification default "" },
+                    { Name: "pricing_unit", Value: uom },
 
-                { Name: "item_desc", Value: item.productDescription default "", IgnoreIfEmpty: true },
+                    { Name: "pricing_unit_size", Value: 1 },
 
-                { Name: "unit_quantity", Value: item.quantityInvoiced default 0 },
+                    { Name: "unit_price_display", Value: item.unitPrice default 0 },
 
-                { Name: "qty_received", Value: item.quantityInvoiced default 0 },
+                    {
+                      Name: "item_desc",
+                      Value:
+                        item.productDescription
+                        default item.description
+                        default "",
+                      IgnoreIfEmpty: true
+                    }
 
-                { Name: "c_qty_vouched", Value: item.quantityInvoiced default 0 }
-
-              ],
-
-              RelativeDateEdits: []
-
-            }
+                  ],
+                  RelativeDateEdits: []
+                }
+              }
 
         }
 
       ],
 
       Documents: null
-
     }
-
   ],
 
   Query: null,
-
   FieldMap: [],
-
   TransactionSplitMethod: 0,
-
   Parameters: null
-
 }
- 
