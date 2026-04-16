@@ -55,10 +55,10 @@ import toBase64 from dw::core::Binaries
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="daf0a59e-db1f-43dd-81bd-7ca2863bb96b" type="CUSTOM:VALIDATION_FAILED" description="#[vars.isValid.validationErrors]" />
 			</otherwise>
 		</choice>
-		<ee:transform doc:name="var : p21Invoice" doc:id="fb1a7b9f-bbfd-4674-bbdc-7fc0ff8f0e50" >
+		<ee:transform doc:name="var : p21poAck" doc:id="fb1a7b9f-bbfd-4674-bbdc-7fc0ff8f0e50" >
 			<ee:message />
 			<ee:variables >
-				<ee:set-variable resource="dwl/inbound-poAck-processing-subflow/v_p21Invoice.dwl" variableName="p21Invoice" />
+				<ee:set-variable resource="dwl/inbound-poAck-processing-subflow/v_p21Invoice.dwl" variableName="p21poAck" />
 			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="var : httpOperation - post invoice" doc:id="bf92619f-3e38-4c38-a78c-20732dfde9dd" >
@@ -79,7 +79,7 @@ import toBase64 from dw::core::Binaries
     	"client_secret": "1234"
     },
 	"queryParams":{
-		"transactionType": "purchaseOrderInvoice",
+		"transactionType": "purchaseOrderAck",
     },
     "uriParams": {
     },
@@ -87,11 +87,11 @@ import toBase64 from dw::core::Binaries
     	"maxRetries": "5",
     	"interval": "5000"
     },
-    "body": vars.p21Invoice
+    "body": vars.p21poAck
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Reference To commom-http-request-subflow1" doc:id="727d7cdc-0466-4327-9b4f-b039a8cfb17c" name="common-http-request-subflow" />
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="727d7cdc-0466-4327-9b4f-b039a8cfb17c" name="common-http-request-subflow" />
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="74837d49-bd9d-4659-b4fc-a3df92894944" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
 	</sub-flow>
 </mule>
