@@ -72,12 +72,119 @@ output application/json
 			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="51a6cf79-4d66-409a-a1da-910a0e61c867" category="com.apikit.errors" message="#[vars.errorResponse]"/>
 		
 </on-error-propagate>
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="Generic" doc:id="0e371a58-d923-4d64-a963-1de85169a38b" >
-			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="58802e93-2e65-41bf-a7a8-88f8644d6910" message="Start: Global Error Handler: GENERIC ERROR"/>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="Validation Errors" doc:id="0e371a58-d923-4d64-a963-1de85169a38b" when='#[error.errorType.namespace == "CUSTOM"]'>
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="cec686b4-7520-427e-a366-128dd66c5d27" message="Start: Global Error Handler: Validation ERROR" />
+			<ee:transform doc:name="Response Payload" doc:id="6c27e672-1a05-49a1-a263-b2a312a8c8e7" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+
+fun safe(v, d="N/A") =
+    if (v == null or (v is String and trim(v) == "")) d else v
+
+var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
+var cdmHeader = cdm.header  default {}
+
+var ve = vars.isValid.validationErrors default {}
+
+var itemRows =
+    flatten(
+        (ve.itemErrors default {}) pluck ((value, key) ->
+            (value default []) map (err) ->
+                "<tr style='background:#fee2e2;color:#b91c1c;'>" ++
+                "<td style='padding:8px;border:1px solid #ddd;'>Item (" ++ key ++ ")</td>" ++
+                "<td style='padding:8px;border:1px solid #ddd;'>" ++ err ++ "</td>" ++
+                "</tr>"
+        )
+    )
+
+var carrierRows =
+    (ve.carrierErrors default []) map (e) ->
+        "<tr style='background:#fee2e2;color:#b91c1c;'>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>Carrier</td>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
+
+var externalPoRows =
+    (ve.externalPoErrors default []) map (e) ->
+        "<tr style='background:#fee2e2;color:#b91c1c;'>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>External PO</td>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
+
+var customerPartRows =
+    (ve.customerPartErrors default []) map (e) ->
+        "<tr style='background:#fee2e2;color:#b91c1c;'>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>Customer Part</td>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
+
+var totalRows =
+    (ve.totalErrors default []) map (e) ->
+        "<tr style='background:#fee2e2;color:#b91c1c;'>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>Total</td>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
+
+var shipToRows =
+    (ve.shipToErrors default []) map (e) ->
+        "<tr style='background:#fee2e2;color:#b91c1c;'>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>Ship To</td>" ++
+        "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
+
+var allRows =
+    itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows
+
+var validationHtml =
+    if (sizeOf(allRows) > 0)
+        "<table style='width:100%;border-collapse:collapse;margin-top:10px;'>"
+        ++ "<tr style='background:#fecaca;'>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;'>Type</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;'>Error</th>"
+        ++ "</tr>"
+        ++ (allRows joinBy "")
+        ++ "</table>"
+    else
+        "Validation failed but no detailed errors available."
+
+var data = {
+    flowDirection:  "INBOUND",
+    documentType:   safe(cdmHeader.documentType,        "810"),
+    errorTitle:     "Validation Error",
+    bannerColor:    "#f59e0b",
+    errorType:      "Validation Error",
+    status:         "FAILED",
+    message:        "Validation failed while processing transaction.",
+    errorCategory:  "VALIDATION",
+    partnerName:    safe(cdmHeader.senderId),
+    route:          "APM → Mule → P21",
+    errorCode:      "VALIDATION_ERROR",
+    errorResolution: "The validation failed because the P21 data and the EDI data do not match. Please correct the EDI data accordingly and resend the file.",
+    errorDescription: validationHtml,
+    timestamp:          now() as String,
+    transmissionId: safe(cdmHeader.transmissionId),
+    transactionType: safe(cdmHeader.documentType,       "810"),
+    appName:        safe(vars.appName,                  "Mule Application"),
+    flowName:       safe(vars.flowName,                 "N/A"),
+    environment:    Mule::p('mule.env'),
+    keyLabel:       "PO Number",
+    key:            safe(cdmHeader.purchaseOrderNumber)
+}
+
+var template =
+    readUrl("classpath://templates/error-template.html", "text/plain")
+
+---
+template replace /\$\{(\w+)\}/ with ((m) ->
+    (data[m[1]] as String) default ""
+)]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="send-email-subflow" doc:id="dd485f70-15d0-4237-afdf-bfd5683f636a" name="send-email-subflow" />
+			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="bb9686f8-f3e3-45d5-916d-999d5ba2a8e7" message="#[vars.errorResponse]" category="com.validation.errors" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="Generic" doc:id="0b4f58a9-df94-47dd-a581-2045b60c3ce7" >
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="58802e93-2e65-41bf-a7a8-88f8644d6910" message="Start: Global Error Handler: GENERIC ERROR" />
 			<ee:transform doc:name="Status code generator" doc:id="7383930b-00cc-472b-a9f1-20403b8b4e79">
 				<ee:message />
 				<ee:variables>
-					<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+					<ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
 output application/json
 ---
 if(error.errorType.identifier == "BAD_REQUEST") (400) else
@@ -93,11 +200,11 @@ if (!isEmpty(attributes.statusCode))(attributes.statusCode) else
 				
 </ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Response payload" doc:id="6d4b0651-2bfd-464f-a879-abc270f6fc9c" >
-				<ee:message >
+			<ee:transform doc:name="Response payload" doc:id="6d4b0651-2bfd-464f-a879-abc270f6fc9c">
+				<ee:message>
 				</ee:message>
-				<ee:variables >
-					<ee:set-variable variableName="errorResponseHtml" ><![CDATA[%dw 2.0
+				<ee:variables>
+					<ee:set-variable variableName="errorResponseHtml"><![CDATA[%dw 2.0
 output text/plain
 var explictHandlerCodes = [504,502]
 ---
@@ -110,7 +217,7 @@ var explictHandlerCodes = [504,502]
 	}) ++ " UTC") else (error.errorMessage.payload.errorDateTime)) default (((now() >> "UTC")  as String {
 		format : "yyyy/MM/dd HH:mm:ss"
 	}) ++ " UTC"))]]></ee:set-variable>
-					<ee:set-variable variableName="systemInformation" ><![CDATA[%dw 2.0
+					<ee:set-variable variableName="systemInformation"><![CDATA[%dw 2.0
 output application/json
 import * from dw::core::Strings
 ---
@@ -121,7 +228,7 @@ import * from dw::core::Strings
 	"integration": vars.integration.information
 	
 }]]></ee:set-variable>
-					<ee:set-variable variableName="errorResponse" ><![CDATA[%dw 2.0
+					<ee:set-variable variableName="errorResponse"><![CDATA[%dw 2.0
 output application/json
 var explictHandlerCodes = p('explicitcodes')
 ---
@@ -137,12 +244,12 @@ var explictHandlerCodes = p('explicitcodes')
 				
 </ee:variables>
 			</ee:transform>
-			<choice doc:name="CHECK IF: Email notification is required?" doc:id="4eae29bd-4074-49a2-b2f9-22295c869167" >
+			<choice doc:name="CHECK IF: Email notification is required?" doc:id="4eae29bd-4074-49a2-b2f9-22295c869167">
 				<when expression="#[vars.errorResponse.notificationRequired]">
 					<flow-ref doc:name="send-email-subflow" doc:id="ab4ad35a-a573-43a7-a4fe-8d3794087d72" name="send-email-subflow" />
 				</when>
-				<otherwise >
-					<logger level="DEBUG" doc:name="LOG DEBUG: Notification not required" doc:id="cfcf83f5-f493-4b08-9c6e-9eb41b00362f" message='#["Email notification sent via the downstream API!"]'/>
+				<otherwise>
+					<logger level="DEBUG" doc:name="LOG DEBUG: Notification not required" doc:id="cfcf83f5-f493-4b08-9c6e-9eb41b00362f" message='#["Email notification sent via the downstream API!"]' />
 				</otherwise>
 			</choice>
 			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="c7e50d63-3d91-4462-a651-761245bcc0ba" />
@@ -150,9 +257,6 @@ var explictHandlerCodes = p('explicitcodes')
 		</on-error-propagate>
 	</error-handler>
 	<sub-flow name="send-email-subflow" doc:id="421993f9-c123-453a-8a37-135d2a1821c1" >
-		<!-- [STUDIO:"Parse Email Template"]<parse-template doc:name="Parse Email Template" doc:id="ff351b26-e7a3-4012-9655-9c64f901a8aa">
-
-		</parse-template> [STUDIO] -->
 		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="f7577dfb-a02b-4ad8-9ca6-6eb0108c6d8c" message="Start: Email Alert" />
 		<choice doc:name="CHECK IF: Environment is Local?" doc:id="34850b13-651d-4dbb-a9f3-eb54bb459ab0">
 				<when expression="#[p('mule.env') != &quot;local&quot;]">

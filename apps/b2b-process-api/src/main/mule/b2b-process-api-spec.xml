@@ -19,6 +19,7 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
             </http:error-response>
         </http:listener>
         <apikit:router config-ref="b2b-process-api-spec-config" />
+		<error-handler ref="global-common-error-handler" />
     </flow>
     <flow name="get:\healthCheck:b2b-process-api-spec-config">
         <ee:transform doc:name="Transform Message">
