@@ -1,5 +1,16 @@
 #Common Properties
 
+# SMTP Email Properties
+email:
+  host: "smtp.office365.com"
+  port: "587"
+  username: "mulesoftalerts@fluidflow.onmicrosoft.com"
+  connectionTimeout: "60"
+  readTimeout: "60"
+  writeTimeout: "60"
+  reconnection:
+    attempts: "3"
+    frequency: "2000"
 
 common: 
     error: 

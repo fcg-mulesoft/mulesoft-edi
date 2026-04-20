@@ -6,9 +6,6 @@
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
 http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
-	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="9a10ead4-d0bf-4bec-82f7-698b9bea551b" >
-		<email:smtp-connection host="#[p('email.host')]" port="#[p('email.port')]" user="#[p('email.user')]" password="$(secure::email.password)" />
-	</email:smtp-config>
 	<error-handler name="global-common-error-handler" doc:id="38f24dd9-21a0-4ad3-aa7b-aae4b15fa57f" >
 		<on-error-propagate enableNotifications="true" logException="true" doc:name="APIKIT Errors" doc:id="a08904c3-cea9-4c03-9c78-13cc50a3f991" when='#[error.errorType.namespace == "APIKIT"]'>
 			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="fc23563f-5d75-4cb6-91ad-fb85b90db62e" message="Start: Global Error Handler: APIKIT ERROR"/>
@@ -262,7 +259,7 @@ var explictHandlerCodes = p('explicitcodes')
 				<when expression="#[p('mule.env') != &quot;local&quot;]">
 					<async doc:name="Async" doc:id="7f386d36-0c87-4cab-b589-59c3091d7007">
 					<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" >
-						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" config-ref="Email_SMTP" fromAddress="${email.sender}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('api.name'))]" toAddresses="#[p('email.receivers') splitBy(&quot;,&quot;)]">
+						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('api.name'))]" toAddresses='#[["ven_gopi.makutam@flowcontrol.com"]]' config-ref="Email_SMTP">
 				<reconnect />
 				<email:body contentType="text/html">
 				</email:body>

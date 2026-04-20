@@ -10,16 +10,3 @@ b2b-p21-sys-api:
   transaction:
     path: "/transactions"
     method: "POST"
-    
-email: 
-    read: 
-        timeout: "30"
-    conn: 
-        timeout: "30"
-    write:  
-        timeout: "30"
-    host: "smtp.office365.com"
-    port: "587"
-    user: "mulesoftalerts@fluidflow.onmicrosoft.com"
-    sender: "mulesoftalerts@fluidflow.onmicrosoft.com"
-    receivers: "reddyharshavardhan2003@gmail.com"
