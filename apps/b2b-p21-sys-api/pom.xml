@@ -7,7 +7,7 @@
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 
-	<name>b2b-p21-sys-api</name>
+	<name>b2b-p21-sys-api-anshul</name>
 	<parent>
 		<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 		<artifactId>integration-parent-pom</artifactId>
@@ -19,6 +19,7 @@
 
 		<app.runtime>4.11.0</app.runtime>
 		<mule.maven.plugin.version>4.7.0</mule.maven.plugin.version>
+		<munit.version>3.7.0</munit.version>
 	</properties>
 
 	<build>
@@ -35,6 +36,28 @@
 				<extensions>true</extensions>
 				<configuration>
 					<classifier>mule-application</classifier>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.mulesoft.munit.tools</groupId>
+				<artifactId>munit-maven-plugin</artifactId>
+				<version>${munit.version}</version>
+				<executions>
+					<execution>
+						<id>test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>test</goal>
+							<goal>coverage-report</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<coverage>
+						<ignoreFiles>
+							<ignoreFile>common/common-error-handler.xml</ignoreFile>
+						</ignoreFiles>
+					</coverage>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -72,9 +95,29 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-runner</artifactId>
+			<version>3.7.0</version>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-tools</artifactId>
+			<version>3.7.0</version>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.weave</groupId>
+			<artifactId>assertions</artifactId>
+			<version>1.2.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 			<artifactId>b2b-p21-sys-api-spec</artifactId>
-			<version>1.0.3</version>
+			<version>1.0.4</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
 		</dependency>

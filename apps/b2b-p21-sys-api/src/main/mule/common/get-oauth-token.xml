@@ -11,13 +11,15 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 
 
-	<sub-flow name="system-api-get-oauth-token-subflow"
+	<sub-flow name="get-oauth-token-subflow"
 		doc:id="ffa28338-27b7-40e2-8442-fea049621475">
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="31c59695-74c5-4dc8-89ec-d63a2ef055dc" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
 		<os:contains doc:name="Contains Auth Token" doc:id="8b664e29-a8ee-4f75-8996-cf9e70e54fd1" key="token" objectStore="Auth_Token_Object_Store" target="accessToken"/>
-		<choice doc:name="Choice"
+		<choice doc:name="Access Token Exist ?"
 			doc:id="826a8f60-225c-4cd5-a5bb-c80c606f12fe">
 			<when expression="#[vars.accessToken != false]">
-				<os:retrieve doc:name="Retrieve accessToken" doc:id="63fd4d8a-27be-411f-8884-d35d24482d42" key="token" objectStore="Auth_Token_Object_Store"/>
+				<os:retrieve doc:name="Retrieve accessToken" doc:id="63fd4d8a-27be-411f-8884-d35d24482d42" key="token" objectStore="Auth_Token_Object_Store">
+				</os:retrieve>
 
 			</when>
 			<otherwise>
@@ -34,5 +36,6 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 			
 </otherwise>
 		</choice>
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="9fc12cf3-a792-4560-aaeb-1da1f2bc548f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
 	</sub-flow>
 </mule>

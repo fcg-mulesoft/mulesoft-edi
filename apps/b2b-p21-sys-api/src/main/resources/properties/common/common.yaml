@@ -6,7 +6,7 @@ http:
   protocol: "HTTP"
   host: "0.0.0.0"
   readTimeout: "30000"
-  port: "8081"
+  port: "8082"
   private:
     port: "8091"
   path:
@@ -14,6 +14,7 @@ http:
   
 # Listener Properties
 https:
+  protocol: "HTTPS"
   host: "0.0.0.0"
   port: "8082"
   timeout:
@@ -23,7 +24,7 @@ https:
   responseTimeout: "40000"
   basePath: "/api/v1/*"
   private:
-    port: "8092"
+    port: "8093"
   keystore:
     path: "keystore.jks"
     alias: "fcg-mule-cert"
@@ -45,7 +46,7 @@ p21:
       transaction: "POST"
     reconnection:
       maxConcurrency:
-        transaction: "15000"
+        transaction: "1500000"
         OData: "20000"
       retries: 
         transaction: "3"
@@ -53,8 +54,15 @@ p21:
       
       
 #View Types
-
 viewNames:
   purchaseOrderOutbound: "fcg_edi_po_850_outbound_export_vw"
   purchaseOrderAckInbound: "fcg_po_hdr_line_udf_vw"
   purchaseOrderInvoiceInbound: "fcg_po_hdr_line_udf_vw"
+  
+#Service Types
+serviceNames:
+  purchaseOrder: "PurchaseOrder"
+  purchaseOrderAck: "PurchaseOrder"
+  purchaseOrderInvoice: "VendorInvoice"
+  purchaseOrderShipment: "PurchaseOrderShipment"
+  

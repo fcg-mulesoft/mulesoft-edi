@@ -14,10 +14,11 @@ http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+
 	 <http:listener-config name="b2b-p21-sys-api-spec-httpListenerConfig">
-        <http:listener-connection host="${http.host}" port="${http.port}" readTimeout="${http.readTimeout}" protocol="HTTPS" tlsContext="TLS_Context"/>
+        <http:listener-connection host="${http.host}" port="${http.port}" readTimeout="${http.readTimeout}" protocol="HTTPS" tlsContext="TLS_Context" />
     </http:listener-config>
-    <apikit:config name="b2b-p21-sys-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-p21-sys-api-spec:1.0.3:raml:zip:b2b-p21-sys-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="b2b-p21-sys-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-p21-sys-api-spec:1.0.4:raml:zip:b2b-p21-sys-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
 	<http:request-config
 		name="HTTP_Request_Configuration"
 		doc:name="HTTP Request configuration"
@@ -31,13 +32,10 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	</http:request-config>
 	<os:object-store name="Auth_Token_Object_Store"
 		doc:name="Object store" doc:id="b9369892-23d3-40d3-ba4b-26a8c8e3697b"
-		entryTtl="${objectstore.token.entryTTL}" expirationInterval="${objectstore.token.expirationInterval}" maxEntries="${objectstore.token.maxEntries}" persistent="false"
-		entryTtlUnit="HOURS" expirationIntervalUnit="HOURS" />
-	<configuration-properties
-		doc:name="Configuration properties"
-		doc:id="9cc4e9a8-8d5d-48e7-8195-6a98c5bb1f99"
-		file="properties\config-${mule.env}.yaml" />
-	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="fd8b1c87-b59c-4d8a-a30b-6eb3e0be400d" file="properties\secure\config-${mule.env}-secure.yaml" key="${mule.key}" />
+		entryTtl="${objectstore.token.entryTTL}" expirationInterval="${objectstore.token.expirationInterval}" maxEntries="${objectstore.token.maxEntries}" entryTtlUnit="HOURS" expirationIntervalUnit="HOURS" persistent="false"/>
+	<configuration-properties doc:name="Environment Configuration Properties" doc:id="37ecc42f-37a9-4fcc-a7f1-bf8551fa9006" file="properties/${mule.env}-properties.yaml" />
+
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="a30353cb-8bbc-4dc1-b2eb-4cf39e12d6b5" file="properties\secure\\${mule.env}-secure-properties.yaml" key="${mule.key}" />
 	<configuration-properties doc:name="Configuration properties" doc:id="f3a72687-17bc-49d2-8df5-742887355d46" file="properties\common\common.yaml" />
 <!-- <api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="d1d0a279-4cc8-447f-bb54-b78d844f1ba4" flowRef="b2b-p21-sys-api-spec-main" />
  -->	
