@@ -56,4 +56,29 @@ payload]]></ee:set-variable>
         </ee:transform>
         <flow-ref doc:name="Inbound Transaction Processing" doc:id="885af747-f4ce-47cd-bc6f-ea61768d6175" name="#[&quot;inbound-&quot; ++ attributes.queryParams.&quot;type&quot; ++ &quot;-processing-subflow&quot;]" />
     </flow>
+	<flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1" >
+		<scheduler doc:name="Scheduler" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" startDelay="1" timeUnit="HOURS" />
+			</scheduling-strategy>
+		</scheduler>
+		<ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="initialvariables" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  correlationId: correlationId default uuid(),
+  timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"},
+  source: "scheduler",
+  status: "STARTED"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="91ec1caa-66f7-4294-8cf8-7cb72d3aa291" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	//transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+		<flow-ref doc:name="Flow Reference to purchase-order-processing-subflow" doc:id="305f024e-419d-45fc-9aa2-c6204fe82f06" name="purchase-order-processing-subflow" />
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="6ee0af0c-950d-4e7b-a2ca-c9dbdf2926ab" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+	</flow>
 </mule>
