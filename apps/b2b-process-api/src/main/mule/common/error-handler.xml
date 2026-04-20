@@ -161,7 +161,7 @@ var data = {
     flowName:       safe(vars.flowName,                 "N/A"),
     environment:    Mule::p('mule.env'),
     keyLabel:       "PO Number",
-    key:            safe(cdmHeader.purchaseOrderNumber)
+    key:            safe(cdmHeader.poNumber)
 }
 
 var template =

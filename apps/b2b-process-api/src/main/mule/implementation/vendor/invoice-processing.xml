@@ -31,9 +31,6 @@ import toBase64 from dw::core::Binaries
     },
     "uriParams": {
     },
-    "body":{
-    	
-    },
     "untilsuccessful":{
     	"maxRetries": "5",
     	"interval": "5000"

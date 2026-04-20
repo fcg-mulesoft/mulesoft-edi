@@ -3,9 +3,8 @@ output application/json
 
 var invoice = vars.initialPayload[0].b2bMessage default {}
 var header = invoice.header default {}
-var summary = invoice.Summary default {}
+var summary = invoice.summary default {}                          
 var refs = header.references default {}
-
 var p21Items = vars.purchaseOrderData.value default []
 var p21 = p21Items[0] default {}
 
@@ -20,12 +19,44 @@ fun formatDate(v) =
         else (val as DateTime {format: "yyyy-MM-dd'T'HH:mm:ssXXX"})
              as String {format: "MM/dd/yyyy"}
     }
-var rawItems = invoice.data.invoice.itemDetails default []
+
+fun toNumber(v) =
+    if (v == null) 0
+    else if (v is Number) v
+    else if (v is String and trim(v) == "") 0
+    else if (v is String and !(trim(v) matches /^-?\d+(\.\d+)?$/)) 0
+    else (v as Number)
+
+var rawItems = invoice.detail.invoice.itemDetails default []
 
 var items =
     if (isEmpty(rawItems)) []
     else if (rawItems[0] is Array) flatten(rawItems)
     else rawItems
+
+fun findMatch(item) =
+    (p21Items filter (
+        (upper($.supplier_part_no default "") == upper(item.vendorPartNo default "")) or
+        (upper($.customer_part_number default "") == upper(item.buyerPartNo default "")) or
+        (upper($.item_id default "") == upper(item.vendorPartNo default ""))
+    ))[0] default {}
+
+fun getSafeQty(item, matched) =
+    do {
+        var invQty = toNumber(item.qtyInvoiced)               
+        var ordered = toNumber(matched.qty_ordered)
+        var received = toNumber(matched.qty_received)
+        var allowed = ordered - received
+        ---
+        if (allowed <= 0) 0
+        else if (invQty > allowed) allowed
+        else invQty
+    } default 0
+
+var calculatedTotal =
+    items reduce ((i, acc = 0) ->
+        acc + (toNumber(i.qtyInvoiced) * toNumber(i.unitPrice))  
+    )
 
 ---
 {
@@ -49,30 +80,37 @@ var items =
 
                 { Name: "vendor_invoice_flag", Value: "Y" },
 
-                { Name: "po_no", Value: getVal(header.purchaseOrderNumber) },
+                { Name: "po_no", Value: p21.po_no },
 
                 {
                   Name: "external_po_no",
                   Value:
                     if ((p21.po_type default "") == "D")
-                        getVal(refs.purchaseOrderReference default header.purchaseOrderNumber)
+                        trim(p21.external_po_no default "")
                     else "",
                   IgnoreIfEmpty: true
                 },
 
                 { Name: "c_invoice_no", Value: header.invoiceNumber default "" },
 
-                { Name: "c_invoice_date", Value: formatDate(header.invoiceIssueDate) },
+                { Name: "c_invoice_date", Value: formatDate(header.invoiceDate) }, 
+
+                {
+                  Name: "branch_id",
+                  Value: "",
+                  IgnoreIfEmpty: true
+                },
+                {
+                  Name: "location_id",
+                  Value: "",
+                  IgnoreIfEmpty: true
+                },
 
                 { Name: "vendor_id", Value: refs.internalVendorId default "" },
 
-                { Name: "terms_id", Value: header.termsOfSale.typeCode default "" },
-
                 { Name: "currency_code", Value: header.currencyCode default "" },
 
-                { Name: "bill_of_lading", Value: refs.billOfLading default "" },
-
-                { Name: "cf_invoice_total", Value: summary.totalInvoiceAmount default 0 }
+                { Name: "cf_invoice_total", Value: calculatedTotal }
 
               ],
               RelativeDateEdits: []
@@ -85,30 +123,21 @@ var items =
           Type: "List",
           Keys: ["line_no"],
           Rows:
-            if (isEmpty(items)) []
-            else items map (item) ->
+            items map (item, index) ->
               do {
+
+                var matched = findMatch(item)
+
                 var itemId =
-                    item.buyerPartNumber
+                    item.buyerPartNo
+                    default item.vendorPartNo
                     default item.primaryItemNumber
-                    default item.vendorPartNumber
                     default item.upcCode
                     default ""
 
-                var qty =
-                    item.quantityInvoiced
-                    default item.quantityOrdered
-                    default 0
+                var qty = getSafeQty(item, matched)
 
-                var uom =
-                    item.unitOfMeasurementCode
-                    default item.uom
-                    default ""
-
-                var lineNo =
-                    item.assignedIdentification
-                    default item.lineNo
-                    default ""
+                var uom = item.uom default ""                  
 
                 ---
                 {
@@ -116,9 +145,9 @@ var items =
 
                     { Name: "c_select_flag", Value: "Y" },
 
-                    { Name: "line_no", Value: lineNo },
+                    { Name: "line_no", Value: (index + 1) },
 
-                    { Name: "item_id", Value: itemId, IgnoreIfEmpty: true },
+                    { Name: "item_id", Value: itemId },
 
                     { Name: "unit_of_measure", Value: uom },
 
@@ -130,16 +159,7 @@ var items =
 
                     { Name: "pricing_unit_size", Value: 1 },
 
-                    { Name: "unit_price_display", Value: item.unitPrice default 0 },
-
-                    {
-                      Name: "item_desc",
-                      Value:
-                        item.productDescription
-                        default item.description
-                        default "",
-                      IgnoreIfEmpty: true
-                    }
+                    { Name: "unit_price_display", Value: toNumber(item.unitPrice) }
 
                   ],
                   RelativeDateEdits: []
