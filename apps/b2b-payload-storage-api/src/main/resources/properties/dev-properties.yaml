@@ -20,6 +20,6 @@ email:
         timeout: "30"
     host: "smtp.office365.com"
     port: "587"
-    user: ""
+    user: "mulesoftalerts@fluidflow.onmicrosoft.com"
     sender: ""
     receivers: ""
