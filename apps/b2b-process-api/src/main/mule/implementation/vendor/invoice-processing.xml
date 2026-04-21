@@ -27,7 +27,7 @@ import toBase64 from dw::core::Binaries
 	"queryParams":{
 		"transactionType": "purchaseOrderInvoice",
 		"purpose": "validation",
-		"businesskey": vars.initialPayload.b2bMessage.header.purchaseOrderNumber[0]
+		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0]
     },
     "uriParams": {
     },
