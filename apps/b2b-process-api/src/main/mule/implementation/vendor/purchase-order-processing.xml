@@ -260,11 +260,11 @@ output application/json
 				</error-handler>
 			</try>
 		</parallel-foreach>
-		<ee:transform doc:name="Preparing error payload for transaction api" doc:id="2befd336-0a59-43f8-9148-d9d8d5594758">
+		<!-- [STUDIO:"Preparing error payload for transaction api"]<ee:transform doc:name="Preparing error payload for transaction api" doc:id="2befd336-0a59-43f8-9148-d9d8d5594758">
 				<ee:message>
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
----
+&#45;&#45;-
 {
   UseCodeValues: true,
   IgnoreDisabled: true,
@@ -274,7 +274,7 @@ output application/json
       {
         Name: "TABPAGE_1.tp_1_dw_1",
         Type: "Form",
-        Keys: ["po_no"],
+        Keys: ["po_no"&#93;,
         Rows: [
           {
             Edits: [
@@ -290,19 +290,19 @@ output application/json
                   else 
                     "Failed"
               }
-            ]
+            &#93;
           }
-        ]
+        &#93;
       }
-    ]
+    &#93;
   }
-}]]></ee:set-payload>
+}&#93;&#93;></ee:set-payload>
 				</ee:message>
 			<ee:variables >
 				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
 output application/json
 import toBase64 from dw::core::Binaries
----
+&#45;&#45;-
 {
     "method": "POST",
     "host": Mule::p('b2b-p21-sys-api.host'),
@@ -325,19 +325,19 @@ import toBase64 from dw::core::Binaries
     	"maxRetries": "5",
     	"interval": "60000"
     }
-}]]>![CDATA[%dw 2.0
+}&#93;&#93;>![CDATA[%dw 2.0
 output application/json
----
+&#45;&#45;-
 payload
   filter ($.payload.status == "FAILED")
   map {
     poNo: $.payload.poNumber,
     "Error Details": (
-      $.payload.error scan /\$\.B2BMessage\.Header\.partyInformation\[1\]\.(\w+): null found, string expected/
-    ) map ($[1] ++ " is null")
-  }]]></ee:set-variable>
+      $.payload.error scan /\$\.B2BMessage\.Header\.partyInformation\[1\&#93;\.(\w+): null found, string expected/
+    ) map ($[1&#93; ++ " is null")
+  }&#93;&#93;></ee:set-variable>
 			</ee:variables>
-			</ee:transform>
+			</ee:transform> [STUDIO] -->
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="b245c1de-a43f-423a-a4a3-20608dfc7294" name="common-http-request-subflow"/>
 		<ee:transform doc:name="P21 response" doc:id="f9f06866-df75-483c-b30f-61a6231029e1">
 			<ee:message>

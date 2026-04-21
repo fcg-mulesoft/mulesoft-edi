@@ -1,9 +1,12 @@
 #DEV Environment Properties
 
+api:
+  name: "b2b-process-api-app"
+
 b2b-p21-sys-api:
-  host: 
+  host: "localhost"
   basePath: "/api/"
-  port: 
+  port: "8081"
   view:
     path: "/views"
     method: "POST"

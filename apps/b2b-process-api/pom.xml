@@ -55,7 +55,7 @@
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-email-connector</artifactId>
-			<version>1.7.6</version>
+			<version>1.8.0</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
@@ -73,7 +73,7 @@
 		<dependency>
 			<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 			<artifactId>b2b-process-api-spec</artifactId>
-			<version>1.0.2</version>
+			<version>1.0.3</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
 		</dependency>

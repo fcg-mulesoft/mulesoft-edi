@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-    <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.2:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.3:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1635db3f-cb73-4e02-b335-6eee9ea8dbbf">
         <http:listener-connection host="0.0.0.0" port="${https.private.port}" protocol="HTTPS" tlsContext="TLS_Context" />
     </http:listener-config>
@@ -17,8 +17,27 @@
                 <http:headers>#[vars.outboundHeaders default {}]</http:headers>
             </http:error-response>
         </http:listener>
-        <apikit:router config-ref="b2b-process-api-spec-config" />
-		<error-handler ref="global-common-error-handler" />
+        <ee:transform doc:name="var : integration, initialPayload">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="integration"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"source" : "APM" ,
+	"target" : "P21",
+	"integration-type" : "Inbound " ++ attributes.queryParams."type",
+	"correlationId": correlationId
+}
+]]></ee:set-variable>
+                <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+		<apikit:router config-ref="b2b-process-api-spec-config" />
+        <error-handler ref="global-common-error-handler" />
     </flow>
     <flow name="get:\healthCheck:b2b-process-api-spec-config">
         <ee:transform doc:name="Transform Message">
@@ -36,24 +55,6 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="post:\inboundTransactions:application\json:b2b-process-api-spec-config">
-        <ee:transform doc:name="var : integration, initialPayload">
-            <ee:message />
-            <ee:variables>
-                <ee:set-variable variableName="integration"><![CDATA[%dw 2.0
-output application/json
----
-{
-	"source" : "APM",
-	"target" : "P21",
-	"integration-type" : "Inbound " ++ attributes.queryParams."type",
-	"correlationId": correlationId
-}]]></ee:set-variable>
-                <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-variable>
-            </ee:variables>
-        </ee:transform>
         <flow-ref doc:name="Inbound Transaction Processing" doc:id="885af747-f4ce-47cd-bc6f-ea61768d6175" name="#[&quot;inbound-&quot; ++ attributes.queryParams.&quot;type&quot; ++ &quot;-processing-subflow&quot;]" />
     </flow>
 	<flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1" >
