@@ -7,7 +7,7 @@
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 
-	<name>b2b-p21-sys-api-anshul</name>
+	<name>b2b-p21-sys-api-app</name>
 	<parent>
 		<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 		<artifactId>integration-parent-pom</artifactId>
@@ -32,9 +32,26 @@
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
-				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
+					<cloudHubDeployment>
+						<uri>https://anypoint.mulesoft.com</uri>
+						<muleVersion>4.9-java17</muleVersion>
+						<connectedAppClientId>${deploy.clientId}</connectedAppClientId>
+						<connectedAppClientSecret>${deploy.clientSecret}</connectedAppClientSecret>
+						<connectedAppGrantType>client_credentials</connectedAppGrantType>
+						<applicationName>${deploy.appName}</applicationName>
+						<environment>${deploy.env}</environment>
+						<region>${deploy.region}</region>
+						<workers>${deploy.workers}</workers>
+						<workerType>${deploy.workerType}</workerType>
+						<objectStoreV2>true</objectStoreV2>
+						<properties>
+							<mule.env>${mule.env}</mule.env>
+							<mule.key>${mule.key}</mule.key>
+							<anypoint.platform.config.analytics.agent.enabled>true</anypoint.platform.config.analytics.agent.enabled>
+						</properties>
+					</cloudHubDeployment>
 					<classifier>mule-application</classifier>
 				</configuration>
 			</plugin>
