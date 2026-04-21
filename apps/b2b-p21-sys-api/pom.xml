@@ -73,6 +73,7 @@
 					<coverage>
 						<ignoreFiles>
 							<ignoreFile>common/common-error-handler.xml</ignoreFile>
+							<ignoreFile>b2b-p21-sys-api-spec.xml</ignoreFile>
 						</ignoreFiles>
 					</coverage>
 				</configuration>
