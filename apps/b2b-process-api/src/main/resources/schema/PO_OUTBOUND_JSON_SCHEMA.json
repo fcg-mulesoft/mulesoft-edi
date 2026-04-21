@@ -22,8 +22,7 @@
             "receiverId": { "type": "string" },
             "purchaseOrderNumber": { "type": "string" },
             "purchaseOrderDate": {
-              "type": "string",
-              "pattern": "^[0-9]{8}$"
+              "type": "string"
             },
             "purchaseOrderType": { "type": "string" },
             "purchaseOrderTypeCode": { "type": "string" },
