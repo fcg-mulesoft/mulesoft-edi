@@ -1,0 +1,32 @@
+{
+  "headers": {
+    "content-type": "application/json",
+    "accept": "application/json",
+    "client_id": "1234567",
+    "client_secret": "12345",
+    "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmbHVpZGZsb3cubG9jYWxcXFZFTl9CaWdobmVzaFNhaG9vIiwiYXVkIjoiIiwiUDIxLlNlc3Npb25JZCI6IjA0MTlkMTA3LWI3MjktNDY4YS1iZGNmLTY4NmNiNjliY2FmYyIsIm5iZiI6MTc3MzM5ODU1MiwiZXhwIjoxNzczNDg0OTUyLCJpYXQiOjE3NzMzOTg1NTIsImlzcyI6IlAyMS5Tb2EifQ.We5yfkKVwFvt9Msg2rjuLpghv0ybyeWhHJz_eKXa01M",
+    "user-agent": "PostmanRuntime/7.53.0",
+    "cache-control": "no-cache",
+    "postman-token": "2f0bd792-2be2-4097-95d6-68896fb8d696",
+    "host": "localhost:8081",
+    "accept-encoding": "gzip, deflate, br",
+    "connection": "keep-alive",
+    "content-length": "577"
+  },
+  "clientCertificate": null,
+  "method": "GET",
+  "scheme": "https",
+  "queryParams": {},
+  "requestUri": "/api/healthCheck",
+  "queryString": "",
+  "version": "HTTP/1.1",
+  "maskedRequestPath": "/healthCheck",
+  "listenerPath": "/api/*",
+  "localAddress": "/127.0.0.1:8081",
+  "relativePath": "/api/healthCheck",
+  "uriParams": {},
+  "rawRequestUri": "/api/healthCheck",
+  "rawRequestPath": "/api/healthCheck",
+  "remoteAddress": "/127.0.0.1:61725",
+  "requestPath": "/api/healthCheck"
+}

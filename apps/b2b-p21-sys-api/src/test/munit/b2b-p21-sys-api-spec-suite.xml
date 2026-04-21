@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="b2b-p21-sys-api-spec-suite.xml" />
+	<munit:test name="b2b-p21-sys-api-spec-main-test" doc:id="3376f3d8-82b3-495a-b692-86cd4438875d" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock APIkit Router" doc:id="ddf4cab3-1680-4620-95ed-ec8c103e0905" processor="apikit:router">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f0d21315-0b63-491d-b287-6382c580375b" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://b2bp21sysapispecmaintest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://b2bp21sysapispecmaintest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://b2bp21sysapispecmaintest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="httpStatus" value="#[readUrl('classpath://b2bp21sysapispecmaintest\mock_variable_1.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="963449a7-9d09-4956-a599-e55df2d384ce" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://b2bp21sysapispecmaintest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://b2bp21sysapispecmaintest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to b2b-p21-sys-api-spec-main" doc:id="824ae8ee-4ad3-468c-af93-60b157730e14" name="b2b-p21-sys-api-spec-main"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="dfd7ffa2-f8f0-4dbc-a03d-c8fb667ccf18" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import b2bp21sysapispecmaintest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="get:\healthCheck:b2b-p21-sys-api-spec-config-test" doc:id="adffa4eb-cf0b-44e4-b91a-6a32e6ca8367" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Flow Reference to get-healthcheck-subflow" doc:id="eec662e3-e30e-4d44-82bd-9410c5a140e7" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="af585899-4c15-435e-af36-4f4d98498e46" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://gethealthCheckb2bp21sysapispecconfigtest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://gethealthCheckb2bp21sysapispecconfigtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://gethealthCheckb2bp21sysapispecconfigtest\mock_variable_.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="8aa7fe70-66f0-40f1-b6d3-3afb49a7cdda" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://gethealthCheckb2bp21sysapispecconfigtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://gethealthCheckb2bp21sysapispecconfigtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://gethealthCheckb2bp21sysapispecconfigtest\set-event_variable_.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\healthCheck:b2b-p21-sys-api-spec-config" doc:id="40f6b880-cb89-4dfa-a1a9-75be2386338c" name="get:\healthCheck:b2b-p21-sys-api-spec-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="bcf4367f-d120-451f-85f3-a51c46612781" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import gethealthCheckb2bp21sysapispecconfigtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="get:\views:b2b-p21-sys-api-spec-config-test" doc:id="7226c759-bea1-4e29-8398-0ff6595d6b17" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Flow Reference to get-p21-view-processing-subflow" doc:id="67a2d10c-5719-45f4-9d8f-2d5e3486e679" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="732a4cb4-ccdf-4bf4-841a-1747538b47ad" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://getviewsb2bp21sysapispecconfigtest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://getviewsb2bp21sysapispecconfigtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://getviewsb2bp21sysapispecconfigtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="httpOperation" value="#[output application/json --- readUrl('classpath://getviewsb2bp21sysapispecconfigtest\mock_variable_1.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="accessToken" value="#[output text/plain --- readUrl('classpath://getviewsb2bp21sysapispecconfigtest\mock_variable_2.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="ee1342b1-599c-4520-a6d6-6d66085dd49a" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://getviewsb2bp21sysapispecconfigtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://getviewsb2bp21sysapispecconfigtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://getviewsb2bp21sysapispecconfigtest\set-event_variable_.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\views:b2b-p21-sys-api-spec-config" doc:id="1ce44af0-32e9-4351-8a49-531c346fc636" name="get:\views:b2b-p21-sys-api-spec-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="e1a6403e-33cf-483c-bd47-5adc1c66bf6e" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import getviewsb2bp21sysapispecconfigtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="post:\transactions:application\json:b2b-p21-sys-api-spec-config-test" doc:id="6b0710c8-930a-4c8c-a011-6563db5ae1bb" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Flow Reference to post-p21-transaction-processing-subflow" doc:id="009ebe23-3007-4561-b495-3d81477e5b73" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="314b6e9c-3f05-4b43-b835-afd0d9c75588" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://posttransactionsapplicationjsonb2bp21sysapispecconfigtest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://posttransactionsapplicationjsonb2bp21sysapispecconfigtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://posttransactionsapplicationjsonb2bp21sysapispecconfigtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="httpOperation" value="#[output application/json --- readUrl('classpath://posttransactionsapplicationjsonb2bp21sysapispecconfigtest\mock_variable_1.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="accessToken" value="#[output text/plain --- readUrl('classpath://posttransactionsapplicationjsonb2bp21sysapispecconfigtest\mock_variable_2.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="2a21480b-babe-406c-9784-eb6051b3e494" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://posttransactionsapplicationjsonb2bp21sysapispecconfigtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://posttransactionsapplicationjsonb2bp21sysapispecconfigtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://posttransactionsapplicationjsonb2bp21sysapispecconfigtest\set-event_variable_.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to post:\transactions:application\json:b2b-p21-sys-api-spec-config" doc:id="13bd383f-a3d6-4020-8eec-a516f0365603" name="post:\transactions:application\json:b2b-p21-sys-api-spec-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="e0ccb30f-8794-4a00-b3f9-64cfa1d2b1e6" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import posttransactionsapplicationjsonb2bp21sysapispecconfigtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

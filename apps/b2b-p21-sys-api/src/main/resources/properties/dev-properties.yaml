@@ -1,0 +1,11 @@
+#DEV Configuration
+
+#p21 Configuration
+p21:
+  request:
+    basePath:
+      Odata: "/odataservice/odata/view"
+      transaction: "/uiserver0/api/v2"
+    path:
+      transaction: "/transaction"
+      

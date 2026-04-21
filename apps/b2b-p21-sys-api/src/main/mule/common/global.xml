@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd 
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+
+	 <http:listener-config name="b2b-p21-sys-api-spec-httpListenerConfig">
+        <http:listener-connection host="${http.host}" port="${http.port}" readTimeout="${http.readTimeout}" protocol="HTTPS" tlsContext="TLS_Context" />
+    </http:listener-config>
+    <apikit:config name="b2b-p21-sys-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-p21-sys-api-spec:1.0.4:raml:zip:b2b-p21-sys-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<http:request-config
+		name="HTTP_Request_Configuration"
+		doc:name="HTTP Request configuration"
+		doc:id="f9952c5e-6f7f-4df3-a5d6-9d602f737bc5"
+		doc:description="Common HTTP Request Configuration&#10;"
+		basePath="#[vars.httpOperation.basePath]">
+		<http:request-connection protocol="HTTPS"
+			host='#[vars.httpOperation.host]' port='#[vars.httpOperation.port]' />
+		<http:default-query-params />
+
+	</http:request-config>
+	<os:object-store name="Auth_Token_Object_Store"
+		doc:name="Object store" doc:id="b9369892-23d3-40d3-ba4b-26a8c8e3697b"
+		entryTtl="${objectstore.token.entryTTL}" expirationInterval="${objectstore.token.expirationInterval}" maxEntries="${objectstore.token.maxEntries}" entryTtlUnit="HOURS" expirationIntervalUnit="HOURS" persistent="false"/>
+	<configuration-properties doc:name="Environment Configuration Properties" doc:id="37ecc42f-37a9-4fcc-a7f1-bf8551fa9006" file="properties/${mule.env}-properties.yaml" />
+
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="a30353cb-8bbc-4dc1-b2eb-4cf39e12d6b5" file="properties\secure\\${mule.env}-secure-properties.yaml" key="${mule.key}" />
+	<configuration-properties doc:name="Configuration properties" doc:id="f3a72687-17bc-49d2-8df5-742887355d46" file="properties\common\common.yaml" />
+<!-- <api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="d1d0a279-4cc8-447f-bb54-b78d844f1ba4" flowRef="b2b-p21-sys-api-spec-main" />
+ -->	
+ <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="7b4dc940-9257-467b-b7be-ed3db4de2f3a" >
+		<tls:key-store type="jks" path="${https.keystore.path}" alias="${https.keystore.alias}" keyPassword="${secure::https.keystore.keypass}" password="${secure::https.keystore.storepass}"/>
+	</tls:context>
+
+
+
+</mule>

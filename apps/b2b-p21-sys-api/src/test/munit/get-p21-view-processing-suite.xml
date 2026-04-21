@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="get-p21-view-processing-suite.xml" />
+	<munit:test name="get-p21-view-processing-subflow-test" doc:id="73fc7e8e-fc08-424f-90f6-28ccc1a32e02" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Flow Reference to get-oauth-token-subflow" doc:id="a39aa8b8-99cd-462c-825b-480fdd44d7e8" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="99556d9b-af95-4611-874c-e5d9b338f622" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://getp21viewprocessingsubflowtest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://getp21viewprocessingsubflowtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://getp21viewprocessingsubflowtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="accessToken" value="#[output text/plain --- readUrl('classpath://getp21viewprocessingsubflowtest\mock_variable_1.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Flow Reference: to common-http-request-subflow" doc:id="3e63b300-2975-4c98-9bb9-04ba5489006a" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="0b67aa1c-3aa2-4777-a4d9-4b72a2d44b61" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://getp21viewprocessingsubflowtest\mock_payload1.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://getp21viewprocessingsubflowtest\mock_attributes1.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://getp21viewprocessingsubflowtest\mock_variable_2.dwl')]" />
+						<munit-tools:variable key="httpOperation" value="#[output application/json --- readUrl('classpath://getp21viewprocessingsubflowtest\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="accessToken" value="#[output text/plain --- readUrl('classpath://getp21viewprocessingsubflowtest\mock_variable_4.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="7696b2b2-51ec-4133-8e0d-185d9d0b68b0" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://getp21viewprocessingsubflowtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://getp21viewprocessingsubflowtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://getp21viewprocessingsubflowtest\set-event_variable_.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get-p21-view-processing-subflow" doc:id="930c9f3f-b651-4c2f-8fd3-8942faa84731" name="get-p21-view-processing-subflow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="357fa88d-d18d-4940-bdfd-d47e0ccae6ed" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import getp21viewprocessingsubflowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
