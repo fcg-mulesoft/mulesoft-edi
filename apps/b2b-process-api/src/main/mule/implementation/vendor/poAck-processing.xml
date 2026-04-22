@@ -6,13 +6,13 @@
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<sub-flow name="inbound-poAck-processing-subflow" doc:id="6f77f384-483c-4f70-a315-7809d5adca7d" >
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="79ba3bf2-f5a7-42f4-af7b-cfe36d788f45" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
-		<!-- [STUDIO:"var : httpOperation - get purchase order"]<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="1df1687d-368c-4ab5-91f7-6cc62df4bea2" >
+		<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="1df1687d-368c-4ab5-91f7-6cc62df4bea2" >
 			<ee:message />
 			<ee:variables >
 				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
 output application/json
 import toBase64 from dw::core::Binaries
-&#45;&#45;-
+---
 {
     "method": "GET",
     "host": Mule::p('b2b-p21-sys-api.host'),
@@ -26,7 +26,7 @@ import toBase64 from dw::core::Binaries
 	"queryParams":{
 		"transactionType": "purchaseOrderInvoice",
 		"purpose": "validation",
-		"businesskey": vars.initialPayload.b2bMessage.header.purchaseOrderNumber[0&#93;
+		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0]
     },
     "uriParams": {
     },
@@ -37,11 +37,10 @@ import toBase64 from dw::core::Binaries
     	"maxRetries": "5",
     	"interval": "5000"
     }
-}&#93;&#93;></ee:set-variable>
+}]]></ee:set-variable>
 			</ee:variables>
-		</ee:transform> [STUDIO] -->
-		<!-- [STUDIO:"Flow Reference To commom-http-request-subflow"]<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="72d35b75-b960-46cc-866c-c1f7e698a1d4" name="common-http-request-subflow" target="purchaseOrderData" /> [STUDIO] -->
-		<set-variable value='#[{&#10;  "value": [&#10;    {&#10;      "po_no": 40418062,&#10;      "line_no": 3,&#10;      "item_id": "WF3P02018JTIMONIUM",&#10;      "supplier_part_no": "WF3P02018JTIMONIUM",&#10;      "qty_ordered": 960,&#10;      "qty_received": 0,&#10;      "unit_price": 75.59,&#10;      "company_no": "FFP",&#10;      "unit_size": 1,&#10;      "unit_quantity": 960,&#10;      "config_1": null,&#10;      "config_2": null,&#10;      "carrier_id": "859394",&#10;      "ship2_name": null,&#10;      "packing_slip_number": null,&#10;      "ship2_add1": null,&#10;      "ship2_add2": null,&#10;      "ship2_city": null,&#10;      "ship2_state": null,&#10;      "ship2_country": null,&#10;      "buyer_id": "495436",&#10;      "ship2_zip": null,&#10;      "shipping_instruction": null,&#10;      "external_po_no": "/345678",&#10;      "customer_part_number": null,&#10;      "carrier_code": null,&#10;      "po_type": "B",&#10;      "sales_order_number": null&#10;    },&#10;    {&#10;      "po_no": 40418062,&#10;      "line_no": 1,&#10;      "item_id": "HFU640UY020J",&#10;      "supplier_part_no": "HFU640UY020J",&#10;      "qty_ordered": 16,&#10;      "qty_received": 0,&#10;      "unit_price": 851.98,&#10;      "company_no": "FFP",&#10;      "unit_size": 1,&#10;      "unit_quantity": 16,&#10;      "config_1": null,&#10;      "config_2": null,&#10;      "carrier_id": "859394",&#10;      "ship2_name": null,&#10;      "packing_slip_number": null,&#10;      "ship2_add1": null,&#10;      "ship2_add2": null,&#10;      "ship2_city": null,&#10;      "ship2_state": null,&#10;      "ship2_country": null,&#10;      "buyer_id": "495436",&#10;      "ship2_zip": null,&#10;      "shipping_instruction": null,&#10;      "external_po_no": "/345678",&#10;      "customer_part_number": null,&#10;      "carrier_code": null,&#10;      "po_type": "B",&#10;      "sales_order_number": null&#10;    },&#10;    {&#10;      "po_no": 40418062,&#10;      "line_no": 2,&#10;      "item_id": "HFU640UY045J",&#10;      "supplier_part_no": "HFU640UY045J",&#10;      "qty_ordered": 8,&#10;      "qty_received": 0,&#10;      "unit_price": 614.22,&#10;      "company_no": "FFP",&#10;      "unit_size": 1,&#10;      "unit_quantity": 8,&#10;      "config_1": null,&#10;      "config_2": null,&#10;      "carrier_id": "859394",&#10;      "ship2_name": null,&#10;      "packing_slip_number": null,&#10;      "ship2_add1": null,&#10;      "ship2_add2": null,&#10;      "ship2_city": null,&#10;      "ship2_state": null,&#10;      "ship2_country": null,&#10;      "buyer_id": "495436",&#10;      "ship2_zip": null,&#10;      "shipping_instruction": null,&#10;      "external_po_no": "/345678",&#10;      "customer_part_number": null,&#10;      "carrier_code": null,&#10;      "po_type": "B",&#10;      "sales_order_number": null&#10;    }&#10;  ]&#10;}]' doc:name="Set Variable" doc:id="15f52a4f-c432-4867-8a77-52028efd82f3" variableName="purchaseOrderData"/>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="72d35b75-b960-46cc-866c-c1f7e698a1d4" name="common-http-request-subflow" target="purchaseOrderData" />
 		<ee:transform doc:name="var : isValid" doc:id="79756a1f-388d-47ba-a1f1-1cd103af437b" >
 			<ee:message />
 			<ee:variables >

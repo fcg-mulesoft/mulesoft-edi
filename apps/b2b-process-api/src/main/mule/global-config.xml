@@ -29,6 +29,6 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
             </email:properties>
         </email:smtp-connection>
     </email:smtp-config>
-	<os:object-store name="Object_store1" doc:name="Object store" doc:id="f2a38677-1eeb-47c2-8c6b-87a11cb44897" entryTtl="30" entryTtlUnit="HOURS" expirationInterval="29" expirationIntervalUnit="HOURS" />
+	<os:object-store name="Object_store1" doc:name="Object store" doc:id="f2a38677-1eeb-47c2-8c6b-87a11cb44897" entryTtl="30" entryTtlUnit="HOURS" expirationInterval="29" expirationIntervalUnit="HOURS" persistent="false"/>
 	
 </mule>

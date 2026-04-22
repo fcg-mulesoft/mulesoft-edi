@@ -3,7 +3,7 @@ output application/json
 
 fun formatDate(d) = 
     if (d is String) 
-    ((d as DateTime) as String {format: "MM/dd/yyyy"}) 
+        ((d as DateTime) as String {format: "MM/dd/yyyy"}) 
     else ""
 
 ---
@@ -15,6 +15,7 @@ fun formatDate(d) =
     
     var txn = wrapper.b2bMessage
     var items = txn.detail.itemDetails default []
+    var poNum = txn.header.poNumber default ""
     
     ---
     {
@@ -29,15 +30,15 @@ fun formatDate(d) =
               Edits: [
                 {
                   Name: "po_no",
-                  Value: txn.header.purchaseOrderNumber default ""
+                  Value: poNum
                 },
                 {
                   Name: "external_po_no",
-                  Value: "/" ++ (txn.header.purchaseOrderNumber default "")
+                  Value: "/" ++ poNum
                 },
                 {
                   Name: "ufc_po_hdr_ud_supplier_acknowledgement",
-                  Value: txn.header.purchaseOrderNumber default ""
+                  Value: poNum
                 }
               ]
             }
