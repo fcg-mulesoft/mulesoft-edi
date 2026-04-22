@@ -1355,7 +1355,7 @@ template replace /\$\{(\w+)\}/ with ((m) ->
 	<sub-flow name="send-email-subflow" doc:id="421993f9-c123-453a-8a37-135d2a1821c1" >
 		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="f7577dfb-a02b-4ad8-9ca6-6eb0108c6d8c" message="Start: Email Alert" />
 		<choice doc:name="CHECK IF: Environment is Local?" doc:id="34850b13-651d-4dbb-a9f3-eb54bb459ab0">
-				<when expression="#[p('mule.env') == &quot;local&quot;]">
+				<when expression="#[p('mule.env') != &quot;local&quot;]">
 					<async doc:name="Async" doc:id="7f386d36-0c87-4cab-b589-59c3091d7007">
 					<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
 						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('api.name'))]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com"]]' config-ref="Email_SMTP">
