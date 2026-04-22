@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<sub-flow name="b2b-alert-notification-main-subflow"
+		doc:id="b5487a0a-3471-47ff-88fa-f8cbcf0424d9">
+
+		<logger level="INFO" doc:name="START"
+			doc:id="225600a2-9b46-4979-a17b-25ebc53cb2bd"
+			message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />
+		<flow-ref doc:name="retrieve-access-token-sub-flow"
+			doc:id="57584837-2dad-40e5-9426-cea38cb6887a"
+			name="retrieve-access-token-sub-flow" />
+		<os:retrieve-all-keys doc:name="lastRun" doc:id="f6ca8535-dd04-4607-8bb5-97ea4b5c5a89" objectStore="Object_store1"/>
+		<ee:transform doc:name="var : timeStamp"
+			doc:id="46555cbe-bf35-4bfd-af98-8f590120656f">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="timeStamp"><![CDATA[payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform
+			doc:name="Set fromTime for apm error report"
+			doc:id="b58075a9-1235-4fe8-be03-fa1201e85d68">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if(isEmpty(payload)) (now() - |PT100H|)
+else read(payload.lastRun,"application/json") as DateTime]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="apm-error-report-sub-flow"
+			doc:id="f1180b74-485a-4947-9586-c52e3114cffe"
+			name="apm-error-report-sub-flow" />
+		<logger level="INFO" doc:name="END"
+			doc:id="975c02e9-def0-4f1a-9abc-2bf7eead4a4e"
+			message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />
+	</sub-flow>
+</mule>

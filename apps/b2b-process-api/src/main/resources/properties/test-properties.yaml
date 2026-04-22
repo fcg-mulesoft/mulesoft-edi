@@ -24,3 +24,12 @@ email:
     password: ""
     sender: ""
     receivers: ""
+    
+anypoint:
+  platform:
+    login-url: "https://anypoint.mulesoft.com/accounts/api/v2/oauth2/token"
+  apm:
+   url-prefix: "https://anypoint.mulesoft.com/partnermanager"
+   orgid: "d239ff40-5b13-47be-9bb0-a029a64dac2c"
+   envid: "fa8f848a-42c7-4ed1-b06d-f7ead0069829"
+   method: "GET"
