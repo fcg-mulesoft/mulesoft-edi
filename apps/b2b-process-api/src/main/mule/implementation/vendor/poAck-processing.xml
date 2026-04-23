@@ -27,6 +27,7 @@ import toBase64 from dw::core::Binaries
 		"transactionType": "purchaseOrderInvoice",
 		"purpose": "validation",
 		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0]
+
     },
     "uriParams": {
     },
@@ -41,6 +42,7 @@ import toBase64 from dw::core::Binaries
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="72d35b75-b960-46cc-866c-c1f7e698a1d4" name="common-http-request-subflow" target="purchaseOrderData" />
+
 		<ee:transform doc:name="var : isValid" doc:id="79756a1f-388d-47ba-a1f1-1cd103af437b" >
 			<ee:message />
 			<ee:variables >
@@ -93,8 +95,8 @@ import toBase64 from dw::core::Binaries
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="727d7cdc-0466-4327-9b4f-b039a8cfb17c" name="common-http-request-subflow" />
 		<choice doc:name="is Successful?" doc:id="a6809f24-da33-41fa-a15b-1edcbe1c371d">
-			<when expression='#[(payload.Results.Transactions[0]."Status" == "Failed")]'>
-				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="bf20b71b-9b2e-4c07-97bb-a6a8a4449b2e" type="CUSTOM:P21_FAILED" description='#[payload.Messages joinBy ","]' />
+			<when expression='#[payload."TransactionSetResult"."Summary"."Failed" != "0"]'>
+				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="bf20b71b-9b2e-4c07-97bb-a6a8a4449b2e" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"]' />
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="LOG INFO : AcknowledgementCreated" doc:id="dfb65b0e-9a88-4712-8441-4245b442d0ea" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"flow": (flow.name),&#10;	"message": "Acknowledgement Creation Successful",&#10;    "correlationId": correlationId&#10;}]' />

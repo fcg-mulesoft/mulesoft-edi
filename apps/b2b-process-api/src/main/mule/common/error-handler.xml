@@ -56,6 +56,7 @@ output application/json
 			<ee:transform doc:name="Response Payload" doc:id="12e07846-cc14-4b6c-a536-b056209e3d36" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
 output text/plain
 
 fun safe(v, d="N/A") =
@@ -68,8 +69,7 @@ var integration = vars.integration       default {}
 var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
 var cdmHeader = cdm.header default {}
 
-var isValidationFlow = vars.isValid != null
-
+var isP21Failed =     (error.errorType.namespace  default "") == "CUSTOM" and     (error.errorType.identifier default "") == "P21_FAILED" var isValidationFlow = vars.isValid != null and not isP21Failed
 var errNs      = if (isValidationFlow) "CUSTOM"   else (error.errorType.namespace  default "UNKNOWN")
 var errId      = if (isValidationFlow) "VALIDATION_ERROR" else (error.errorType.identifier default "ERROR")
 var errDesc    = if (isValidationFlow) "Validation failed while processing transaction."
@@ -168,6 +168,8 @@ var bannerColor =
     else                                         "#ef4444"
 
 var ve = vars.isValid.validationErrors default {}
+
+var msgPoNumber  = safe(cdmHeader.poNumber  as String,                     safe(vars.initialPayload[0].b2bMessage.header.poNumber as String, "N/A")) var msgVendorId  = safe(cdmHeader.senderId  as String,                     safe(integration.source as String, "N/A"))
 
 var itemRows =
     flatten(
@@ -435,19 +437,68 @@ var data = {
     appName:         p('api.name')  default "Mule Application",
     transactionType: if (isValidationFlow) safe(cdmHeader.documentType, "810")
                      else (vars.systemInformation."integration-type" default "API"),
-    environment:     safe(sysInfo.env, p('mule.env')),
+    environment:     upper(safe(sysInfo.env, p('mule.env'))),
     flowName:        safe(vars.flowName, "Global Error Handler"),
     route:           sourceSystem ++ " → Mule → " ++ targetSystem,
-    partnerName:     if (isValidationFlow) safe(cdmHeader.senderId) else sourceSystem,
-    errorTitle:      errorTitle,
+	partnerName: if (isValidationFlow) safe(cdmHeader.senderId)
+             else if (msgVendorId != "N/A") msgVendorId
+             else sourceSystem,    errorTitle:      errorTitle,
     bannerColor:     bannerColor,
     errorType:       errorTypeValue,
     errorCategory:   errorCategory,
     status:          "FAILED",
     errorCode:       if (isValidationFlow) "VALIDATION_ERROR" else errId,
-    message:         if (isValidationFlow) "Validation failed while processing transaction."
-                     else "An unexpected error occurred during integration processing.",
-    errorResolution: errorResolution,
+message: if (isValidationFlow)
+             "Validation failed while processing transaction for PO "
+             ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ ")."
+ 
+         else if (errorCategory == "P21_ERROR")
+             "P21 rejected the transaction for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
+             ++ sourceSystem ++ " → " ++ targetSystem ++ " route."
+ 
+         else if (errorCategory == "CONNECTIVITY")
+             "Failed to reach " ++ targetSystem ++ " while processing PO "
+             ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Error: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "SECURITY")
+             "Access denied while connecting to " ++ targetSystem
+             ++ " for PO " ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "VALIDATION")
+             "Request payload for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") failed validation. "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "TRANSFORMATION")
+             "Data mapping failed while processing PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
+             ++ sourceSystem ++ " → " ++ targetSystem ++ " route. "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "CLIENT_ERROR")
+             targetSystem ++ " returned an error for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "APIKIT")
+             "Invalid request received from " ++ sourceSystem
+             ++ " for PO " ++ msgPoNumber ++ ". "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "ROUTING")
+             "Message could not be routed for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
+             ++ sourceSystem ++ " → " ++ targetSystem ++ " route. "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else
+             "An error occurred on the " ++ sourceSystem ++ " → " ++ targetSystem
+             ++ " route for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Error: " ++ categoryId ++ ".",    errorResolution: errorResolution,
     errorDescription: errorDescFull,
     transmissionId:  if (isValidationFlow) safe(cdmHeader.transmissionId)
                      else (vars.initialPayload[0].b2bMessage.header.transmissionId default corrId),
@@ -463,6 +514,12 @@ template replace /\$\{(\w+)\}/ with ((m) ->
     (data[m[1]] as String) default ""
 )]]></ee:set-payload>
 				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
+output application/json
+---
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type"]]></ee:set-variable>
+				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ad0d75c3-34ff-4d21-bd60-1d62a1add1dc" name="send-email-subflow" />
 			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="94ca9611-0cd6-4ac0-b80f-0afa3cd6518d" />
@@ -474,6 +531,7 @@ template replace /\$\{(\w+)\}/ with ((m) ->
 			<ee:transform doc:name="Response Payload" doc:id="6c27e672-1a05-49a1-a263-b2a312a8c8e7" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
 output text/plain
 
 fun safe(v, d="N/A") =
@@ -486,8 +544,7 @@ var integration = vars.integration       default {}
 var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
 var cdmHeader = cdm.header default {}
 
-var isValidationFlow = vars.isValid != null
-
+var isP21Failed =     (error.errorType.namespace  default "") == "CUSTOM" and     (error.errorType.identifier default "") == "P21_FAILED" var isValidationFlow = vars.isValid != null and not isP21Failed
 var errNs      = if (isValidationFlow) "CUSTOM"   else (error.errorType.namespace  default "UNKNOWN")
 var errId      = if (isValidationFlow) "VALIDATION_ERROR" else (error.errorType.identifier default "ERROR")
 var errDesc    = if (isValidationFlow) "Validation failed while processing transaction."
@@ -586,6 +643,8 @@ var bannerColor =
     else                                         "#ef4444"
 
 var ve = vars.isValid.validationErrors default {}
+
+var msgPoNumber  = safe(cdmHeader.poNumber  as String,                     safe(vars.initialPayload[0].b2bMessage.header.poNumber as String, "N/A")) var msgVendorId  = safe(cdmHeader.senderId  as String,                     safe(integration.source as String, "N/A"))
 
 var itemRows =
     flatten(
@@ -853,19 +912,68 @@ var data = {
     appName:         p('api.name')  default "Mule Application",
     transactionType: if (isValidationFlow) safe(cdmHeader.documentType, "810")
                      else (vars.systemInformation."integration-type" default "API"),
-    environment:     safe(sysInfo.env, p('mule.env')),
+    environment:     upper(safe(sysInfo.env, p('mule.env'))),
     flowName:        safe(vars.flowName, "Global Error Handler"),
     route:           sourceSystem ++ " → Mule → " ++ targetSystem,
-    partnerName:     if (isValidationFlow) safe(cdmHeader.senderId) else sourceSystem,
-    errorTitle:      errorTitle,
+	partnerName: if (isValidationFlow) safe(cdmHeader.senderId)
+             else if (msgVendorId != "N/A") msgVendorId
+             else sourceSystem,    errorTitle:      errorTitle,
     bannerColor:     bannerColor,
     errorType:       errorTypeValue,
     errorCategory:   errorCategory,
     status:          "FAILED",
     errorCode:       if (isValidationFlow) "VALIDATION_ERROR" else errId,
-    message:         if (isValidationFlow) "Validation failed while processing transaction."
-                     else "An unexpected error occurred during integration processing.",
-    errorResolution: errorResolution,
+message: if (isValidationFlow)
+             "Validation failed while processing transaction for PO "
+             ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ ")."
+ 
+         else if (errorCategory == "P21_ERROR")
+             "P21 rejected the transaction for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
+             ++ sourceSystem ++ " → " ++ targetSystem ++ " route."
+ 
+         else if (errorCategory == "CONNECTIVITY")
+             "Failed to reach " ++ targetSystem ++ " while processing PO "
+             ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Error: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "SECURITY")
+             "Access denied while connecting to " ++ targetSystem
+             ++ " for PO " ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "VALIDATION")
+             "Request payload for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") failed validation. "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "TRANSFORMATION")
+             "Data mapping failed while processing PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
+             ++ sourceSystem ++ " → " ++ targetSystem ++ " route. "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "CLIENT_ERROR")
+             targetSystem ++ " returned an error for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "APIKIT")
+             "Invalid request received from " ++ sourceSystem
+             ++ " for PO " ++ msgPoNumber ++ ". "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "ROUTING")
+             "Message could not be routed for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
+             ++ sourceSystem ++ " → " ++ targetSystem ++ " route. "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else
+             "An error occurred on the " ++ sourceSystem ++ " → " ++ targetSystem
+             ++ " route for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Error: " ++ categoryId ++ ".",    errorResolution: errorResolution,
     errorDescription: errorDescFull,
     transmissionId:  if (isValidationFlow) safe(cdmHeader.transmissionId)
                      else (vars.initialPayload[0].b2bMessage.header.transmissionId default corrId),
@@ -881,6 +989,12 @@ template replace /\$\{(\w+)\}/ with ((m) ->
     (data[m[1]] as String) default ""
 )]]></ee:set-payload>
 				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
+output application/json
+---
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type"]]></ee:set-variable>
+				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="dd485f70-15d0-4237-afdf-bfd5683f636a" name="send-email-subflow" />
 			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="bb9686f8-f3e3-45d5-916d-999d5ba2a8e7" message="#[vars.errorResponse]" category="com.validation.errors" />
@@ -939,6 +1053,7 @@ var explictHandlerCodes = p('explicitcodes')
 			<ee:transform doc:name="Response Payload" doc:id="d86351f2-cb7d-4cc3-8cac-dd57c08f3567" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
 output text/plain
 
 fun safe(v, d="N/A") =
@@ -951,8 +1066,7 @@ var integration = vars.integration       default {}
 var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
 var cdmHeader = cdm.header default {}
 
-var isValidationFlow = vars.isValid != null
-
+var isP21Failed =     (error.errorType.namespace  default "") == "CUSTOM" and     (error.errorType.identifier default "") == "P21_FAILED" var isValidationFlow = vars.isValid != null and not isP21Failed
 var errNs      = if (isValidationFlow) "CUSTOM"   else (error.errorType.namespace  default "UNKNOWN")
 var errId      = if (isValidationFlow) "VALIDATION_ERROR" else (error.errorType.identifier default "ERROR")
 var errDesc    = if (isValidationFlow) "Validation failed while processing transaction."
@@ -1051,6 +1165,8 @@ var bannerColor =
     else                                         "#ef4444"
 
 var ve = vars.isValid.validationErrors default {}
+
+var msgPoNumber  = safe(cdmHeader.poNumber  as String,                     safe(vars.initialPayload[0].b2bMessage.header.poNumber as String, "N/A")) var msgVendorId  = safe(cdmHeader.senderId  as String,                     safe(integration.source as String, "N/A"))
 
 var itemRows =
     flatten(
@@ -1318,19 +1434,68 @@ var data = {
     appName:         p('api.name')  default "Mule Application",
     transactionType: if (isValidationFlow) safe(cdmHeader.documentType, "810")
                      else (vars.systemInformation."integration-type" default "API"),
-    environment:     safe(sysInfo.env, p('mule.env')),
+    environment:     upper(safe(sysInfo.env, p('mule.env'))),
     flowName:        safe(vars.flowName, "Global Error Handler"),
     route:           sourceSystem ++ " → Mule → " ++ targetSystem,
-    partnerName:     if (isValidationFlow) safe(cdmHeader.senderId) else sourceSystem,
-    errorTitle:      errorTitle,
+	partnerName: if (isValidationFlow) safe(cdmHeader.senderId)
+             else if (msgVendorId != "N/A") msgVendorId
+             else sourceSystem,    errorTitle:      errorTitle,
     bannerColor:     bannerColor,
     errorType:       errorTypeValue,
     errorCategory:   errorCategory,
     status:          "FAILED",
     errorCode:       if (isValidationFlow) "VALIDATION_ERROR" else errId,
-    message:         if (isValidationFlow) "Validation failed while processing transaction."
-                     else "An unexpected error occurred during integration processing.",
-    errorResolution: errorResolution,
+message: if (isValidationFlow)
+             "Validation failed while processing transaction for PO "
+             ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ ")."
+ 
+         else if (errorCategory == "P21_ERROR")
+             "P21 rejected the transaction for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
+             ++ sourceSystem ++ " → " ++ targetSystem ++ " route."
+ 
+         else if (errorCategory == "CONNECTIVITY")
+             "Failed to reach " ++ targetSystem ++ " while processing PO "
+             ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Error: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "SECURITY")
+             "Access denied while connecting to " ++ targetSystem
+             ++ " for PO " ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "VALIDATION")
+             "Request payload for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") failed validation. "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "TRANSFORMATION")
+             "Data mapping failed while processing PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
+             ++ sourceSystem ++ " → " ++ targetSystem ++ " route. "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "CLIENT_ERROR")
+             targetSystem ++ " returned an error for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "APIKIT")
+             "Invalid request received from " ++ sourceSystem
+             ++ " for PO " ++ msgPoNumber ++ ". "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else if (errorCategory == "ROUTING")
+             "Message could not be routed for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
+             ++ sourceSystem ++ " → " ++ targetSystem ++ " route. "
+             ++ "Reason: " ++ categoryId ++ "."
+ 
+         else
+             "An error occurred on the " ++ sourceSystem ++ " → " ++ targetSystem
+             ++ " route for PO " ++ msgPoNumber
+             ++ " (Vendor: " ++ msgVendorId ++ "). "
+             ++ "Error: " ++ categoryId ++ ".",    errorResolution: errorResolution,
     errorDescription: errorDescFull,
     transmissionId:  if (isValidationFlow) safe(cdmHeader.transmissionId)
                      else (vars.initialPayload[0].b2bMessage.header.transmissionId default corrId),
@@ -1346,6 +1511,12 @@ template replace /\$\{(\w+)\}/ with ((m) ->
     (data[m[1]] as String) default ""
 )]]></ee:set-payload>
 				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
+output application/json
+---
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type"]]></ee:set-variable>
+				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ab4ad35a-a573-43a7-a4fe-8d3794087d72" name="send-email-subflow" />
 			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="c7e50d63-3d91-4462-a651-761245bcc0ba" />
@@ -1354,23 +1525,15 @@ template replace /\$\{(\w+)\}/ with ((m) ->
 	</error-handler>
 	<sub-flow name="send-email-subflow" doc:id="421993f9-c123-453a-8a37-135d2a1821c1" >
 		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="f7577dfb-a02b-4ad8-9ca6-6eb0108c6d8c" message="Start: Email Alert" />
-		<choice doc:name="CHECK IF: Environment is Local?" doc:id="34850b13-651d-4dbb-a9f3-eb54bb459ab0">
-				<when expression="#[p('mule.env') != &quot;local&quot;]">
-					<async doc:name="Async" doc:id="7f386d36-0c87-4cab-b589-59c3091d7007">
-					<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
-						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('api.name'))]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com","bighnesh.sahoo@caeliusconsulting.com","priyanshu.dhawan@caeliusconsulting.com"]]' config-ref="Email_SMTP">
+
+		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
+						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com"]]' config-ref="Email_SMTP">
+
 				<reconnect />
 				<email:body contentType="text/html">
 				</email:body>
 			</email:send>
 					</until-successful>
-			
-</async>
-				</when>
-				<otherwise>
-					<logger level="DEBUG" doc:name="LOG DEBUG: Dummy Email Sent" doc:id="ac486e6b-193c-4218-9032-feef694793c2" message="Email Sent!" />
-				</otherwise>
-			</choice>
 		<logger level="DEBUG" doc:name="LOG DEBUG: After Email" doc:id="dc455bec-59d5-4b2b-bcde-6d2a7acace49" message="End: Email Alert" />
 	
 </sub-flow>

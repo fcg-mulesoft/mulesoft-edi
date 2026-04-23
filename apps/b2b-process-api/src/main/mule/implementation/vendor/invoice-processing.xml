@@ -93,8 +93,8 @@ import toBase64 from dw::core::Binaries
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" />
 		<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b" >
-			<when expression='#[(payload.Results.Transactions[0]."Status" == "Failed")]'>
-				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="cf33fd6d-514a-40df-8113-45bedd343499" type="CUSTOM:P21_FAILED" description='#[payload.Messages joinBy ","]'/>
+			<when expression='#[payload."TransactionSetResult"."Summary"."Failed" != "0"]'>
+				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="cf33fd6d-514a-40df-8113-45bedd343499" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"]'/>
 			</when>
 			<otherwise >
 				<logger level="INFO" doc:name="LOG INFO : InvoiceCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"flow": (flow.name),&#10;	"message": "Invoice Creation Successful",&#10;    "correlationId": correlationId&#10;}]'/>
