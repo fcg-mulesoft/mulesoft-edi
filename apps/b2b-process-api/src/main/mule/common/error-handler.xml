@@ -1358,7 +1358,7 @@ template replace /\$\{(\w+)\}/ with ((m) ->
 				<when expression="#[p('mule.env') != &quot;local&quot;]">
 					<async doc:name="Async" doc:id="7f386d36-0c87-4cab-b589-59c3091d7007">
 					<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
-						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('api.name'))]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com","bighnesh.sahoo@caeliusconsulting.com"]]' config-ref="Email_SMTP">
+						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('api.name'))]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com","bighnesh.sahoo@caeliusconsulting.com","priyanshu.dhawan@caeliusconsulting.com"]]' config-ref="Email_SMTP">
 				<reconnect />
 				<email:body contentType="text/html">
 				</email:body>

@@ -7,7 +7,7 @@
     <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="5b9a6f65-5316-48ca-a090-d751d492bc9d">
         <tls:key-store type="jks" path="${https.keystore.path}" alias="${https.keystore.alias}" keyPassword="${secure::https.keystore.keypass}" password="${secure::https.keystore.storepass}" />
     </tls:context>
-    <flow name="b2b-process-api-spec-main">
+    <flow name="b2b-process-api-spec-main" doc:id="61ca2ba4-6c49-4bb9-8cd1-ad6bd561f615">
         <http:listener config-ref="HTTP_Listener_config" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers>#[vars.outboundHeaders default {}]</http:headers>

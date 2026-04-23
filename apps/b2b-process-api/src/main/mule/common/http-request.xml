@@ -17,7 +17,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 			doc:id="cbe1174f-23ba-45ae-bec4-2b02fc685743"
 			millisBetweenRetries="#[vars.httpOperation.untilsuccessful.interval]">
 			<http:request method="#[vars.httpOperation.method]"
-				doc:name="Common HTTP Request "
+				doc:name="Common HTTP Request"
 				doc:id="b976f5d7-308c-4391-9d3e-e65db725d6d5"
 				config-ref="HTTP_Request_configuration"
 				path="#[vars.httpOperation.path]" responseTimeout="500000">
@@ -29,24 +29,5 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<logger level="INFO" doc:name="LOG INFO : END"
 			doc:id="fab713a1-b95a-477a-81df-e54430d91e55"
 			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
-	</sub-flow>
-	<sub-flow name="common-request-sub-flow"
-		doc:id="88a43d13-22e1-4ed4-b795-ce1214a98c3a">
-		<logger level="INFO" doc:name="START"
-			doc:id="88caa81a-bf39-4ecc-a3f4-1d059bad438a"
-			message="#[%dw 2.0&#10;output application/java&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />
-		<until-successful maxRetries="#[vars.httpOperation.untilsuccessful.maxRetries]" doc:name="Until Successful" doc:id="f48b2743-6579-430c-9cf4-6270cc67bc89" millisBetweenRetries="#[vars.httpOperation.untilsuccessful.interval]">
-			<http:request method="#[vars.httpOperation.method]" doc:name="common-request" doc:id="78dd041d-3718-4ed5-ac56-91e5dd3a9798" url="#[vars.httpOperation.url]">
-			<http:headers><![CDATA[#[output application/json
----
-(vars.httpOperation.headers default {})]]]></http:headers>
-			<http:query-params><![CDATA[#[output application/json
----
-vars.httpOperation.queryParameters default {}]]]></http:query-params>
-		</http:request>
-		</until-successful>
-		<logger level="INFO" doc:name="END"
-			doc:id="adaaff62-df6f-4aad-b00d-136e1d768c47"
-			message="#[%dw 2.0&#10;output application/java&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />
 	</sub-flow>
 </mule>
