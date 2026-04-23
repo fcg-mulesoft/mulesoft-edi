@@ -86,14 +86,18 @@ payload]]></ee:set-variable>
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="initialvariables" ><![CDATA[%dw 2.0
+				<ee:set-variable variableName="initialVariables" ><![CDATA[%dw 2.0
 output application/json
 ---
 {
-  correlationId: correlationId default uuid(),
-  timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"},
-  source: "scheduler",
-  status: "STARTED"
+	"source": "P21",
+	"target": "APM",
+	"integration-type": "Outbound-850",
+	correlationId: correlationId default uuid(),
+	timestamp: now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+	},
+	status: "STARTED"
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>

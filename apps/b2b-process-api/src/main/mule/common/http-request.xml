@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 				doc:id="b976f5d7-308c-4391-9d3e-e65db725d6d5"
 				config-ref="HTTP_Request_configuration"
 				path="#[vars.httpOperation.path]" responseTimeout="500000">
-				<http:body><![CDATA[#[vars.httpOperation.body]]]></http:body>
+				<http:body ><![CDATA[#[vars.httpOperation.body]]]></http:body>
 				<http:headers><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
 				<http:query-params><![CDATA[#[vars.httpOperation.queryParams]]]></http:query-params>
 			</http:request>

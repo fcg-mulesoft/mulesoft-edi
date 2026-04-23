@@ -1526,8 +1526,18 @@ output application/json
 	<sub-flow name="send-email-subflow" doc:id="421993f9-c123-453a-8a37-135d2a1821c1" >
 		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="f7577dfb-a02b-4ad8-9ca6-6eb0108c6d8c" message="Start: Email Alert" />
 
+		<ee:transform doc:name="var: subject" doc:id="19499001-3829-4016-978f-97548c22403f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
+output application/json
+---
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ (vars.integration."integration-type" default vars.initialVariables."integration-type" )]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
-						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com"]]' config-ref="Email_SMTP">
+						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","anshul.negi@caeliusconsulting.com","priyanshu.dhawan@caeliusconsulting.com"]]' config-ref="Email_SMTP">
 
 				<reconnect />
 				<email:body contentType="text/html">
