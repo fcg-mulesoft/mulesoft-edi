@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="purchase-order-processing-test-suite.xml" />
+	<munit:test name="purchase-order-processing-test-suite" doc:id="8e5217ca-5bf1-4613-9445-46e6e82c8eea" description="Test">
+		<munit:behavior>
+			<munit-tools:mock-when doc:name="Mock Http Request: Get view data" doc:id="fce26f84-0bf1-4d8a-afb9-29bd926922c8" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Reference To commom-http-request-subflow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Json schema validator" doc:id="8d22801d-9d37-4449-927d-37c6f20de77a" processor="json:validate-schema">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Validate schema" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Http Request: Post APM data" doc:id="34c3dc53-5094-4930-a0f4-43353a5f2c86" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Reference To commom-http-request-subflow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Http Request: Post transaction api" doc:id="982b0e40-37e1-45bf-a7fb-ca481b11aa4d" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Reference To commom-http-request-subflow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Http Request: send email" doc:id="ee311d2f-9085-4ce1-adb4-c98105b21fce" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="send-email-subflow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="994cc14a-3370-46e2-9ee1-983c73e4d7f9" >
+				<munit:payload value="#[readUrl('classpath://dwl/purchase-order-processing-test-suite/payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:variables >
+					<munit:variable key="purchaseOrderData" value="#[output json ---readUrl('classpath://dwl/purchase-order-processing-test-suite/payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to purchase-order-processing-subflow" doc:id="311e3c4d-70a3-4709-996c-604293f50ff3" name="purchase-order-processing-subflow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="1d36eade-015b-4d09-9995-371a096c7942" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG INFO : END" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="purchase-order-processing-test-suite-validation-fail" doc:id="af79f827-252f-44a3-8488-5876e88f8537" description="Test" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Http Request: Get view data" doc:id="a1ce80f0-a314-4d8d-9632-9cd2f3314be8" processor="flow-ref" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Reference To commom-http-request-subflow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Http Request: Post APM data" doc:id="686dd458-a933-43d3-a37c-87c3efde15fd" processor="flow-ref" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Reference To commom-http-request-subflow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Http Request: Post transaction api" doc:id="10617837-d8b5-4d2b-a114-1cee0d55dc85" processor="flow-ref" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Reference To commom-http-request-subflow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Http Request: send email" doc:id="abe79172-ae55-457e-8d75-731d2b20fe0a" processor="flow-ref" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="send-email-subflow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="de8e0618-4d23-45b3-83b5-8192ffeca7f4" >
+				<munit:payload value="#[readUrl('classpath://dwl/purchase-order-processing-test-suite/payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:variables >
+					<munit:variable key="purchaseOrderData" value="#[output json ---readUrl('classpath://dwl/purchase-order-processing-test-suite/payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="erroredPOs" value='"Exist"' encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to purchase-order-processing-subflow" doc:id="192fa6bd-3878-47d9-b963-d43025a59b67" name="purchase-order-processing-subflow" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="3b6911f0-c95f-433b-a4c9-b53a52a1aa0a" processor="logger" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG INFO : END" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

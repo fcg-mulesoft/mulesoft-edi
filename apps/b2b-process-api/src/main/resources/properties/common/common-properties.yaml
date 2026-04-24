@@ -1,0 +1,45 @@
+#Common Properties
+
+# SMTP Email Properties
+email:
+  host: "smtp.office365.com"
+  port: "587"
+  username: "mulesoftalerts@fluidflow.onmicrosoft.com"
+  connectionTimeout: "60"
+  readTimeout: "60"
+  writeTimeout: "60"
+  reconnection:
+    attempts: "3"
+    frequency: "2000"
+
+common: 
+    error: 
+        handler: 
+            debug: 
+                logs: ""
+                
+explicitcodes: "502,504,413"  
+
+untilsuccessful:
+  maxRetries: "5"
+  interval: "5000"
+  
+# Listener Properties
+https:
+  host: "0.0.0.0"
+  port: "8082"
+  timeout:
+    connection-idle: "600000"
+  connectionIdleTimeOut: "30000"
+  responseBufferSize: "1024"
+  responseTimeout: "40000"
+  basePath: "/api/v1/*"
+  private:
+    port: "8092"
+  keystore:
+    path: "keystore.jks"
+    alias: "fcg-mule-cert"
+    
+# Partners
+partner:
+  "234093": "FESTO"

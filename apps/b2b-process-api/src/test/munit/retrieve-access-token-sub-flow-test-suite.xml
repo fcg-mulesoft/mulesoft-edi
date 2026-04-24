@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="retrieve-access-token-sub-flow-test-suite.xml" />
+	<munit:test name="retrieve-access-token-sub-flowTest" doc:id="9903c198-a6cf-4ac4-90cc-7c8161445c53" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when Flow ref to common-http-request-subflow" doc:id="802490d3-9c11-4c61-aaf4-232623cc1318" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="d58d81dc-8a0d-4354-b00a-de6874130720" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[{&#10;	"access_token":"1234"&#10;}]' />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to retrieve-access-token-sub-flow" doc:id="c8bc744b-29a7-40c7-94ff-f049636ed88b" name="retrieve-access-token-sub-flow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="LOG INFO : END" doc:id="0412d0b6-cd0c-4e0f-994b-666cda477d3f" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="af643536-9b72-4dd7-a385-6609ee9d7939" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

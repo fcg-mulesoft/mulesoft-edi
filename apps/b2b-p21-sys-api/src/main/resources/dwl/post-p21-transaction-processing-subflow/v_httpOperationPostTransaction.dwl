@@ -13,10 +13,6 @@ output application/json
         "Authorization": "Bearer "++ (vars.accessToken default ""),
         "Content-Type": "application/json"
     },
-    retryMechanism: {
-    	"maxConcurrency": Mule::p('p21.request.reconnection.maxConcurrency.transaction'),
-    	"retries":  Mule::p('p21.request.reconnection.retries.transaction')
-    },
     queryParams: {},
     uriParams: {}
 }

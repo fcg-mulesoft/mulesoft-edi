@@ -58,10 +58,6 @@ var selectedConfig =
 		Authorization: "Bearer " ++ (vars.accessToken default ""),
 		"Content-Type": "application/json"
 	},
-	retryMechanism: {
-		"maxConcurrency": Mule::p('p21.request.reconnection.maxConcurrency.OData'),
-		"retries": Mule::p('p21.request.reconnection.retries.OData')
-	},
 	queryParams: selectedConfig.queryParams default {
 	},
 	uriParams: {

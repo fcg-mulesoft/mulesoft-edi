@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="retrieve-access-token-sub-flow" doc:id="ad9cecd6-8225-4009-ab41-03a248438fb6" >
+		<logger level="INFO" doc:name="INFO : START" doc:id="a7b91c5a-7049-4989-881a-f9d738afc73f" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]"/>
+		<ee:transform doc:name="var : httpOperation" doc:id="5b107554-d901-44a1-aeb1-4ce8a82a3fcc">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="httpOperation"><![CDATA[
+%dw 2.0
+output application/json
+---
+{
+	method: "POST",
+	host: Mule::p('anypoint.platform.host'),
+	port: Mule::p('anypoint.platform.port'),
+	basePath: Mule::p('anypoint.platform.basePath'),
+	path: Mule::p('anypoint.platform.path'),
+	headers: {
+	},
+	queryParams: {
+		"dateReceivedTo": vars.interval.toTime,
+		"expandCustomAttributes": true,
+		"dateReceivedFrom": vars.interval.fromTime
+	},
+	body: {
+		"grant_type": Mule::p('secure::apm.api.accessToken.grantType'),
+		"client_id": Mule::p('secure::apm.api.accessToken.clientId'),
+		"client_secret": Mule::p('secure::apm.api.accessToken.clientSecret')
+	},
+	"untilsuccessful": {
+		"maxRetries": "5",
+		"interval": "5000"
+	}
+}
+
+
+
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference common-http-request-subflow" doc:id="d58d81dc-8a0d-4354-b00a-de6874130720" name="common-http-request-subflow"/>
+		<ee:transform doc:name="Var : accessToken" doc:id="d368c1f4-49ba-427c-957a-d4feef630909" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="accessToken" ><![CDATA[output application/java 
+---
+payload.access_token as String]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="INFO : END" doc:id="af643536-9b72-4dd7-a385-6609ee9d7939" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]"/>
+	</sub-flow>
+</mule>

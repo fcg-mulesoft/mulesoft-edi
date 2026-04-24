@@ -8,3 +8,7 @@
 *.prefs
 *.md
 *.wev
+*.html
+*.css
+*.svg
+*.js
