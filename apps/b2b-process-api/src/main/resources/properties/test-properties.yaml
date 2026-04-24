@@ -1,9 +1,9 @@
 #TEST Environment Properties
 
 b2b-p21-sys-api:
-  host: 
+  host: "localhost"
   basePath: "/api/"
-  port: 
+  port: "8085"
   view:
     path: "/view"
     method: "POST"
@@ -33,3 +33,12 @@ anypoint:
    orgid: "d239ff40-5b13-47be-9bb0-a029a64dac2c"
    envid: "fa8f848a-42c7-4ed1-b06d-f7ead0069829"
    method: "GET"
+   
+# APM Request Properties
+
+apm:
+  request:
+    host: "b2b-inbound-http-9yzw-zrx5fd.y7366p.usa-e1.cloudhub.io"
+    port: "443"
+    basePath: "/api"
+    path: "/out-src-purchase-order"

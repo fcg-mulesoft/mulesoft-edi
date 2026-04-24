@@ -19,7 +19,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	</http:request-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="4100daf7-05f0-4add-9d25-6dbd8ce83162" file="properties/${mule.env}-properties.yaml" doc:description="Environment Specific Property File&#10;"/>
 	<configuration-properties doc:name="Configuration properties" doc:id="4543f32f-4c89-4629-bd06-fa5baa83d5b5" doc:description="Common Properties File" file="properties\common\common-properties.yaml" />
-	<global-property doc:name="Global Property" doc:id="d02fc4a9-a807-4249-a74e-adc3cf958efd" name="mule.env" value="local" />
+	<global-property doc:name="Global Property" doc:id="d02fc4a9-a807-4249-a74e-adc3cf958efd" name="mule.env" value="test" />
 	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="97594968-ddbf-445c-9d93-c6a2bd3d5219" file="properties\secure\\${mule.env}-secure-properties.yaml" key="fcgMuleKey123456" doc:description="Secure Properties Config File"/>
 	    <email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="26d31c0c-e7ef-4d56-849b-69a1dab31c1e">
         <email:smtp-connection host="${email.host}" port="${email.port}" user="${email.username}" password="${secure::email.password}" connectionTimeout="${email.connectionTimeout}" readTimeout="${email.readTimeout}" writeTimeout="${email.writeTimeout}">
