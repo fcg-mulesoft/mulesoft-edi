@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
-	<artifactId>fcg-prc-api-app</artifactId>
+	<artifactId>b2b-process-api-app</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 	<parent>
