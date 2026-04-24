@@ -15,7 +15,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 				<http:headers><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
 				<http:query-params><![CDATA[#[vars.httpOperation.queryParams]]]></http:query-params>
 			</http:request>
-		<logger level="DEBUG" doc:name="LOG INFO : END"
+		<logger level="DEBUG" doc:name="LOG INFO :END"
 			doc:id="590ef2d4-88d8-4719-93b9-17faab6944bb"
 			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
 	</sub-flow>
