@@ -24,7 +24,7 @@ https:
   responseTimeout: "40000"
   basePath: "/api/v1/*"
   private:
-    port: "8093"
+    port: "8092"
   keystore:
     path: "keystore.jks"
     alias: "fcg-mule-cert"
@@ -44,13 +44,6 @@ p21:
     method:
       OData: "GET"
       transaction: "POST"
-    reconnection:
-      maxConcurrency:
-        transaction: "1500000"
-        OData: "20000"
-      retries: 
-        transaction: "3"
-        OData: "3"
       
       
 #View Types

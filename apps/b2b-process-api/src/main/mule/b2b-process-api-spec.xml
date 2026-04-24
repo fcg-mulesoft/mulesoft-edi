@@ -79,7 +79,7 @@ payload]]></ee:set-variable>
 	<flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1" >
 		<scheduler doc:name="Scheduler" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="1" startDelay="1" timeUnit="HOURS" />
+				<fixed-frequency frequency="6" startDelay="1" timeUnit="HOURS" />
 			</scheduling-strategy>
 		</scheduler>
 		<ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32" >
@@ -109,7 +109,7 @@ output application/json
 	<flow name="b2b-alert-notification-apm-flow" doc:id="150e108b-c71a-4397-8bfb-25faf78f9fb0" >
 		<scheduler doc:name="Scheduler" doc:id="84722158-e1cc-446a-88d8-928188b6be87" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="1" startDelay="1" timeUnit="HOURS" />
+				<fixed-frequency frequency="6" startDelay="1" timeUnit="HOURS" />
 			</scheduling-strategy>
 		</scheduler>
 		<ee:transform doc:name="var: initialVariables" doc:id="7e4fe777-4fbb-4083-831b-50deef3f20bd" >
