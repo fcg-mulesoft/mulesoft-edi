@@ -1,33 +1,24 @@
 #TEST Environment Properties
 
+api:
+  name: "b2b-process-api-app"
+
 b2b-p21-sys-api:
-  host: "localhost"
+  host: "b2b-p21-sys-api-dev-zrx5fd.internal-y7366p.usa-e1.cloudhub.io"
   basePath: "/api/"
-  port: "8085"
+  port: "8092"
   view:
-    path: "/view"
+    path: "/views"
     method: "POST"
   transaction:
-    path: "/transaction"
+    path: "/transactions"
     method: "POST"
-    
-email: 
-    read: 
-        timeout: "30"
-    conn: 
-        timeout: "30"
-    write:  
-        timeout: "30"
-    host: "smtp.office365.com"
-    port: "587"
-    user: ""
-    password: ""
-    sender: ""
-    receivers: ""
-    
 anypoint:
   platform:
-    login-url: "https://anypoint.mulesoft.com/accounts/api/v2/oauth2/token"
+    host: "anypoint.mulesoft.com"
+    port: "443"
+    basePath: "/accounts/api"
+    path: "/v2/oauth2/token"
   apm:
    url-prefix: "https://anypoint.mulesoft.com/partnermanager"
    orgid: "d239ff40-5b13-47be-9bb0-a029a64dac2c"

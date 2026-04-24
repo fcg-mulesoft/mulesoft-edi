@@ -261,6 +261,7 @@ vars.messageErrors default [] map (msg) -> {
 				<ee:transform doc:name="Email Payload" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Strings
 output text/plain
 
 fun safe(v, d="N/A") =
@@ -325,8 +326,8 @@ var messageTable =
 var errorDescriptionHtml = transmissionTable ++ messageTable
 
 var distinctPartners =
-    (transmissionData map (t) -> safe(t.partnerFrom as String, "UNKNOWN"))
-    ++ (messageData map (m) -> safe(m.partnerFrom as String, "UNKNOWN"))
+    (transmissionData map (t) -> Mule::p('partner.' ++ safe(t.partnerFrom as String, "UNKNOWN")))
+    ++ (messageData map (m) -> Mule::p('partner.' ++ safe(m.partnerFrom as String, "UNKNOWN")))
 
 var partnerSummary =
     (distinctPartners distinctBy $) joinBy ", "
@@ -336,7 +337,7 @@ var data = {
     documentType:    "EDI",
     appName:         p('api.name')  default "Mule Application",
     transactionType: "EDI",
-    environment:     Mule::p('mule.env'),
+    environment:     upper(Mule::p('mule.env')),
     flowName:        safe(vars.flowName, "EDI Validation Handler"),
     route:           "Partner → Mule → System",
     partnerName:     partnerSummary,

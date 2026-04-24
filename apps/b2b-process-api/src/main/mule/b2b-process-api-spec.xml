@@ -104,6 +104,7 @@ output application/json
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="91ec1caa-66f7-4294-8cf8-7cb72d3aa291" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	//transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
 		<flow-ref doc:name="Flow Reference to purchase-order-processing-subflow" doc:id="305f024e-419d-45fc-9aa2-c6204fe82f06" name="purchase-order-processing-subflow" />
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="6ee0af0c-950d-4e7b-a2ca-c9dbdf2926ab" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+		<error-handler ref="global-common-error-handler" />
 	</flow>
 	<flow name="b2b-alert-notification-apm-flow" doc:id="150e108b-c71a-4397-8bfb-25faf78f9fb0" >
 		<scheduler doc:name="Scheduler" doc:id="84722158-e1cc-446a-88d8-928188b6be87" >
@@ -128,5 +129,6 @@ output application/json
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="012ca2d6-040c-419b-a54c-28bcbacb44b7" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	//transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
 		<flow-ref doc:name="Flow Reference b2b-alert-notification-main-subflow" doc:id="c7f85bb3-a757-4e9e-a701-e6b1bc5cfa38" name="b2b-alert-notification-main-subflow"/>
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="00053657-e525-43b6-a7a2-8975ae96d6eb" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+		<error-handler ref="global-common-error-handler" />
 	</flow>
 </mule>

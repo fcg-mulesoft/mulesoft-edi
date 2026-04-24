@@ -406,6 +406,7 @@ import toBase64 from dw::core::Binaries
 							<ee:transform doc:name="Preparing Email Template for P21 connectivity issues" doc:id="40e59ebb-8f85-49e5-9f85-93f685fa0523">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Strings
 output text/plain
 
 fun safe(v, d="N/A") =
@@ -785,11 +786,11 @@ var data = {
     appName:         p('api.name')  default "Mule Application",
     transactionType: if (isValidationFlow) safe(cdmHeader.documentType, "810")
                      else (vars.systemInformation."integration-type" default "API"),
-    environment:     safe(sysInfo.env, p('mule.env')),
+    environment:     upper(safe(sysInfo.env, p('mule.env'))),
     flowName:        safe(vars.flowName, "Global Error Handler"),
     route:           sourceSystem ++ " → Mule → " ++ targetSystem,
-    partnerName:     (payload.Transactions[0].DataElements[0].Rows[0].Edits
-    filter ($.Name == "vendor_id"))[0].Value,
+    partnerName:     Mule::p('partner.' ++ (payload.Transactions[0].DataElements[0].Rows[0].Edits
+    filter ($.Name == "vendor_id"))[0].Value),
     errorTitle:      errorTitle,
     bannerColor:     bannerColor,
     errorType:       errorTypeValue,
@@ -841,6 +842,7 @@ txns map (txn, index) -> {
 							<ee:transform doc:name="Prepare Template Email" doc:id="863fb8fc-6022-4053-9c88-7261f377aef4">
 								<ee:message>
 									<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Strings
 output text/plain
 
 fun safe(v, d="N/A") =
@@ -896,14 +898,14 @@ var transactionTable =
 var errorDescriptionHtml = summaryBar ++ transactionTable
 
 var poNumbers  = (transactions map (t) -> safe(t.po_no    as String, "N/A")) distinctBy $ joinBy ", "
-var vendorIds  = (transactions map (t) -> safe(t.vendor_id as String, "N/A")) distinctBy $ joinBy ", "
+var vendorIds  = (transactions map (t) -> Mule::p('partner.' ++ safe(t.vendor_id as String, "N/A"))) distinctBy $ joinBy ", "
 
 var data = {
     flowDirection:   "OUTBOUND",
     documentType:    "850",
     appName:         p('api.name') default "Mule Application",
     transactionType: "850",
-    environment:     Mule::p('mule.env'),
+    environment:     upper(Mule::p('mule.env')),
     flowName:        safe(vars.flowName, "850 Outbound P21 Handler"),
     route:           "P21 → Mule → APM",
     partnerName:     "Vendor ID(s): " ++ vendorIds,
@@ -948,6 +950,7 @@ template replace /\$\{(\w+)\}/ with ((m) ->
 			<ee:transform doc:name="Preparing Email Template" doc:id="2375996c-8946-4ca9-991c-58263985c68a" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
 output text/plain
 
 fun safe(v, d="N/A") =
@@ -1003,12 +1006,12 @@ var partnerSummary =
 var data = {
     flowDirection:   "OUTBOUND",
     documentType:    "850",
-    appName:         p('api.name')  default "Mule Application",
+    appName:         Mule::p('api.name')  default "Mule Application",
     transactionType: "850",
-    environment:     Mule::p('mule.env'),
+    environment:     upper(Mule::p('mule.env')),
     flowName:        safe(vars.flowName, "850 Outbound Validation"),
     route:           "P21 → Mule → APM",
-    partnerName:     partnerSummary,
+    partnerName:     Mule::p('partner.' ++ partnerSummary),
     errorTitle:      "850 Outbound Validation Error",
     bannerColor:     "#f59e0b",
     errorType:       "CUSTOM:VALIDATION_ERROR",

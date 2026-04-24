@@ -4,9 +4,9 @@ api:
   name: "b2b-process-api-app"
 
 b2b-p21-sys-api:
-  host: "localhost"
+  host: "b2b-p21-sys-api-dev-zrx5fd.internal-y7366p.usa-e1.cloudhub.io"
   basePath: "/api/"
-  port: "8085"
+  port: "8092"
   view:
     path: "/views"
     method: "POST"
