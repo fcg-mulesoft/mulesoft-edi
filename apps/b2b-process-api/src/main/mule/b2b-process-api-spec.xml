@@ -54,7 +54,7 @@ output application/json
             </ee:message>
         </ee:transform>
     </flow>
-    <flow name="post:\inboundTransactions:application\json:b2b-process-api-spec-config">
+    <flow name="post:\inboundTransactions:application\json:b2b-process-api-spec-config" doc:id="e445073a-6ac5-4ba8-acea-c05aec807d6a">
         <ee:transform doc:name="var : integration, initialPayload" doc:id="f7c8a630-5842-43d9-bb3e-0ce2e274d0f4">
 			<ee:message />
 			<ee:variables>
