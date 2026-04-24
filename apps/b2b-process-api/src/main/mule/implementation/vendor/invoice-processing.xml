@@ -5,7 +5,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<sub-flow name="inbound-invoice-processing-subflow" doc:id="0f3b0ec8-ab83-4254-a92f-ce1b7e4e5fca" >
-		<logger level="INFO" doc:name="LOG INFO : START" doc:id="f3eaae67-8060-4585-9b21-8949893def16" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]'/>
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="f3eaae67-8060-4585-9b21-8949893def16" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId,&#10;    "transmissionId": vars.initialPayload.b2bMessage.header.transmissionId[0]&#10;}]'/>
 		<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="0f587fa5-6fc6-4c33-aa38-3c2478ca3fe8" >
 			<ee:message >
 			</ee:message>
@@ -100,6 +100,6 @@ import toBase64 from dw::core::Binaries
 				<logger level="INFO" doc:name="LOG INFO : InvoiceCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"flow": (flow.name),&#10;	"message": "Invoice Creation Successful",&#10;    "correlationId": correlationId&#10;}]'/>
 			</otherwise>
 		</choice>
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="7a218d2e-888d-442d-8952-b5cdd14450e9" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]'/>
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="7a218d2e-888d-442d-8952-b5cdd14450e9" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId,&#10;        "transmissionId": vars.initialPayload.b2bMessage.header.transmissionId[0]&#10;    &#10;}]'/>
 	</sub-flow>
 </mule>
