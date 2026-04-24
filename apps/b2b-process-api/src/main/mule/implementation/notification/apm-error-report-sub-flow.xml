@@ -325,9 +325,15 @@ var messageTable =
 
 var errorDescriptionHtml = transmissionTable ++ messageTable
 
+fun resolvePartner(pId) =
+    if (p('partner.' ++ pId) != null)
+        p('partner.' ++ pId)
+    else
+        pId
+
 var distinctPartners =
-    (transmissionData map (t) -> Mule::p('partner.' ++ safe(t.partnerFrom as String, "UNKNOWN")))
-    ++ (messageData map (m) -> Mule::p('partner.' ++ safe(m.partnerFrom as String, "UNKNOWN")))
+    (transmissionData map (t) -> resolvePartner(safe(t.partnerFrom as String, "UNKNOWN")))
+    ++ (messageData map (m) -> resolvePartner(safe(m.partnerFrom as String, "UNKNOWN")))
 
 var partnerSummary =
     (distinctPartners distinctBy $) joinBy ", "
@@ -335,9 +341,9 @@ var partnerSummary =
 var data = {
     flowDirection:   "INBOUND",
     documentType:    "EDI",
-    appName:         p('api.name')  default "Mule Application",
+    appName:         p('api.name') default "Mule Application",
     transactionType: "EDI",
-    environment:     upper(Mule::p('mule.env')),
+    environment:     upper(p('mule.env') default "DEV"),
     flowName:        safe(vars.flowName, "EDI Validation Handler"),
     route:           "Partner → Mule → System",
     partnerName:     partnerSummary,

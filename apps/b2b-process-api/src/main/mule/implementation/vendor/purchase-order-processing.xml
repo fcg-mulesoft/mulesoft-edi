@@ -412,6 +412,12 @@ output text/plain
 fun safe(v, d="N/A") =
     if (v == null or (v is String and trim(v) == "")) d else v
 
+fun resolvePartner(pId) =
+    if (p('partner.' ++ pId) != null)
+        p('partner.' ++ pId)
+    else
+        pId
+
 var errResp     = vars.errorResponse     default {}
 var sysInfo     = vars.systemInformation default {}
 var integration = vars.integration       default vars.initialVariables default {}
@@ -463,35 +469,35 @@ var errorCategory =
         "P21_ERROR"
     else if (categoryNs == "APIKIT" and suppressed == null)
         "APIKIT"
-    else if (categoryId == "UNAUTHORIZED"          or categoryId == "FORBIDDEN"
+    else if (categoryId == "UNAUTHORIZED" or categoryId == "FORBIDDEN"
           or categoryId == "AUTHENTICATION_FAILED" or categoryId == "INVALID_TOKEN"
-          or categoryId == "TOKEN_EXPIRED"          or categoryId == "ACCESS_DENIED"
-          or categoryNs == "OAUTH2"                 or categoryNs == "JWT"
-          or (categoryNs == "MULE"                  and categoryId == "SECURITY"))
+          or categoryId == "TOKEN_EXPIRED" or categoryId == "ACCESS_DENIED"
+          or categoryNs == "OAUTH2" or categoryNs == "JWT"
+          or (categoryNs == "MULE" and categoryId == "SECURITY"))
         "SECURITY"
-    else if (categoryId == "BAD_REQUEST"             or categoryId == "SCHEMA_NOT_HONOURED"
-          or categoryId == "INVALID_INPUT"           or categoryId == "UNRECOGNIZED_FIELD"
-          or categoryId == "MISSING_REQUIRED_FIELD"  or categoryId == "PARSE_ERROR"
-          or categoryNs == "VALIDATION"              or categoryNs == "JSON"
-          or categoryNs == "XML"                    or categoryNs == "CSV")
+    else if (categoryId == "BAD_REQUEST" or categoryId == "SCHEMA_NOT_HONOURED"
+          or categoryId == "INVALID_INPUT" or categoryId == "UNRECOGNIZED_FIELD"
+          or categoryId == "MISSING_REQUIRED_FIELD" or categoryId == "PARSE_ERROR"
+          or categoryNs == "VALIDATION" or categoryNs == "JSON"
+          or categoryNs == "XML" or categoryNs == "CSV")
         "VALIDATION"
-    else if (categoryId == "TIMEOUT"                or categoryId == "GATEWAY_TIMEOUT"
-          or categoryId == "BAD_GATEWAY"            or categoryId == "CONNECTIVITY"
-          or categoryId == "CONNECTION_TIMEOUT"     or categoryId == "READ_TIMEOUT"
-          or categoryId == "WRITE_TIMEOUT"          or categoryId == "RETRY_EXHAUSTED"
-          or categoryId == "SERVICE_UNAVAILABLE"    or categoryId == "REMOTELY_CLOSED"
+    else if (categoryId == "TIMEOUT" or categoryId == "GATEWAY_TIMEOUT"
+          or categoryId == "BAD_GATEWAY" or categoryId == "CONNECTIVITY"
+          or categoryId == "CONNECTION_TIMEOUT" or categoryId == "READ_TIMEOUT"
+          or categoryId == "WRITE_TIMEOUT" or categoryId == "RETRY_EXHAUSTED"
+          or categoryId == "SERVICE_UNAVAILABLE" or categoryId == "REMOTELY_CLOSED"
           or categoryId == "SSL_ERROR")
         "CONNECTIVITY"
-    else if (categoryId == "NOT_FOUND"              or categoryId == "METHOD_NOT_ALLOWED"
-          or categoryId == "NOT_ACCEPTABLE"         or categoryId == "UNSUPPORTED_MEDIA_TYPE"
-          or categoryId == "CONFLICT"               or categoryId == "GONE"
+    else if (categoryId == "NOT_FOUND" or categoryId == "METHOD_NOT_ALLOWED"
+          or categoryId == "NOT_ACCEPTABLE" or categoryId == "UNSUPPORTED_MEDIA_TYPE"
+          or categoryId == "CONFLICT" or categoryId == "GONE"
           or categoryId == "TOO_MANY_REQUESTS")
         "CLIENT_ERROR"
-    else if (categoryId == "TRANSFORMATION"         or categoryId == "EXPRESSION"
-          or categoryId == "COERCION"               or categoryId == "SCRIPTING_FAILED"
+    else if (categoryId == "TRANSFORMATION" or categoryId == "EXPRESSION"
+          or categoryId == "COERCION" or categoryId == "SCRIPTING_FAILED"
           or (categoryNs == "MULE" and (categoryId == "TRANSFORMATION" or categoryId == "EXPRESSION")))
         "TRANSFORMATION"
-    else if (categoryId == "ROUTING"                or categoryId == "COMPOSITE_ROUTING"
+    else if (categoryId == "ROUTING" or categoryId == "COMPOSITE_ROUTING"
           or categoryId == "FLOW_NOT_FOUND")
         "ROUTING"
     else
@@ -520,260 +526,14 @@ var bannerColor =
 
 var ve = vars.isValid.validationErrors default {}
 
-var itemRows =
-    flatten(
-        (ve.itemErrors default {}) pluck ((value, key) ->
-            (value default []) map (err) ->
-                "<tr style='background:#fee2e2;color:#b91c1c;'>"
-                ++ "<td style='padding:8px;border:1px solid #ddd;'>Item (" ++ key ++ ")</td>"
-                ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ err ++ "</td>"
-                ++ "</tr>"
-        )
+var vendorId =
+    safe(
+        ((payload.Transactions[0].DataElements[0].Rows[0].Edits
+            filter ($.Name == "vendor_id"))[0].Value),
+        "UNKNOWN"
     )
 
-var carrierRows =
-    (ve.carrierErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>Carrier</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var externalPoRows =
-    (ve.externalPoErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>External PO</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var customerPartRows =
-    (ve.customerPartErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>Customer Part</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var totalRows =
-    (ve.totalErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>Total</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var shipToRows =
-    (ve.shipToErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>Ship To</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var allRows =
-    itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows
-
-var validationHtml =
-    if (sizeOf(allRows) > 0)
-        "<table style='width:100%;border-collapse:collapse;margin-top:10px;'>"
-        ++ "<tr style='background:#fecaca;'>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;'>Type</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;'>Error</th>"
-        ++ "</tr>"
-        ++ (allRows joinBy "")
-        ++ "</table>"
-    else
-        "Validation failed but no detailed errors available."
-
-var errorResolution =
-    if (errorCategory == "VALIDATION")
-        if (isValidationFlow)
-            "The validation failed because the P21 data and the EDI data do not match. Please correct the EDI data accordingly and resend the file."
-        else
-            do {
-                var baseMsg = "The incoming request payload from " ++ sourceSystem ++ " failed validation."
-                var steps =
-                    if (categoryId == "BAD_REQUEST" or categoryId == "SCHEMA_NOT_HONOURED")
-                        "\n  1. Compare the received payload against the API RAML/OAS schema — identify the non-conforming fields."
-                        ++ "\n  2. Check for missing mandatory fields, incorrect data types, or values outside allowed enumerations."
-                        ++ "\n  3. Validate the payload manually using a schema validator tool before resubmitting."
-                        ++ "\n  4. Notify the sending system (" ++ sourceSystem ++ ") team to fix the payload structure."
-                    else if (categoryId == "MISSING_REQUIRED_FIELD")
-                        "\n  1. A required field is absent — review the schema to identify which field(s) are mandatory."
-                        ++ "\n  2. Coordinate with " ++ sourceSystem ++ " to ensure all required fields are populated before sending."
-                        ++ "\n  3. If the field is conditionally required, review the business rules applied in the flow."
-                    else if (categoryId == "PARSE_ERROR")
-                        "\n  1. The payload could not be parsed — verify the Content-Type header matches the actual payload format."
-                        ++ "\n  2. Check for special characters, BOM markers, or encoding issues (ensure UTF-8)."
-                        ++ "\n  3. Validate the raw message body for malformed JSON/XML syntax."
-                    else
-                        "\n  1. Review the full error description to identify the failing field or rule."
-                        ++ "\n  2. Validate the payload structure against the published API contract."
-                        ++ "\n  3. Engage the source system team to correct the data before resubmitting."
-                ---
-                baseMsg ++ steps
-                ++ "\n\n  Resubmission is safe only after the payload has been corrected."
-            }
-
-    else if (errorCategory == "P21_ERROR")
-        do {
-            var baseMsg = "A P21 (Prophet 21) integration failure occurred on the " ++ sourceSystem ++ " → " ++ targetSystem ++ " route."
-            var steps =
-                if (contains(lower(errDesc), "invalid column") or contains(lower(errDesc), "column"))
-                    "\n  1. An invalid or unrecognized column was referenced in the P21 transaction — review the column name in the error description."
-                    ++ "\n  2. Verify that the column exists in the target P21 table (e.g., TP_POHDR) and is spelled correctly."
-                    ++ "\n  3. Check if a recent P21 schema upgrade removed or renamed the column — re-align the integration mapping."
-                    ++ "\n  4. Confirm the column is available in the P21 version deployed in the " ++ safe(sysInfo.env, "current") ++ " environment."
-                    ++ "\n  5. Run the transaction manually in P21 with the same payload to reproduce and isolate the column issue."
-                else if (contains(lower(errDesc), "general exception"))
-                    "\n  1. P21 raised a general exception — capture the full error description and transaction reference from the logs."
-                    ++ "\n  2. Reproduce the transaction manually in P21 to identify the root cause."
-                    ++ "\n  3. Check P21 application logs for the matching timestamp and transaction ID."
-                    ++ "\n  4. Verify the P21 service is healthy and the target table/object is not locked."
-                else if (contains(lower(errDesc), "transaction"))
-                    "\n  1. The P21 transaction failed to process — check the transaction ID referenced in the error description."
-                    ++ "\n  2. Verify the transaction data conforms to P21 business rules and required field constraints."
-                    ++ "\n  3. Check if a prior transaction left the record in a locked or incomplete state."
-                    ++ "\n  4. Review the P21 event log for any associated warnings or preceding failures."
-                else
-                    "\n  1. Capture the full error description and correlation ID and search P21 application logs."
-                    ++ "\n  2. Verify the P21 endpoint is reachable and the target object/table is accessible."
-                    ++ "\n  3. Confirm the integration payload structure matches the P21 expected schema."
-                    ++ "\n  4. Engage the P21 support team with the correlation ID and error detail if the issue persists."
-            ---
-            baseMsg ++ steps
-            ++ "\n\n  Do NOT resubmit the transaction without confirming whether it was partially committed in P21."
-        }
-
-    else if (errorCategory == "SECURITY")
-        do {
-            var baseMsg = "Authentication or authorization failure detected on the " ++ sourceSystem ++ " → " ++ targetSystem ++ " route."
-            var steps =
-                if (categoryId == "UNAUTHORIZED" or categoryId == "AUTHENTICATION_FAILED")
-                    "\n  1. Verify that the client credentials (username/password or client ID/secret) are valid and have not expired."
-                    ++ "\n  2. Confirm the token endpoint URL and grant type are correctly configured in the connector."
-                    ++ "\n  3. Check if the credentials were recently rotated — update the secret manager entry and re-deploy."
-                    ++ "\n  4. Review the HTTP Authorization header format (Bearer vs Basic)."
-                else if (categoryId == "FORBIDDEN" or categoryId == "ACCESS_DENIED")
-                    "\n  1. The identity is authenticated but lacks permission — review role/scope assignments in the target system."
-                    ++ "\n  2. Confirm the API client has the required scopes granted in API Manager."
-                    ++ "\n  3. Check IP allowlist or policy restrictions applied on the API."
-                else if (categoryId == "TOKEN_EXPIRED" or categoryId == "INVALID_TOKEN")
-                    "\n  1. Token has expired or is malformed — verify the token refresh logic in the integration flow."
-                    ++ "\n  2. Ensure system clock is synchronized (NTP) — clock skew can invalidate JWT tokens."
-                    ++ "\n  3. Check token TTL settings in the OAuth provider and align the refresh interval."
-                else
-                    "\n  1. Review security policy configuration in API Manager for this API."
-                    ++ "\n  2. Inspect request headers for correct Authorization values."
-                    ++ "\n  3. Contact the API owner if credentials or scopes need to be re-provisioned."
-            ---
-            baseMsg ++ steps
-            ++ "\n\n  Do NOT expose credentials in logs. Escalate to the security team if repeated failures are observed."
-        }
-
-    else if (errorCategory == "CONNECTIVITY")
-        do {
-            var baseMsg = "A connectivity failure occurred while communicating with " ++ targetSystem ++ "."
-            var steps =
-                if (categoryId == "TIMEOUT" or categoryId == "CONNECTION_TIMEOUT" or categoryId == "GATEWAY_TIMEOUT")
-                    "\n  1. Verify that " ++ targetSystem ++ " is running and reachable from the Mule runtime network."
-                    ++ "\n  2. Check firewall rules and security group policies for the target endpoint."
-                    ++ "\n  3. Review the connector timeout settings — increase if the target is known to be slow."
-                    ++ "\n  4. Inspect " ++ targetSystem ++ " server logs for signs of overload or long processing times."
-                else if (categoryId == "READ_TIMEOUT" or categoryId == "WRITE_TIMEOUT")
-                    "\n  1. The connection was established but the operation timed out mid-transfer."
-                    ++ "\n  2. Increase read/write timeout values in the HTTP/connector configuration."
-                    ++ "\n  3. Check payload size — large payloads may require streaming or chunked transfer."
-                else if (categoryId == "SSL_ERROR")
-                    "\n  1. Verify the TLS/SSL certificate of " ++ targetSystem ++ " is valid and not expired."
-                    ++ "\n  2. Ensure the certificate is trusted — add it to the Mule truststore if self-signed."
-                    ++ "\n  3. Confirm TLS protocol versions are compatible (TLS 1.2/1.3)."
-                    ++ "\n  4. Check mutual TLS (mTLS) configuration if client certificates are required."
-                else if (categoryId == "RETRY_EXHAUSTED")
-                    "\n  1. All retry attempts have been exhausted — " ++ targetSystem ++ " may be consistently unavailable."
-                    ++ "\n  2. Review the Until Successful / retry policy settings and adjust retry count and interval."
-                    ++ "\n  3. Consider implementing a dead-letter queue for failed messages."
-                    ++ "\n  4. Alert the " ++ targetSystem ++ " operations team to investigate availability."
-                else
-                    "\n  1. Confirm network connectivity between Mule runtime and " ++ targetSystem ++ "."
-                    ++ "\n  2. Verify the endpoint URL, port, and protocol are correctly configured."
-                    ++ "\n  3. Check infrastructure health dashboards for any active incidents."
-            ---
-            baseMsg ++ steps
-            ++ "\n\n  If the issue is intermittent, check for network instability or scheduled maintenance windows."
-        }
-
-    else if (errorCategory == "CLIENT_ERROR")
-        do {
-            var baseMsg = "The request was well-formed but could not be fulfilled by " ++ targetSystem ++ "."
-            var steps =
-                if (categoryId == "NOT_FOUND")
-                    "\n  1. The requested resource does not exist on " ++ targetSystem ++ " — verify the resource ID or URI path."
-                    ++ "\n  2. Confirm the resource was not deleted or archived in the target system."
-                    ++ "\n  3. Check for environment-specific differences (Dev vs Prod resource IDs)."
-                else if (categoryId == "METHOD_NOT_ALLOWED")
-                    "\n  1. The HTTP method used is not supported for this endpoint — review the API documentation."
-                    ++ "\n  2. Verify the connector or HTTP request component is configured with the correct HTTP verb."
-                else if (categoryId == "TOO_MANY_REQUESTS")
-                    "\n  1. Rate limit has been exceeded for " ++ targetSystem ++ "."
-                    ++ "\n  2. Implement exponential back-off and retry logic in the flow."
-                    ++ "\n  3. Review the API rate limit policy and consider requesting a quota increase."
-                    ++ "\n  4. Batch or throttle outbound requests to stay within allowed limits."
-                else if (categoryId == "CONFLICT")
-                    "\n  1. A conflicting resource state was detected — the resource may already exist or be locked."
-                    ++ "\n  2. Check for duplicate transaction IDs or idempotency key conflicts."
-                    ++ "\n  3. Implement idempotency checks before sending create/update requests."
-                else
-                    "\n  1. Review the HTTP status code and error description for specific guidance."
-                    ++ "\n  2. Verify the request parameters, headers, and body match the API contract."
-                    ++ "\n  3. Consult the " ++ targetSystem ++ " API documentation for this endpoint."
-            ---
-            baseMsg ++ steps
-        }
-
-    else if (errorCategory == "TRANSFORMATION")
-        do {
-            var baseMsg = "A data transformation or mapping error occurred in the integration flow."
-            var steps =
-                if (categoryId == "EXPRESSION" or categoryId == "SCRIPTING_FAILED")
-                    "\n  1. Review the DataWeave script at the failing Transform component."
-                    ++ "\n  2. Validate that all referenced fields exist in the input payload — use 'default' guards for optional fields."
-                    ++ "\n  3. Test the mapping in DataWeave Playground or Anypoint Studio with a sample payload."
-                    ++ "\n  4. Add null-safety checks: use '?' operator and 'default' to handle missing or null values."
-                else if (categoryId == "COERCION")
-                    "\n  1. A type coercion failed — verify the data type of the field being cast (e.g., String to Number)."
-                    ++ "\n  2. Check for empty strings, null values, or non-numeric characters in numeric fields."
-                    ++ "\n  3. Add explicit type guards before coercion: if (value is String and not isEmpty(value))."
-                else
-                    "\n  1. Identify the failing Transform component using the Correlation ID in the application logs."
-                    ++ "\n  2. Log the input payload just before the transform to capture the actual data shape."
-                    ++ "\n  3. Verify the mapping handles all edge cases (null, empty, unexpected formats)."
-            ---
-            baseMsg ++ steps
-            ++ "\n\n  Check if the source payload structure changed — upstream schema changes often cause silent mapping breaks."
-        }
-
-    else if (errorCategory == "APIKIT")
-        "The request did not conform to the API specification."
-        ++ "\n  1. Verify the request URI, HTTP method, headers, and query parameters match the RAML/OAS definition."
-        ++ "\n  2. Ensure the Content-Type and Accept headers are set correctly."
-        ++ "\n  3. Validate the request payload against the schema defined in the API spec."
-        ++ "\n  4. Consult the API documentation or contact the API owner for the correct request format."
-
-    else if (errorCategory == "ROUTING")
-        "The integration flow could not route the message to its intended destination."
-        ++ "\n  1. Verify that the target flow name is correct and the flow is deployed and active."
-        ++ "\n  2. Check the routing logic (Choice/Scatter-Gather) for conditions that may not match the current payload."
-        ++ "\n  3. Review the flow-ref component configuration for typos in the flow name."
-        ++ "\n  4. Confirm there are no missing or disabled flows in the deployed application."
-
-    else
-        "An unexpected system error occurred during processing."
-        ++ "\n  1. Capture the Correlation ID and search the application logs for the full stack trace."
-        ++ "\n  2. Check Anypoint Monitoring or Runtime Manager for memory, CPU, or thread pool alerts."
-        ++ "\n  3. Review recent deployments or configuration changes that may have introduced the issue."
-        ++ "\n  4. If the issue persists, raise a support ticket with the Correlation ID, error type, and timestamp."
-
-var errorDescFull =
-    if (isValidationFlow)
-        validationHtml
-    else
-        (errResp.description default errDesc default "Unexpected error") as String
-        ++ "\n\nCorrelation ID: " ++ (errResp.correlationId default correlationId default uuid())
-        ++ "\nHTTP Status:    " ++ ((errResp.statusCode default vars.httpStatus default 500) as String)
-        ++ "\nStatus Message: " ++ (errResp.statusMessage default errorTypeValue)
-        ++ "\nTimestamp:      " ++ (errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"}))
+var partnerNameResolved = resolvePartner(vendorId)
 
 var corrId =
     if (isValidationFlow) safe(cdmHeader.transmissionId, uuid())
@@ -783,14 +543,13 @@ var data = {
     flowDirection:   flowDirection,
     documentType:    if (isValidationFlow) safe(cdmHeader.documentType, "810")
                      else safe(integration."integration-type", "API"),
-    appName:         p('api.name')  default "Mule Application",
+    appName:         p('api.name') default "Mule Application",
     transactionType: if (isValidationFlow) safe(cdmHeader.documentType, "810")
                      else (vars.systemInformation."integration-type" default "API"),
     environment:     upper(safe(sysInfo.env, p('mule.env'))),
     flowName:        safe(vars.flowName, "Global Error Handler"),
     route:           sourceSystem ++ " → Mule → " ++ targetSystem,
-    partnerName:     Mule::p('partner.' ++ (payload.Transactions[0].DataElements[0].Rows[0].Edits
-    filter ($.Name == "vendor_id"))[0].Value),
+    partnerName:     partnerNameResolved,
     errorTitle:      errorTitle,
     bannerColor:     bannerColor,
     errorType:       errorTypeValue,
@@ -848,6 +607,12 @@ output text/plain
 fun safe(v, d="N/A") =
     if (v == null or (v is String and trim(v) == "")) d else v
 
+fun resolvePartner(pId) =
+    if (p('partner.' ++ pId) != null)
+        p('partner.' ++ pId)
+    else
+        pId
+
 var transactions = payload
 
 var failedCount    = sizeOf(transactions) as String
@@ -857,9 +622,10 @@ var otherCount     = "0"
 var transactionRows =
     transactions map (t, idx) ->
         do {
-            var poNo   = safe(t.po_no   as String, "N/A")
-            var vendor = safe(t.vendor_id as String, "N/A")
-            var msg    = safe(t.message  as String, "No message")
+            var poNo   = safe(t.po_no as String, "N/A")
+            var vendorRaw = safe(t.vendor_id as String, "UNKNOWN")
+            var vendor = resolvePartner(vendorRaw)
+            var msg    = safe(t.message as String, "No message")
             var status = "Failed"
             var rowBg  = "background:#fee2e2;color:#b91c1c;"
             ---
@@ -888,7 +654,7 @@ var transactionTable =
     ++ "<tr style='background:#fecaca;'>"
     ++ "<th style='padding:8px;border:1px solid #ddd;text-align:center;width:6%;'>#</th>"
     ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>PO Number</th>"
-    ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Vendor ID</th>"
+    ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Vendor</th>"
     ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Status</th>"
     ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Message</th>"
     ++ "</tr>"
@@ -897,15 +663,20 @@ var transactionTable =
 
 var errorDescriptionHtml = summaryBar ++ transactionTable
 
-var poNumbers  = (transactions map (t) -> safe(t.po_no    as String, "N/A")) distinctBy $ joinBy ", "
-var vendorIds  = (transactions map (t) -> Mule::p('partner.' ++ safe(t.vendor_id as String, "N/A"))) distinctBy $ joinBy ", "
+var poNumbers =
+    (transactions map (t) -> safe(t.po_no as String, "N/A")) distinctBy $ joinBy ", "
+
+var vendorIds =
+    (transactions map (t) -> resolvePartner(safe(t.vendor_id as String, "UNKNOWN")))
+    distinctBy $
+    joinBy ", "
 
 var data = {
     flowDirection:   "OUTBOUND",
     documentType:    "850",
     appName:         p('api.name') default "Mule Application",
     transactionType: "850",
-    environment:     upper(Mule::p('mule.env')),
+    environment:     upper(p('mule.env') default "DEV"),
     flowName:        safe(vars.flowName, "850 Outbound P21 Handler"),
     route:           "P21 → Mule → APM",
     partnerName:     "Vendor ID(s): " ++ vendorIds,
@@ -952,22 +723,29 @@ template replace /\$\{(\w+)\}/ with ((m) ->
 					<ee:set-payload ><![CDATA[%dw 2.0
 import * from dw::core::Strings
 output text/plain
-
+ 
 fun safe(v, d="N/A") =
     if (v == null or (v is String and trim(v) == "")) d else v
 
+fun resolvePartner(pId) =
+    if (p('partner.' ++ pId) != null)
+        p('partner.' ++ pId)
+    else
+        pId
+ 
 var rawPayload       = if (payload is String) read(payload, "application/json") else payload
 var validationErrors = if (rawPayload is Array) rawPayload else [rawPayload]
-
+ 
 var partnerRows =
     flatten(
         validationErrors map (partner) ->
             do {
-                var partnerId  = safe(partner.partnerId as String, "UNKNOWN")
-                var poList     = partner.errors default []
-                var poCount    = sizeOf(poList)
-                var firstPo    = poList[0]
-                var firstRow   =
+                var partnerIdRaw = safe(partner.partnerId as String, "UNKNOWN")
+                var partnerId    = resolvePartner(partnerIdRaw)
+                var poList       = partner.errors default []
+                var poCount      = sizeOf(poList)
+                var firstPo      = poList[0]
+                var firstRow =
                     "<tr style='background:#fee2e2;color:#b91c1c;'>"
                     ++ "<td style='padding:8px;border:1px solid #ddd;vertical-align:top;font-weight:600;' rowspan='" ++ poCount ++ "'>" ++ partnerId ++ "</td>"
                     ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(firstPo.poNo as String, "N/A") ++ "</td>"
@@ -983,7 +761,7 @@ var partnerRows =
                 [firstRow] ++ remainingRows
             }
     )
-
+ 
 var validationHtml =
     if (sizeOf(partnerRows) > 0)
         "<table style='width:100%;border-collapse:collapse;margin-top:10px;'>"
@@ -996,22 +774,22 @@ var validationHtml =
         ++ "</table>"
     else
         "Validation failed but no detailed errors available."
-
+ 
 var partnerSummary =
     (validationErrors map (p) ->
-        "Partner " ++ safe(p.partnerId as String, "UNKNOWN")
+        resolvePartner(safe(p.partnerId as String, "UNKNOWN"))
         ++ " — " ++ sizeOf(p.errors default []) ++ " PO(s) failed"
     ) joinBy " | "
-
+ 
 var data = {
     flowDirection:   "OUTBOUND",
     documentType:    "850",
-    appName:         Mule::p('api.name')  default "Mule Application",
+    appName:         p('api.name') default "Mule Application",
     transactionType: "850",
-    environment:     upper(Mule::p('mule.env')),
+    environment:     upper(p('mule.env') default "DEV"),
     flowName:        safe(vars.flowName, "850 Outbound Validation"),
     route:           "P21 → Mule → APM",
-    partnerName:     Mule::p('partner.' ++ partnerSummary),
+    partnerName:     partnerSummary,
     errorTitle:      "850 Outbound Validation Error",
     bannerColor:     "#f59e0b",
     errorType:       "CUSTOM:VALIDATION_ERROR",
@@ -1032,14 +810,13 @@ var data = {
     key:             (validationErrors map (p) -> safe(p.partnerId as String, "UNKNOWN")) joinBy ", ",
     timestamp:       now() as String {format: "yyyy-MM-dd HH:mm:ss"}
 }
-
+ 
 var template =
     readUrl("classpath://templates/error-template.html", "text/plain")
 ---
 template replace /\$\{(\w+)\}/ with ((m) ->
     (data[m[1]] as String) default ""
-)
-]]></ee:set-payload>
+)]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="f2c8b03a-b7db-436e-82b5-8aeb49ded849" name="send-email-subflow"/>

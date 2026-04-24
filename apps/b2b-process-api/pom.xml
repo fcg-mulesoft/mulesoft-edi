@@ -70,7 +70,7 @@
 				<configuration>
 					<coverage>
 						<ignoreFiles>
-							<ignoreFile>common/common-error-handler.xml</ignoreFile>
+							<ignoreFile>implementation/notification/apm-error-report-sub-flow.xml</ignoreFile>
 						</ignoreFiles>
 					</coverage>
 				</configuration>
