@@ -61,7 +61,7 @@ output application/json
 					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
 output application/json
 ---
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type"]]></ee:set-variable>
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type"]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ad0d75c3-34ff-4d21-bd60-1d62a1add1dc" name="send-email-subflow" />
@@ -79,7 +79,7 @@ output application/json
 					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
 output application/json
 ---
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type"]]></ee:set-variable>
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type"]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="dd485f70-15d0-4237-afdf-bfd5683f636a" name="send-email-subflow" />
@@ -144,7 +144,7 @@ var explictHandlerCodes = p('explicitcodes')
 					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
 output application/json
 ---
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type"]]></ee:set-variable>
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type"]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ab4ad35a-a573-43a7-a4fe-8d3794087d72" name="send-email-subflow" />
