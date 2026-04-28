@@ -7,7 +7,7 @@ fun safe(v, d="N/A") =
 
 var errResp     = vars.errorResponse     default {}
 var sysInfo     = vars.systemInformation default {}
-var integration = vars.integration       default {}
+var integration = vars.integration  default vars.initialVariables     default {}
 
 var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
 var cdmHeader = cdm.header default {}
@@ -244,28 +244,28 @@ var errorResolution =
 
     else if (errorCategory == "CONNECTIVITY")
         do {
-            var base  = "The integration was unable to establish a connection with " ++ targetSystem ++ "."
+            var base  = "The integration was unable to establish a connection with " ++ "P21" ++ "."
             var steps =
                 if (categoryId == "RETRY_EXHAUSTED")
-                    "\n  1. The system attempted to reach " ++ targetSystem ++ " multiple times but all attempts failed."
-                    ++ "\n  2. " ++ targetSystem ++ " may be down or unreachable — check whether it is currently available."
+                    "\n  1. The system attempted to reach " ++ "P21" ++ " multiple times but all attempts failed."
+                    ++ "\n  2. " ++ "P21" ++ " may be down or unreachable — check whether it is currently available."
                     ++ "\n  3. Do not retry manually — contact the IT support team to report the outage."
-                    ++ "\n  4. The support team will investigate and reprocess the transaction once " ++ targetSystem ++ " is back online."
+                    ++ "\n  4. The support team will investigate and reprocess the transaction once " ++ "P21" ++ " is back online."
                 else if (categoryId == "TIMEOUT" or categoryId == "CONNECTION_TIMEOUT" or categoryId == "GATEWAY_TIMEOUT")
-                    "\n  1. " ++ targetSystem ++ " did not respond in time — it may be under heavy load or temporarily unavailable."
+                    "\n  1. " ++ "P21" ++ " did not respond in time — it may be under heavy load or temporarily unavailable."
                     ++ "\n  2. Wait a few minutes and try resubmitting the transaction."
                     ++ "\n  3. If the timeout keeps happening, contact the IT support team — do not keep retrying manually."
                 else if (categoryId == "SSL_ERROR")
-                    "\n  1. A security certificate issue prevented the connection to " ++ targetSystem ++ "."
+                    "\n  1. A security certificate issue prevented the connection to " ++ "P21" ++ "."
                     ++ "\n  2. This is not a data issue — contact the IT support team immediately with the Correlation ID."
                     ++ "\n  3. Do not retry until the certificate issue has been confirmed as resolved."
                 else if (categoryId == "SERVICE_UNAVAILABLE")
-                    "\n  1. " ++ targetSystem ++ " is currently unavailable — it may be undergoing maintenance."
-                    ++ "\n  2. Wait until " ++ targetSystem ++ " is confirmed back online before resubmitting."
+                    "\n  1. " ++ "P21" ++ " is currently unavailable — it may be undergoing maintenance."
+                    ++ "\n  2. Wait until " ++ "P21" ++ " is confirmed back online before resubmitting."
                     ++ "\n  3. Contact the support team if the service remains unavailable for more than 30 minutes."
                 else
-                    "\n  1. Check whether " ++ targetSystem ++ " is currently available and accessible."
-                    ++ "\n  2. If " ++ targetSystem ++ " is under maintenance or experiencing an outage, wait until it is back online."
+                    "\n  1. Check whether " ++ "P21" ++ " is currently available and accessible."
+                    ++ "\n  2. If " ++ "P21" ++ " is under maintenance or experiencing an outage, wait until it is back online."
                     ++ "\n  3. Try resubmitting the transaction after a few minutes."
                     ++ "\n  4. If the problem persists, contact the IT support team with the Correlation ID."
             ---

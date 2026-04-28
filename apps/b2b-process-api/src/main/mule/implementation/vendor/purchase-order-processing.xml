@@ -417,7 +417,7 @@ fun safe(v, d="N/A") =
 
 var errResp     = vars.errorResponse     default {}
 var sysInfo     = vars.systemInformation default {}
-var integration = vars.integration       default {}
+var integration = vars.integration default vars.initialVariables default {}
 
 var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
 var cdmHeader = cdm.header default {}
