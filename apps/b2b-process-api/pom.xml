@@ -110,13 +110,6 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
-			<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
-			<artifactId>b2b-process-api-spec</artifactId>
-			<version>1.0.3</version>
-			<classifier>raml</classifier>
-			<type>zip</type>
-		</dependency>
-		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-json-module</artifactId>
 			<version>2.5.5</version>
@@ -147,6 +140,13 @@
 			<artifactId>assertions</artifactId>
 			<version>1.2.1</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
+			<artifactId>b2b-process-api-spec</artifactId>
+			<version>1.0.4</version>
+			<classifier>raml</classifier>
+			<type>zip</type>
 		</dependency>
 	</dependencies>
 
