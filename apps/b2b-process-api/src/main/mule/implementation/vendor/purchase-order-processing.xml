@@ -301,7 +301,29 @@ output application/json
 						<logger level="INFO" doc:name="Logger DEBUG:  PO Status" doc:id="194628f8-dbd5-4291-8353-19f5fc40b0a1" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process completed",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	poSummary: payload&#10;}]'/>
 		<ee:transform doc:name="Prepare payload for transaction API" doc:id="060f9eac-4190-48e6-93f5-d92fcb735172" >
 			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="erroredPOs" ><![CDATA[%dw 2.0
+output application/json
+---
+entriesOf(
+  payload
+    filter ($.payload.status == "FAILED")
+    groupBy ($.payload.partnerId)
+)
+map (entry) -> {
+  partnerId: entry.key,
+  errors: entry.value map (item) -> {
+    poNo: item.payload.poNumber,
+    transmissionIdApm: item.payload.transmissionId default "APM request failed for this PO",
+    "Error Details": (
+      item.payload.error 
+        scan /\$\.B2BMessage\.Header\.partyInformation\[1\]\.(\w+): null found, string expected/
+    ) map ($[1] ++ " is null")
+  }
+}
+]]></ee:set-variable>
+				<ee:set-variable variableName="transactionRequestPayload" ><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -339,28 +361,11 @@ output application/json
       }
     ]
   }
-}]]></ee:set-payload>
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="erroredPOs" ><![CDATA[%dw 2.0
+}]]></ee:set-variable>
+				<ee:set-variable variableName="parllelForEachResponse" ><![CDATA[%dw 2.0
 output application/json
 ---
-entriesOf(
-  payload
-    filter ($.payload.status == "FAILED")
-    groupBy ($.payload.partnerId)
-)
-map (entry) -> {
-  partnerId: entry.key,
-  errors: entry.value map (item) -> {
-    poNo: item.payload.poNumber,
-    "Error Details": (
-      item.payload.error 
-        scan /\$\.B2BMessage\.Header\.partyInformation\[1\]\.(\w+): null found, string expected/
-    ) map ($[1] ++ " is null")
-  }
-}
-]]></ee:set-variable>
+payload]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="var: httpOperation-post Transaction api" doc:id="2befd336-0a59-43f8-9148-d9d8d5594758">
@@ -386,7 +391,7 @@ import toBase64 from dw::core::Binaries
 		    },
     "uriParams": {
     },
-    "body":payload,
+    "body":vars.transactionRequestPayload,
     "untilsuccessful":{
     	"maxRetries": "3",
     	"interval": "6000"
@@ -1106,7 +1111,7 @@ var data = {
         ++ "\n  5. If the address fields are intentionally blank, confirm with the business team whether a default address should be applied."
         ++ "\n\n  Do NOT resubmit until all required address fields are populated in P21.",
     errorDescription: validationHtml,
-    transmissionId:  uuid(),
+    transmissionId:  payload.errors[0].transmissionIdApm,
     keyLabel:        "Partner IDs",
     key:             (validationErrors map (p) -> safe(p.partnerId as String, "UNKNOWN")) joinBy ", ",
     timestamp:       now() as String {format: "yyyy-MM-dd HH:mm:ss"}
