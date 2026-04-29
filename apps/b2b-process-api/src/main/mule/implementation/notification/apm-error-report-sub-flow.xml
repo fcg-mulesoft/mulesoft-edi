@@ -258,7 +258,7 @@ vars.messageErrors default [] map (msg) -> {
 		</ee:transform>
 		<choice doc:name="Errors exist ?" doc:id="f4e462f6-d3f6-42d9-a8ba-b537d4249e8d">
 			<when expression="#[!isEmpty(vars.transmissionData) or !isEmpty(vars.messagesData)]">
-				<ee:transform doc:name="Email Payload" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
+				<ee:transform doc:name="Email Payload, var : subject" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 import * from dw::core::Strings
@@ -378,6 +378,10 @@ template replace /\$\{(\w+)\}/ with ((m) ->
 )]]></ee:set-payload>
 			</ee:message>
 					<ee:variables >
+						<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
+output application/json
+---
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ "B2B Alert Notification"]]></ee:set-variable>
 					</ee:variables>
 		</ee:transform>
 				<flow-ref doc:name="Flow Reference send-email-subflow" doc:id="b791b438-4cbf-4136-9bc3-f153dc6f5a7f" name="send-email-subflow"/>

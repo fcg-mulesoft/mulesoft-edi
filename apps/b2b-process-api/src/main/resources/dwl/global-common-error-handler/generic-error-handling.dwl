@@ -7,33 +7,50 @@ fun safe(v, d="N/A") =
 
 var errResp     = vars.errorResponse     default {}
 var sysInfo     = vars.systemInformation default {}
-var integration = vars.integration       default {}
+var integration = vars.integration  default vars.initialVariables     default {}
 
 var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
 var cdmHeader = cdm.header default {}
 
+var rawErrNs  = error.errorType.namespace   default "UNKNOWN"
+var rawErrId  = error.errorType.identifier  default "ERROR"
+var rawSup    = error.suppressedErrors[0]   default null
+var rawSupId  = rawSup.errorType.identifier default ""
+var rawSupNs  = rawSup.errorType.namespace  default ""
+
 var isP21Failed =
-    (error.errorType.namespace  default "") == "CUSTOM" and
-    (error.errorType.identifier default "") == "P21_FAILED"
+    rawErrNs == "CUSTOM" and rawErrId == "P21_FAILED"
 
-var isValidationFlow = vars.isValid != null and not isP21Failed
+var isRetryExhausted =
+    rawErrId == "RETRY_EXHAUSTED"
+    or rawSupId == "RETRY_EXHAUSTED"
+    or rawErrId == "TIMEOUT"
+    or rawErrId == "GATEWAY_TIMEOUT"
+    or rawErrId == "CONNECTION_TIMEOUT"
+    or rawSupId == "TIMEOUT"
+    or rawSupId == "GATEWAY_TIMEOUT"
 
-var errNs   = if (isValidationFlow) "CUSTOM"           else (error.errorType.namespace  default "UNKNOWN")
-var errId   = if (isValidationFlow) "VALIDATION_ERROR" else (error.errorType.identifier default "ERROR")
+var isValidationFlow =
+    vars.isValid != null
+    and not isP21Failed
+    and not isRetryExhausted
+
+var errNs   = if (isValidationFlow) "CUSTOM"           else rawErrNs
+var errId   = if (isValidationFlow) "VALIDATION_ERROR" else rawErrId
 var errDesc = if (isValidationFlow) "Validation failed while processing transaction."
               else (error.detailedDescription default error.description default "Unexpected error")
 
-var suppressed = if (isValidationFlow) null else (error.suppressedErrors[0] default null)
-var suppNs     = suppressed.errorType.namespace  default ""
-var suppId     = suppressed.errorType.identifier default ""
+var suppressed = if (isValidationFlow) null else (rawSup)
+var suppNs     = if (isValidationFlow) "" else rawSupNs
+var suppId     = if (isValidationFlow) "" else rawSupId
 
 var sourceSystem =
     if (isValidationFlow) "APM"
-    else safe(integration.source, "UNKNOWN")
+    else safe(integration.source, "P21")
 
 var targetSystem =
     if (isValidationFlow) "P21"
-    else safe(integration.target, "UNKNOWN")
+    else safe(integration.target, "APM")
 
 var flowDirection =
     if (lower(sourceSystem) == "apm") "INBOUND"
@@ -58,7 +75,6 @@ var errorCategory =
         "VALIDATION"
     else if (categoryNs == "CUSTOM" and categoryId == "P21_FAILED")
         "P21_ERROR"
-    // BAD_REQUEST checked BEFORE APIKIT so APIKIT:BAD_REQUEST → VALIDATION not APIKIT
     else if (categoryId == "BAD_REQUEST"             or categoryId == "SCHEMA_NOT_HONOURED"
           or categoryId == "INVALID_INPUT"           or categoryId == "UNRECOGNIZED_FIELD"
           or categoryId == "MISSING_REQUIRED_FIELD"  or categoryId == "PARSE_ERROR"
@@ -118,14 +134,14 @@ var bannerColor =
 
 var ve = vars.isValid.validationErrors default {}
 
-var msgPoNumber = safe(cdmHeader.poNumber as String,
-                    safe(vars.initialPayload[0].b2bMessage.header.poNumber as String, "N/A"))
+var msgPoNumber = safe(cdmHeader.poNumber default "" as String,
+                    safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, "N/A"))
 
 var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as String
 
 var msgVendorId =
     if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-    else senderKey
+    else "N/A"
 
 var itemRows =
     flatten(
@@ -228,27 +244,28 @@ var errorResolution =
 
     else if (errorCategory == "CONNECTIVITY")
         do {
-            var base  = "The integration was unable to establish a connection with " ++ targetSystem ++ "."
+            var base  = "The integration was unable to establish a connection with " ++ "P21" ++ "."
             var steps =
-                if (categoryId == "TIMEOUT" or categoryId == "CONNECTION_TIMEOUT" or categoryId == "GATEWAY_TIMEOUT")
-                    "\n  1. " ++ targetSystem ++ " did not respond in time — it may be under heavy load or temporarily unavailable."
+                if (categoryId == "RETRY_EXHAUSTED")
+                    "\n  1. The system attempted to reach " ++ "P21" ++ " multiple times but all attempts failed."
+                    ++ "\n  2. " ++ "P21" ++ " may be down or unreachable — check whether it is currently available."
+                    ++ "\n  3. Do not retry manually — contact the IT support team to report the outage."
+                    ++ "\n  4. The support team will investigate and reprocess the transaction once " ++ "P21" ++ " is back online."
+                else if (categoryId == "TIMEOUT" or categoryId == "CONNECTION_TIMEOUT" or categoryId == "GATEWAY_TIMEOUT")
+                    "\n  1. " ++ "P21" ++ " did not respond in time — it may be under heavy load or temporarily unavailable."
                     ++ "\n  2. Wait a few minutes and try resubmitting the transaction."
                     ++ "\n  3. If the timeout keeps happening, contact the IT support team — do not keep retrying manually."
                 else if (categoryId == "SSL_ERROR")
-                    "\n  1. A security certificate issue prevented the connection to " ++ targetSystem ++ "."
+                    "\n  1. A security certificate issue prevented the connection to " ++ "P21" ++ "."
                     ++ "\n  2. This is not a data issue — contact the IT support team immediately with the Correlation ID."
                     ++ "\n  3. Do not retry until the certificate issue has been confirmed as resolved."
-                else if (categoryId == "RETRY_EXHAUSTED")
-                    "\n  1. The system tried multiple times to reach " ++ targetSystem ++ " but all attempts failed."
-                    ++ "\n  2. " ++ targetSystem ++ " may be down — check whether it is currently available."
-                    ++ "\n  3. Contact the IT or support team to report the outage and request manual reprocessing."
                 else if (categoryId == "SERVICE_UNAVAILABLE")
-                    "\n  1. " ++ targetSystem ++ " is currently unavailable — it may be undergoing maintenance."
-                    ++ "\n  2. Wait until " ++ targetSystem ++ " is confirmed back online before resubmitting."
+                    "\n  1. " ++ "P21" ++ " is currently unavailable — it may be undergoing maintenance."
+                    ++ "\n  2. Wait until " ++ "P21" ++ " is confirmed back online before resubmitting."
                     ++ "\n  3. Contact the support team if the service remains unavailable for more than 30 minutes."
                 else
-                    "\n  1. Check whether " ++ targetSystem ++ " is currently available and accessible."
-                    ++ "\n  2. If " ++ targetSystem ++ " is under maintenance or experiencing an outage, wait until it is back online."
+                    "\n  1. Check whether " ++ "P21" ++ " is currently available and accessible."
+                    ++ "\n  2. If " ++ "P21" ++ " is under maintenance or experiencing an outage, wait until it is back online."
                     ++ "\n  3. Try resubmitting the transaction after a few minutes."
                     ++ "\n  4. If the problem persists, contact the IT support team with the Correlation ID."
             ---
@@ -301,8 +318,7 @@ var errorResolution =
                 else
                     "\n  1. Review the error message below for details on what went wrong."
                     ++ "\n  2. Check whether the record or order being referenced still exists in " ++ targetSystem ++ "."
-                    ++ "\n  3. If the record was recently deleted or changed, update the request accordingly."
-                    ++ "\n  4. Contact the support team with the Correlation ID if the issue is unclear."
+                    ++ "\n  3. Contact the support team with the Correlation ID if the issue is unclear."
             ---
             base ++ steps
         }
@@ -367,10 +383,9 @@ var data = {
                          safe(vars.systemInformation."integration-type",
                              safe(cdmHeader.documentType, "API"))),
     environment:     upper(safe(sysInfo.env, p('mule.env'))),
-    flowName:        safe(vars.flowName, "Global Error Handler"),
     route:           sourceSystem ++ " → Mule → " ++ targetSystem,
     partnerName:     if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-                     else sourceSystem,
+                     else "N/A",
     errorTitle:      errorTitle,
     bannerColor:     bannerColor,
     errorType:       errorTypeValue,
@@ -384,13 +399,13 @@ var data = {
         else if (errorCategory == "P21_ERROR")
             "P21 rejected the transaction for PO " ++ msgPoNumber
             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
-            ++ sourceSystem ++ " → " ++ targetSystem ++ " route."
+            ++ sourceSystem ++ " → " ++ "P21" ++ " route."
         else if (errorCategory == "CONNECTIVITY")
-            "Failed to reach " ++ targetSystem ++ " while processing PO "
+            "Failed to reach " ++ "P21" ++ " while processing PO "
             ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
             ++ "Error: " ++ categoryId ++ "."
         else if (errorCategory == "SECURITY")
-            "Access denied while connecting to " ++ targetSystem
+            "Access denied while connecting to " ++ "P21"
             ++ " for PO " ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
             ++ "Reason: " ++ categoryId ++ "."
         else if (errorCategory == "VALIDATION")
@@ -400,10 +415,10 @@ var data = {
         else if (errorCategory == "TRANSFORMATION")
             "Data mapping failed while processing PO " ++ msgPoNumber
             ++ " (Vendor: " ++ msgVendorId ++ ") on the "
-            ++ sourceSystem ++ " → " ++ targetSystem ++ " route. "
+            ++ sourceSystem ++ " → " ++ "P21" ++ " route. "
             ++ "Reason: " ++ categoryId ++ "."
         else if (errorCategory == "CLIENT_ERROR")
-            targetSystem ++ " returned an error for PO " ++ msgPoNumber
+                    "P21" ++ " returned an error for PO " ++ msgPoNumber
             ++ " (Vendor: " ++ msgVendorId ++ "). "
             ++ "Reason: " ++ categoryId ++ "."
         else if (errorCategory == "APIKIT")
@@ -423,8 +438,8 @@ var data = {
     errorResolution:  errorResolution,
     errorDescription: errorDescFull,
     transmissionId:   if (isValidationFlow) safe(cdmHeader.transmissionId)
-                      else (vars.initialPayload[0].b2bMessage.header.transmissionId default corrId),
-    keyLabel:         if (isValidationFlow) "PO Number" else "Correlation ID",
+                      else (vars.initialPayload[0].b2bMessage.header.transmissionId default "N/A"),
+    keyLabel:         if (isValidationFlow) "PO Number" else "N/A",
     key:              if (isValidationFlow) safe(cdmHeader.poNumber) else corrId,
     timestamp:        errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})
 }
