@@ -28,10 +28,16 @@ anypoint:
    method: "GET"
    
 # APM Request Properties
-
 apm:
   request:
     host: "b2b-inbound-http-9yzw-zrx5fd.y7366p.usa-e1.cloudhub.io"
     port: "443"
     basePath: "/api"
     path: "/out-src-purchase-order"
+   
+# Azure Configuration
+azure:
+ accountname: "stfcgmulesoftteus2"
+ container: "test"
+ foldername: "/transition_payload"     
+    
