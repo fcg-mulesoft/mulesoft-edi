@@ -60,8 +60,12 @@ output application/json
 				<ee:variables >
 					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
 output application/json
+var senderKey = vars.initialPayload[0].b2bMessage.header.senderId as String
+var msgVendorId =
+    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
+    else " "
 ---
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type"]]></ee:set-variable>
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ vars.purchaseOrderData.value.company_no[0]]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ad0d75c3-34ff-4d21-bd60-1d62a1add1dc" name="send-email-subflow" />
@@ -107,8 +111,12 @@ output application/json
 				<ee:variables >
 					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
 output application/json
+var senderKey = vars.initialPayload[0].b2bMessage.header.senderId as String
+var msgVendorId =
+    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
+    else " "
 ---
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type"]]></ee:set-variable>
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ vars.purchaseOrderData.value.company_no[0]]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="dd485f70-15d0-4237-afdf-bfd5683f636a" name="send-email-subflow" />
@@ -173,8 +181,12 @@ var explictHandlerCodes = p('explicitcodes')
 				<ee:variables >
 					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
 output application/json
+var senderKey = vars.initialPayload[0].b2bMessage.header.senderId as String
+var msgVendorId =
+    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
+    else " "
 ---
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type"]]></ee:set-variable>
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ vars.purchaseOrderData.value.company_no[0]]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ab4ad35a-a573-43a7-a4fe-8d3794087d72" name="send-email-subflow" />

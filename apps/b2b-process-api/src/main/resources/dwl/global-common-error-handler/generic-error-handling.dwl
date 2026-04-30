@@ -141,7 +141,7 @@ var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as Str
 
 var msgVendorId =
     if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-    else "N/A"
+    else " "
 
 var itemRows =
     flatten(
@@ -209,7 +209,7 @@ var errorResolution =
             ++ "\n\n  If you are unsure which values are incorrect, contact your EDI coordinator for guidance."
         else if (categoryId == "BAD_REQUEST" or categoryId == "SCHEMA_NOT_HONOURED")
             "The data submitted did not match the expected format or structure."
-            ++ "\n  1. This IS a data issue — review the payload sent from " ++ sourceSystem ++ " for incorrect values, wrong data types, or fields outside allowed values."
+            ++ "\n  1. This is a data issue — review the payload sent from " ++ sourceSystem ++ " for incorrect values, wrong data types, or fields outside allowed values."
             ++ "\n  2. Compare the submitted data against the API schema to identify non-conforming fields."
             ++ "\n  3. Correct the identified fields in " ++ sourceSystem ++ " and resubmit."
             ++ "\n  4. Contact the integration support team with the Correlation ID if the schema is unclear."
@@ -439,8 +439,8 @@ var data = {
     errorDescription: errorDescFull,
     transmissionId:   if (isValidationFlow) safe(cdmHeader.transmissionId)
                       else (vars.initialPayload[0].b2bMessage.header.transmissionId default "N/A"),
-    keyLabel:         if (isValidationFlow) "PO Number" else "N/A",
-    key:              if (isValidationFlow) safe(cdmHeader.poNumber) else corrId,
+    keyLabel:        "Correlation ID",
+    key:             correlationId default uuid(),
     timestamp:        errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})
 }
 
