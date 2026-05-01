@@ -31,7 +31,7 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
         </email:smtp-connection>
     </email:smtp-config>
 	<os:object-store name="Object_store1" doc:name="Object store" doc:id="f2a38677-1eeb-47c2-8c6b-87a11cb44897" entryTtl="30" entryTtlUnit="HOURS" expirationInterval="29" expirationIntervalUnit="HOURS" persistent="false"/>
-	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="77b514bd-ac85-47f2-b5b8-7873018dcbb2" flowRef="b2b-process-api-spec-main" />
+<!-- 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="77b514bd-ac85-47f2-b5b8-7873018dcbb2" flowRef="b2b-process-api-spec-main" /> -->
 	<azure-storage:config name="Azure_Storage_Config" doc:name="Azure Storage Config" doc:id="62dd0a7a-502d-4fe5-8e4f-eeda6573ac2b" >
 		<azure-storage:sas-token-azure-connection accountName="${azure.accountname}" sasToken="${secure::azure.sastoken}"/>
 	</azure-storage:config>

@@ -71,6 +71,7 @@
 					<coverage>
 						<ignoreFiles>
 							<ignoreFile>implementation/notification/apm-error-report-sub-flow.xml</ignoreFile>
+							<ignoreFile>common/notification/apm-error-report-sub-flow.xml</ignoreFile>
 						</ignoreFiles>
 					</coverage>
 				</configuration>

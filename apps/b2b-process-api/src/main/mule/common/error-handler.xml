@@ -65,7 +65,7 @@ var msgVendorId =
     if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
     else " "
 ---
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ vars.purchaseOrderData.value.company_no[0]]]></ee:set-variable>
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ (vars.purchaseOrderData.value.company_no[0] default "N/A")]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ad0d75c3-34ff-4d21-bd60-1d62a1add1dc" name="send-email-subflow" />
@@ -116,7 +116,7 @@ var msgVendorId =
     if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
     else " "
 ---
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ vars.purchaseOrderData.value.company_no[0]]]></ee:set-variable>
+"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ (vars.purchaseOrderData.value.company_no[0] default "N/A")]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="dd485f70-15d0-4237-afdf-bfd5683f636a" name="send-email-subflow" />
