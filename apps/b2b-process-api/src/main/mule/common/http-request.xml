@@ -10,7 +10,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		doc:id="770cbece-0c38-467e-82ec-ed9d46c61331">
 		<logger level="INFO" doc:name="LOG INFO : START"
 			doc:id="208b755d-28d6-482c-96f6-e4f8c588ccfd"
-			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
+			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	"Message" : "Initiating request to endpoint: " ++ vars.httpOperation.basePath ++ vars.httpOperation.path&#10; &#10;}]' />
 		<until-successful
 			maxRetries="#[vars.httpOperation.untilsuccessful.maxRetries]"
 			doc:name="Until Successful"
@@ -28,6 +28,6 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		</until-successful>
 		<logger level="INFO" doc:name="LOG INFO : END"
 			doc:id="fab713a1-b95a-477a-81df-e54430d91e55"
-			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
+			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	"Message" : "Fetched response from endpoint: " ++ vars.httpOperation.basePath ++ vars.httpOperation.path&#10; &#10;}]' />
 	</sub-flow>
 </mule>

@@ -12,15 +12,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 					<ee:message>
 					</ee:message>
 					<ee:variables>
-						<ee:set-variable variableName="interval"><![CDATA[%dw 2.0
-output application/json
-var toTime = now() as DateTime
-var fromTime = payload as DateTime
----
-{
-	fromTime: (fromTime  as String {format: "yyyy-MM-dd"}) ++ "T" ++ (fromTime as String {format: "HH:mm:ssxxx"} as String),
-	toTime: (toTime  as String {format: "yyyy-MM-dd"}) ++ "T" ++ (toTime as String {format: "HH:mm:ssxxx"} as String)
-}]]></ee:set-variable>
+				<ee:set-variable resource="dwl/apm-error-report-sub-flow/interval.dwl" variableName="interval" />
 					</ee:variables>
 				</ee:transform>
 		<ee:transform doc:name="var : httpOperation" doc:id="4574cb91-6c74-45b3-836c-5d84d3247bee">
