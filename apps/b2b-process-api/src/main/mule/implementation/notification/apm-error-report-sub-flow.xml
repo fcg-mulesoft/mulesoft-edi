@@ -6,48 +6,20 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
-	<sub-flow name="apm-error-report-sub-flow" doc:id="f65fca5c-7713-490f-a781-9677c7879965" >
+	<sub-flow name="apm-error-report-subflow" doc:id="f65fca5c-7713-490f-a781-9677c7879965" >
 		<logger level="INFO" doc:name="START" doc:id="662dd99e-73ec-48f7-abfc-aff38d95b5b2" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]"/>
 		<ee:transform doc:name="var : interval" doc:id="19fb1aed-10df-429e-89f9-8fdab781ec51">
 					<ee:message>
 					</ee:message>
 					<ee:variables>
-				<ee:set-variable resource="dwl/apm-error-report-sub-flow/interval.dwl" variableName="interval" />
+				<ee:set-variable resource="dwl/apm-error-report-subflow/v_interval.dwl" variableName="interval" />
 					</ee:variables>
 				</ee:transform>
 		<ee:transform doc:name="var : httpOperation" doc:id="4574cb91-6c74-45b3-836c-5d84d3247bee">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
-				<ee:set-variable variableName="httpOperation" ><![CDATA[
-%dw 2.0
-output application/json
----
-{
-	"method": p('anypoint.apm.method'),
-	"host" : "anypoint.mulesoft.com",
-	"port" : "443",
-	"basePath":"/partnermanager" ,
-	"path":"/tracking/api/v1/organizations/" ++ p('anypoint.apm.orgid') ++"/environments/" ++ p('anypoint.apm.envid') ++"/activity/transmissions",
-//	"url": p('anypoint.apm.url-prefix') ++ "/tracking/api/v1/organizations/" ++ p('anypoint.apm.orgid') ++"/environments/" ++ p('anypoint.apm.envid') ++"/activity/transmissions",
-	headers: {
-		"Content-Type": "application/x-www-form-urlencoded",
-		"Authorization": "Bearer " ++ vars.accessToken
-	},
-	queryParams: {
-		"dateReceivedTo": vars.interval.toTime,
-		"expandCustomAttributes": true,
-		"dateReceivedFrom": vars.interval.fromTime
-	},
-	"untilsuccessful": {
-		"maxRetries": "5",
-		"interval": "5000"
-	}
-}
-
-
-
-]]></ee:set-variable>
+				<ee:set-variable resource="dwl/apm-error-report-subflow/v_httpOperation_transmissions.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="common-request-sub-flow" doc:id="2edb6680-95af-4c03-8d4d-755810d5f83f" name="common-http-request-subflow" target="totalPages" targetValue="#[attributes.headers.'x-totalpages']"/>
@@ -58,36 +30,7 @@ output application/json
 				<ee:message>
 				</ee:message>
 				<ee:variables>
-							<ee:set-variable variableName="httpOperation" ><![CDATA[
-%dw 2.0
-output application/json
----
-{
-
-	"method": p('anypoint.apm.method'),
-	"host": "anypoint.mulesoft.com",
-	"port": "443",
-	"basePath": "/partnermanager",
-	"path": "/tracking/api/v1/organizations/" ++ p('anypoint.apm.orgid') ++"/environments/" ++ p('anypoint.apm.envid') ++"/activity/transmissions",
-	headers: {
-		"Content-Type": "application/x-www-form-urlencoded",
-		"Authorization": "Bearer " ++ vars.accessToken
-	},
-	queryParams: {
-		"dateReceivedTo": vars.interval.toTime,
-		"expandCustomAttributes": true,
-		"status": "ERRORED",
-		"dateReceivedFrom": vars.interval.fromTime
-	},
-	"untilsuccessful": {
-		"maxRetries": "5",
-		"interval": "5000"
-	}
-}
-
-
-
-]]></ee:set-variable>
+							<ee:set-variable resource="dwl/apm-error-report-subflow/v_httpOperation_transmissions_paged.dwl" variableName="httpOperation" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="common-http-request-subflow" doc:id="c6c9122e-3013-4d85-9823-3765b42ed9c0" name="common-http-request-subflow" />
@@ -95,10 +38,7 @@ output application/json
 				<ee:message>
 				</ee:message>
 				<ee:variables>
-					<ee:set-variable variableName="transmissionError"><![CDATA[%dw 2.0
-output application/json
----
-vars.transmissionError default [] ++ payload]]></ee:set-variable>
+							<ee:set-variable resource="dwl/apm-error-report-subflow/v_transmissionError.dwl" variableName="transmissionError" />
 				</ee:variables>
 			</ee:transform>
 		</foreach>
@@ -111,34 +51,7 @@ vars.transmissionError default [] ++ payload]]></ee:set-variable>
 			<ee:message>
 			</ee:message>
 			<ee:variables>
-				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
-output application/json
----
-{
-	"method": p('anypoint.apm.method'),
-	"host": "anypoint.mulesoft.com",
-	"port": "443",
-	"basePath": "/partnermanager",
-	"path": "/tracking/api/v1/organizations/" ++ p('anypoint.apm.orgid') ++"/environments/" ++ p('anypoint.apm.envid') ++"/activity/messages",
-	headers: {
-		"Content-Type": "application/x-www-form-urlencoded",
-		"Authorization": "Bearer " ++ vars.accessToken
-	},
-	queryParams: {
-		"dateReceivedTo": vars.interval.toTime,
-		"expandCustomAttributes": true,
-		"status": "ERRORED",
-		"dateReceivedFrom": vars.interval.fromTime
-	},
-	"untilsuccessful": {
-		"maxRetries": "5",
-		"interval": "5000"
-	}
-}
-
-
-
-]]></ee:set-variable>
+				<ee:set-variable resource="dwl/apm-error-report-subflow/v_httpOperation_messages.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="common-http-request-subflow" doc:id="e57ce815-faf1-4be1-9a36-5f1daf1a05f7" name="common-http-request-subflow" target="totalPages" targetValue="#[attributes.headers.'x-totalpages']"/>
@@ -149,34 +62,7 @@ output application/json
 			<ee:message>
 			</ee:message>
 						<ee:variables >
-							<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
-output application/json
----
-{
-	"method": p('anypoint.apm.method'),
-	"host": "anypoint.mulesoft.com",
-	"port": "443",
-	"basePath": "/partnermanager",
-	"path": "/tracking/api/v1/organizations/" ++ p('anypoint.apm.orgid') ++"/environments/" ++ p('anypoint.apm.envid') ++"/activity/messages",
-	headers: {
-		"Content-Type": "application/x-www-form-urlencoded",
-		"Authorization": "Bearer " ++ vars.accessToken
-	},
-	queryParams: {
-		"dateReceivedTo": vars.interval.toTime,
-		"expandCustomAttributes": true,
-		"status": "ERRORED",
-		"dateReceivedFrom": vars.interval.fromTime
-	},
-	"untilsuccessful": {
-		"maxRetries": "5",
-		"interval": "5000"
-	}
-}
-
-
-
-]]></ee:set-variable>
+							<ee:set-variable resource="dwl/apm-error-report-subflow/v_httpOperation_messages_paged.dwl" variableName="httpOperation" />
 						</ee:variables>
 		</ee:transform>
 			<flow-ref doc:name="common-http-request-subflow" doc:id="7daae07b-70ce-41d2-b6a8-2e572e0a2865" name="common-http-request-subflow" />
@@ -184,10 +70,7 @@ output application/json
 				<ee:message>
 				</ee:message>
 				<ee:variables>
-					<ee:set-variable variableName="messageErrors"><![CDATA[%dw 2.0
-output application/json
----
-vars.messageErrors default [] ++ payload]]></ee:set-variable>
+							<ee:set-variable resource="dwl/apm-error-report-subflow/v_messageErrors.dwl" variableName="messageErrors" />
 				</ee:variables>
 			</ee:transform>
 		</foreach>
@@ -200,180 +83,25 @@ vars.messageErrors default [] ++ payload]]></ee:set-variable>
 			<ee:message>
 			</ee:message>
 			<ee:variables>
-				<ee:set-variable variableName="effectiveTransmissions"><![CDATA[%dw 2.0
-output application/json
----
-vars.transmissionError filter ((t) -> not (vars.messageErrors.transmissionId contains t.id))
-]]></ee:set-variable>
+				<ee:set-variable resource="dwl/apm-error-report-subflow/v_effectiveTransmissions.dwl" variableName="effectiveTransmissions" />
 			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="CDM" doc:id="de35fe2a-fc85-4f66-968c-486384a6b093">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
-				<ee:set-variable variableName="transmissionData"><![CDATA[%dw 2.0
-import substring from dw::core::Strings
-output application/json
----
-
-vars.effectiveTransmissions default [] map (transmission) -> {
-    direction: transmission.direction default "",
-    partnerFrom: transmission.partnerFromIdentifierValue default "",
-    partnerTo: transmission.partnerToIdentifierValue default "",
-    businessKey: if ((transmission.businessDocumentKey default null) != null) 
-                 (transmission.businessDocumentKey default "") 
-              else 
-                 (transmission.businessDocumentId default ""),
-    errorMessage: if (sizeOf(transmission.transmissionSteps) > 0) 
-                 transmission.transmissionSteps[-1].errorMessage 
-               else ""
-} ]]></ee:set-variable>
-				<ee:set-variable variableName="messagesData"><![CDATA[%dw 2.0
-output application/json
----
-vars.messageErrors default [] map (msg) -> {
-
-    messageType: msg.messageType,
-    direction: msg.direction,
-    partnerFrom: msg.partnerFrom.name,
-    partnerTo: msg.partnerTo.name,
-    businessKey: if (sizeOf(msg.customAttributes) > 0) 
-                  (msg.customAttributes[0].alias default "") 
-                  ++ "-" 
-                  ++ (msg.customAttributes[0].values[0] default "")
-              else 
-                   (msg.businessDocumentKey default "")
-}
-
-]]></ee:set-variable>
+				<ee:set-variable resource="dwl/apm-error-report-subflow/v_transmissionData.dwl" variableName="transmissionData" />
+				<ee:set-variable resource="dwl/apm-error-report-subflow/v_messagesData.dwl" variableName="messagesData" />
 			</ee:variables>
 		</ee:transform>
 		<choice doc:name="Errors exist ?" doc:id="f4e462f6-d3f6-42d9-a8ba-b537d4249e8d">
 			<when expression="#[!isEmpty(vars.transmissionData) or !isEmpty(vars.messagesData)]">
 				<ee:transform doc:name="Email Payload, var : subject" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
 			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-import * from dw::core::Strings
-output text/plain
-
-fun safe(v, d="N/A") =
-    if (v == null or (v is String and trim(v) == "")) d else v
-
-var transmissionData = vars.transmissionData default []
-var messageData      = vars.messageData      default []
-
-var totalTransmissions = sizeOf(transmissionData)
-var totalMessages      = sizeOf(messageData)
-
-var transmissionRows =
-    transmissionData map (t) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(t.direction as String)    ++ "</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(t.partnerFrom as String)  ++ "</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(t.partnerTo as String)    ++ "</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(t.businessKey as String)  ++ "</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(t.errorMessage as String) ++ "</td>"
-        ++ "</tr>"
-
-var transmissionTable =
-    if (totalTransmissions > 0)
-        "<div style='font-size:13px;font-weight:600;color:#9a3412;margin-bottom:6px;margin-top:4px;'>Transmission Errors (" ++ totalTransmissions ++ ")</div>"
-        ++ "<table style='width:100%;border-collapse:collapse;margin-bottom:16px;'>"
-        ++ "<tr style='background:#fecaca;'>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Direction</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Partner From</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Partner To</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Business Key</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Error Message</th>"
-        ++ "</tr>"
-        ++ (transmissionRows joinBy "")
-        ++ "</table>"
-    else ""
-
-var messageRows =
-    messageData map (m) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(m.messageType as String)  ++ "</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(m.direction as String)    ++ "</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(m.partnerFrom as String)  ++ "</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(m.partnerTo as String)    ++ "</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(m.businessKey as String)  ++ "</td>"
-        ++ "</tr>"
-
-var messageTable =
-    if (totalMessages > 0)
-        "<div style='font-size:13px;font-weight:600;color:#9a3412;margin-bottom:6px;'>Message Errors (" ++ totalMessages ++ ")</div>"
-        ++ "<table style='width:100%;border-collapse:collapse;margin-bottom:16px;'>"
-        ++ "<tr style='background:#fecaca;'>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Message Type</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Direction</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Partner From</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Partner To</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Business Key</th>"
-        ++ "</tr>"
-        ++ (messageRows joinBy "")
-        ++ "</table>"
-    else ""
-
-var errorDescriptionHtml = transmissionTable ++ messageTable
-
-fun resolvePartner(pId) =
-    if (p('partner.' ++ pId) != null)
-        p('partner.' ++ pId)
-    else
-        pId
-
-var distinctPartners =
-    (transmissionData map (t) -> resolvePartner(safe(t.partnerFrom as String, "UNKNOWN")))
-    ++ (messageData map (m) -> resolvePartner(safe(m.partnerFrom as String, "UNKNOWN")))
-
-var partnerSummary =
-    (distinctPartners distinctBy $) joinBy ", "
-
-var data = {
-    flowDirection:   "INBOUND",
-    documentType:    "EDI",
-    appName:         p('api.name') default "Mule Application",
-    transactionType: "EDI",
-    environment:     upper(p('mule.env') default "DEV"),
-    flowName:        safe(vars.flowName, "EDI Validation Handler"),
-    route:           "Partner → Mule → System",
-    partnerName:     partnerSummary,
-    errorTitle:      "EDI Validation Error",
-    bannerColor:     "#ef4444",
-    errorType:       "CUSTOM:EDI_VALIDATION_ERROR",
-    errorCategory:   "VALIDATION",
-    status:          "FAILED",
-    errorCode:       "EDI_VALIDATION_ERROR",
-    message:         "EDI validation failed with "
-                     ++ totalTransmissions ++ " transmission error(s) and "
-                     ++ totalMessages ++ " message error(s). Please review the details below and correct the EDI data before resubmitting.",
-    errorResolution: "One or more EDI transmissions or messages failed X12 validation."
-        ++ "\n  1. Review each row in the tables below — identify the partner, direction, and business key for each failure."
-        ++ "\n  2. Obtain the original EDI file from the partner listed under 'Partner From'."
-        ++ "\n  3. Validate the file against the X12 specification for the relevant transaction set."
-        ++ "\n  4. Correct any structural, segment, or element errors in the EDI file."
-        ++ "\n  5. Request the partner to resend the corrected file."
-        ++ "\n\n  Do NOT reprocess the original file — corrections must come from the source partner.",
-    errorDescription: errorDescriptionHtml,
-    transmissionId:  correlationId default uuid(),
-    keyLabel:        "Correlation ID",
-    key:             correlationId default uuid(),
-    timestamp:       now() as String {format: "yyyy-MM-dd HH:mm:ss"}
-}
-
-var template =
-    readUrl("classpath://templates/error-template.html", "text/plain")
----
-template replace /\$\{(\w+)\}/ with ((m) ->
-    (data[m[1]] as String) default ""
-)]]></ee:set-payload>
+						<ee:set-payload resource="dwl/apm-error-report-subflow/p_emailPayload.dwl" />
 			</ee:message>
 					<ee:variables >
-						<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ "B2B Alert Notification"]]></ee:set-variable>
+						<ee:set-variable resource="dwl/apm-error-report-subflow/v_subject.dwl" variableName="subject" />
 					</ee:variables>
 		</ee:transform>
 				<flow-ref doc:name="Flow Reference send-email-subflow" doc:id="b791b438-4cbf-4136-9bc3-f153dc6f5a7f" name="send-email-subflow"/>
