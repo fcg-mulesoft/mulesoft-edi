@@ -5,40 +5,11 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<sub-flow name="inbound-poAck-processing-subflow" doc:id="6f77f384-483c-4f70-a315-7809d5adca7d" >
-		<logger level="INFO" doc:name="LOG INFO : START" doc:id="79ba3bf2-f5a7-42f4-af7b-cfe36d788f45" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="79ba3bf2-f5a7-42f4-af7b-cfe36d788f45" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
 		<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="1df1687d-368c-4ab5-91f7-6cc62df4bea2" >
 			<ee:message />
 			<ee:variables >
-				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
-output application/json
-import toBase64 from dw::core::Binaries
----
-{
-    "method": "GET",
-    "host": Mule::p('b2b-p21-sys-api.host'),
-    "port": Mule::p('b2b-p21-sys-api.port'),
-    "basePath": Mule::p('b2b-p21-sys-api.basePath'),
-    "path": Mule::p('b2b-p21-sys-api.view.path'),
-    "headers":{
-    	"client_id": "1234",
-    	"client_secret": "1234"
-    },
-	"queryParams":{
-		"transactionType": "purchaseOrderInvoice",
-		"purpose": "validation",
-		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0]
-
-    },
-    "uriParams": {
-    },
-    "body":{
-    	
-    },
-    "untilsuccessful":{
-    	"maxRetries": "5",
-    	"interval": "5000"
-    }
-}]]></ee:set-variable>
+				<ee:set-variable resource="dwl/inbound-poAck-processing-subflow/v_httpOperationGetPurchaseOrder.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="72d35b75-b960-46cc-866c-c1f7e698a1d4" name="common-http-request-subflow" target="purchaseOrderData" />
@@ -54,43 +25,19 @@ import toBase64 from dw::core::Binaries
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="daf0a59e-db1f-43dd-81bd-7ca2863bb96b" type="CUSTOM:VALIDATION_FAILED" description="#[vars.isValid.validationErrors]" />
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="LOG INFO : Valid Acknowledgement" doc:id="9852204f-2f4a-46b3-84b2-4811d13ca509" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"flow": (flow.name),&#10;	"message": "Acknowledgement validation successful, Moving forward to create the Acknowledgement in p21",&#10;    "correlationId": correlationId&#10;}]' />
+				<logger level="INFO" doc:name="LOG INFO : Valid Acknowledgement" doc:id="9852204f-2f4a-46b3-84b2-4811d13ca509" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Acknowledgement validation successful, Moving forward to create the Acknowledgement in p21",&#10;}]' />
 			</otherwise>
 		</choice>
 		<ee:transform doc:name="var : p21poAck" doc:id="fb1a7b9f-bbfd-4674-bbdc-7fc0ff8f0e50" >
 			<ee:message />
 			<ee:variables >
-				<ee:set-variable resource="dwl/inbound-poAck-processing-subflow/v_p21Invoice.dwl" variableName="p21poAck" />
+				<ee:set-variable resource="dwl/inbound-poAck-processing-subflow/v_p21poAck.dwl" variableName="p21poAck" />
 			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="var : httpOperation - post Ack" doc:id="bf92619f-3e38-4c38-a78c-20732dfde9dd" >
 			<ee:message />
 			<ee:variables >
-				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
-output application/json
-import toBase64 from dw::core::Binaries
----
-{
-    "method": "POST",
-    "host": Mule::p('b2b-p21-sys-api.host'),
-    "port": Mule::p('b2b-p21-sys-api.port'),
-    "basePath": Mule::p('b2b-p21-sys-api.basePath'),
-    "path": Mule::p('b2b-p21-sys-api.transaction.path'),
-    "headers":{
-    	"client_id": "1234",
-    	"client_secret": "1234"
-    },
-	"queryParams":{
-		"transactionType": "purchaseOrderAck",
-    },
-    "uriParams": {
-    },
-    "untilsuccessful":{
-    	"maxRetries": "5",
-    	"interval": "5000"
-    },
-    "body": vars.p21poAck
-}]]></ee:set-variable>
+				<ee:set-variable resource="dwl/inbound-poAck-processing-subflow/v_httpOperationPostPoAck.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="727d7cdc-0466-4327-9b4f-b039a8cfb17c" name="common-http-request-subflow" />
@@ -99,9 +46,9 @@ import toBase64 from dw::core::Binaries
 				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="bf20b71b-9b2e-4c07-97bb-a6a8a4449b2e" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"]' />
 			</when>
 			<otherwise>
-				<logger level="INFO" doc:name="LOG INFO : AcknowledgementCreated" doc:id="dfb65b0e-9a88-4712-8441-4245b442d0ea" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"flow": (flow.name),&#10;	"message": "Acknowledgement Creation Successful",&#10;    "correlationId": correlationId&#10;}]' />
+				<logger level="INFO" doc:name="LOG INFO : AcknowledgementCreated" doc:id="dfb65b0e-9a88-4712-8441-4245b442d0ea" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Acknowledgement Creation Successful"&#10;}]' />
 			</otherwise>
 		</choice>
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="74837d49-bd9d-4659-b4fc-a3df92894944" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="74837d49-bd9d-4659-b4fc-a3df92894944" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
 	</sub-flow>
 </mule>

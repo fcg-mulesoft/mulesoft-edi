@@ -63,7 +63,7 @@ output application/json
 {
 	"source" : "APM" ,
 	"target" : "P21",
-	"integration-type" : "Inbound " ++ attributes.queryParams."type",
+	"integration-type" : "Inbound " ++ attributes.queryParams."type" ++ " " ++ payload[0]."b2bMessage"."header"."documentType",
 	"correlationId": correlationId
 }]]></ee:set-variable>
                 <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0

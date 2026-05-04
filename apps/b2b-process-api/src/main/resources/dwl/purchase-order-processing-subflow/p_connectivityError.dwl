@@ -7,7 +7,7 @@ fun safe(v, d="N/A") =
 
 var errResp     = vars.errorResponse     default {}
 var sysInfo     = vars.systemInformation default {}
-var integration = vars.integration  default vars.initialVariables     default {}
+var integration = vars.integration default vars.initialVariables default {}
 
 var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
 var cdmHeader = cdm.header default {}
@@ -141,7 +141,7 @@ var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as Str
 
 var msgVendorId =
     if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-    else " "
+    else "N/A"
 
 var itemRows =
     flatten(
@@ -209,7 +209,7 @@ var errorResolution =
             ++ "\n\n  If you are unsure which values are incorrect, contact your EDI coordinator for guidance."
         else if (categoryId == "BAD_REQUEST" or categoryId == "SCHEMA_NOT_HONOURED")
             "The data submitted did not match the expected format or structure."
-            ++ "\n  1. This is a data issue — review the payload sent from " ++ sourceSystem ++ " for incorrect values, wrong data types, or fields outside allowed values."
+            ++ "\n  1. This IS a data issue — review the payload sent from " ++ sourceSystem ++ " for incorrect values, wrong data types, or fields outside allowed values."
             ++ "\n  2. Compare the submitted data against the API schema to identify non-conforming fields."
             ++ "\n  3. Correct the identified fields in " ++ sourceSystem ++ " and resubmit."
             ++ "\n  4. Contact the integration support team with the Correlation ID if the schema is unclear."
@@ -384,6 +384,8 @@ var data = {
                              safe(cdmHeader.documentType, "API"))),
     environment:     upper(safe(sysInfo.env, p('mule.env'))),
     route:           sourceSystem ++ " → Mule → " ++ targetSystem,
+    partnerName:     if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
+                     else "N/A",
     errorTitle:      errorTitle,
     bannerColor:     bannerColor,
     errorType:       errorTypeValue,
@@ -437,9 +439,9 @@ var data = {
     errorDescription: errorDescFull,
     transmissionId:   if (isValidationFlow) safe(cdmHeader.transmissionId)
                       else (vars.initialPayload[0].b2bMessage.header.transmissionId default "N/A"),
-    companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
     keyLabel:        "Correlation ID",
     key:             correlationId default uuid(),
+    companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
     timestamp:        errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})
 }
 

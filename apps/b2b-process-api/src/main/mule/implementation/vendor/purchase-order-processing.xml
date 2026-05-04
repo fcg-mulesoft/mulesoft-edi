@@ -6,402 +6,78 @@
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
 	<sub-flow name="purchase-order-processing-subflow" doc:id="640ba365-afbb-47cd-ad3a-f1f9e2520b4d" >
-		<logger level="INFO" doc:name="LOG INFO : START" doc:id="af724099-b954-4c4a-8cfc-b2526f72d195" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	//transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="af724099-b954-4c4a-8cfc-b2526f72d195" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;START&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
 		<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="bdeed774-a4a3-4569-b917-29cf8ba3124b">
 			<ee:message />
 			<ee:variables>
-				<ee:set-variable variableName="httpOperation"><![CDATA[%dw 2.0
-output application/json
-import toBase64 from dw::core::Binaries
----
-{
-    "method": "GET",
-    "host": Mule::p('b2b-p21-sys-api.host'),
-    "port": Mule::p('b2b-p21-sys-api.port'),
-    "basePath": Mule::p('b2b-p21-sys-api.basePath'),
-    "path": Mule::p('b2b-p21-sys-api.view.path'),
-    "headers":{
-    	"client_id": "1234",
-    	"client_secret": "1234"
-    },
-	"queryParams":{
-		"transactionType": "purchaseOrder",
-		"purpose": "total",
-    },
-    "uriParams": {
-    },
-    "body":{
-    	
-    },
-    "untilsuccessful":{
-    	"maxRetries": "3",
-    	"interval": "5000"
-    }
-}]]></ee:set-variable>
+				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_httpOperationgetPurchaseOrder.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="523d4c38-1e8a-48be-9e54-4029a2e0b282" name="common-http-request-subflow" target="purchaseOrderData"/>
 		<ee:transform doc:name="View to CDM transformation" doc:id="53d4d6eb-0f9f-4e3c-a0f6-c2d7ce094e59" >
 			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
-var groupedPOs = vars.purchaseOrderData.value groupBy $.po_no
----
-groupedPOs pluck ((poItems, poNumber) -> {
-  B2BMessage: {
-    Header: {
-      senderId: "117414135T",//Hardcoded
-      receiverId: poItems[0].vendor_id as String,
-      purchaseOrderNumber: poNumber,
-      purchaseOrderDate: poItems[0].BEG05_PODate default "",
-      purchaseOrderType: poItems[0].BEG01_PurposeCode default "",
-      purchaseOrderTypeCode: poItems[0].BEG02_POTypeCode default "",
-      currencyCode: poItems[0].CUR02_currency default "",
- 
-      contacts: [{
-        contactFunction: "BD",
-        name: poItems[0].PER02_Name default "",
-        commNumberQualifier: "EM",
-        commNumber: poItems[0].PER04_email_address default ""
-      }],
- 
-      dates: [
-        {
-          dateQualifier: "002",
-          date: poItems[0].DTM_002_DeliveryReq
-        },
-        {
-          dateQualifier: "010",
-          date: poItems[0].DTM_010_Requested
-        }
-      ] filter ($.date != null),
- 
-      carrier: [
-        {
-          scac: poItems[0].TD503_CarrierSCAC,
-          routing: poItems[0].TD505_Routing
-        }
-      ] filter ($.scac != null),
- 
-      references:
-        [
-          {
-            qualifier: "ST",
-            referenceNumber: (poItems[0].REF_ST_02_Location_Id as String)
-          }
-          ++
-          (
-            if (poItems[0].MSG01_Shipping_instruction != null)
-              {
-                messages: [
-                  { messageText: poItems[0].MSG01_Shipping_instruction }
-                ]
-              }
-            else {}
-          ),
- 
-          {
-            qualifier: "ZZ",
-            referenceNumber: (poItems[0].REF_ZZ_02_Vendor_Id as String)
-          }
-          ++
-          (
-            if (poItems[0].N902_HDR_Note != null)
-              {
-                messages: [
-                  { messageText: poItems[0].N902_HDR_Note }
-                ]
-              }
-            else {}
-          )
-        ]
-        filter ($.referenceNumber != null),
- 
-      partyInformation: [
-        {
-          qualifier: "BY",
-          name: poItems[0].N1_BY_Name,
-          idQualifier: "92",
-          idCode: poItems[0].location_id as String,
-          address1: poItems[0].N3_BY_Addr1,
-          city: poItems[0].N4_BY_City,
-          state: poItems[0].N4_BY_State,
-          postalCode: poItems[0].N4_BY_Zip,
-          country: poItems[0].N4_BY_Country
-        },
-        {
-          qualifier: "ST",
-          name: poItems[0].N1_ST_Name,
-          idQualifier: "92",
-          idCode: poItems[0].location_id as String,
-          address1: poItems[0].N3_ST_Addr1,
-          city: poItems[0].N4_ST_City,
-          state: poItems[0].N4_ST_State,
-          postalCode: poItems[0].N4_ST_Zip,
-          country: poItems[0].N4_ST_Country,
-          references: [
-            {
-              qualifier: "ST",
-              referenceNumber: (poItems[0].REF_ST_02_Location_Id as String)
-            },
-            {
-              qualifier: "ZZ",
-              referenceNumber: (poItems[0].REF_ZZ_02_Vendor_Id as String)
-            }
-          ]
-        },
-        {
-          qualifier: "SU",
-          name: "",
-          idQualifier: "92",
-          idCode: poItems[0].N1_SU_ID as String,
-          address1: poItems[0].N3_SU_Addr1,
-          city: poItems[0].N4_SU_City,
-          state: poItems[0].N4_SU_State,
-          postalCode: poItems[0].N4_SU_Zip,
-          country: poItems[0].N4_SU_Country
-        }
-      ] filter ($.name != null or $.idCode != null)
-    },
- 
-    detail: {
-      lineItems: poItems map (item) -> {
-        lineNo: item.line_no default "",
-        qtyOrdered: item.PO1_02_QtyOrdered default 0,
-        uom: item.PO1_03_UOM default "",
-        unitPrice: item.PO1_04_UnitPrice default 0,
-        priceQualifier: "PE",
-        vendorPartNumberQualifier: "VP",
-        vendorPartNo: item.supplier_part_no default "",
-        buyerPartNumberQualifier: "BP",
-        buyerPartNo: item.item_id default "",
- 
-  productDescription:
-    [
-      if (item.PID05_Description != null)
-        {
-          descriptionType: "F",
-          description: item.PID05_Description
-        }
-      else null,
- 
-      if (item.PID05_LineConfig1 != null)
-        {
-          descriptionType: "config1",
-          description: item.PID05_LineConfig1
-        }
-      else null,
- 
-      if (item.PID05_2nd_LineConfig2 != null)
-        {
-          descriptionType: "config2",
-          description: item.PID05_2nd_LineConfig2
-        }
-      else null,
- 
-      if (item.PID05_Extended_Desc != null)
-        {
-          descriptionType: "F",
-          description: item.PID05_Extended_Desc
-        }
-      else null
-    ]
-    filter ($ != null),
- 
-        schedules: [
-          {
-            dateQualifier: "002",
-            scheduledDate: item.DTM_002_DeliveryReq
-          }
-        ]
-      }
-    },
- 
-    Summary: {
-      totalLineItems: sizeOf(poItems),
-      totalQuantity: sum(poItems.*PO1_02_QtyOrdered default [])
-    }
-  }
-})]]></ee:set-payload>
+				<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_cdmMapping.dwl" />
 			</ee:message>
 		</ee:transform>
-				<logger level="INFO" doc:name="Logger DEBUG:  Parllel for each" doc:id="e0d56ebc-9b4f-44a8-b148-3c5fa85a8d53" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	poMapping: payload&#10;}]' />
-		<parallel-foreach doc:name="Parallel For Each" doc:id="7986e00b-9d90-458d-bd84-f219e3092d6d" collection="#[payload]">
+				<logger level="DEBUG" doc:name="Logger DEBUG:  Parllel for each" doc:id="e0d56ebc-9b4f-44a8-b148-3c5fa85a8d53" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' />
+		<parallel-foreach doc:name="Parallel For Each : Iteration over POs" doc:id="7986e00b-9d90-458d-bd84-f219e3092d6d" collection="#[payload]">
 			<try doc:name="Try" doc:id="5d9023da-464b-4fa6-9479-6099a6346eea" >
 				<json:validate-schema doc:name="Validate schema" doc:id="ffe1bc4d-7bca-4c2e-b8bb-347da0ef2d36" schema="schema/PO_OUTBOUND_JSON_SCHEMA.json"/>
 				<ee:transform doc:name="var: httpOperation- post APM" doc:id="c1ad95c5-2b3b-4684-ab25-0dce143b0f90" >
 					<ee:message >
 					</ee:message>
 					<ee:variables >
-						<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
-output application/json
-import toBase64 from dw::core::Binaries
----
-{
-    "method": "POST",
-    "host": Mule::p('apm.request.host'),
-    "port": Mule::p('apm.request.port'),
-    "basePath": Mule::p('apm.request.basePath'),
-    "path": Mule::p('apm.request.path'),
-    "headers":{
-    	"client_id": "1234",
-    	"client_secret": "1234"
-    },
-	"queryParams":{
-		"transactionType": "purchaseOrder",
-		"purpose": "total",
-    },
-    "uriParams": {
-    },
-    "body":payload,
-    "untilsuccessful":{
-    	"maxRetries": "3",
-    	"interval": "5000"
-    }
-}]]></ee:set-variable>
+						<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_httpOperationApmRequest.dwl" variableName="httpOperation" />
 					</ee:variables>
 				</ee:transform>
-				<logger level="INFO" doc:name="Log DEBUG: APM Request" doc:id="fde1be55-2797-4f1d-8f69-3e5da1254d14" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow start&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: correlationId&#10;}]" />
+				<logger level="DEBUG" doc:name="Log DEBUG: APM Request" doc:id="fde1be55-2797-4f1d-8f69-3e5da1254d14" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow start&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]" />
 				<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="0417706a-08ea-43db-90b2-792ae0237d69" name="common-http-request-subflow" target="transmissionId" targetValue="#[attributes.headers.'x-apm-trx-id']"/>
-				<logger level="INFO" doc:name="Log DEBUG: APM Request" doc:id="140c0f2b-2db6-4950-8de5-741747dc0d24" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow ended&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	transmissionId: vars.transmissionId&#10;}]"/>
+				<logger level="DEBUG" doc:name="Log DEBUG: APM Request" doc:id="140c0f2b-2db6-4950-8de5-741747dc0d24" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow ended&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	transmissionId: vars.transmissionId&#10;}]"/>
 				<ee:transform doc:name="Transaction api payload  transformation" doc:id="aa57eb78-9a2e-42e7-a837-24af5dfac952" >
 					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	status: "SUCCESS",
-	poNumber: payload.B2BMessage.Header.purchaseOrderNumber,
-	partnerId: payload.B2BMessage.Header.receiverId,
-	transmissionId: vars.transmissionId
-}]]></ee:set-payload>
+						<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_accumulatedSuccessResponse.dwl" />
 					</ee:message>
 				</ee:transform>
 				<error-handler >
 					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="61f08e41-8482-4bcf-97bc-bf42fc519db0" >
 						<ee:transform doc:name="Preparing error payload for transaction api" doc:id="d7f437fe-619b-4dbd-bee5-3d75bc7f9c9d">
 							<ee:message>
-								<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-	status: "FAILED",
-	partnerId: payload.B2BMessage.Header.receiverId,
-	poNumber: payload.B2BMessage.Header.purchaseOrderNumber default "UNKNOWN",
-	error: error.description,
-	
-}]]></ee:set-payload>
+								<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_accumulatedFailedResponse.dwl" />
 							</ee:message>
 						</ee:transform>
-						<logger level="DEBUG" doc:name="LOG INFO : Error" doc:id="1bb47f79-ca27-43c2-ba90-0b811febda8f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": (flow.name),&#10;    "correlationId": correlationId,&#10;    "timeStamp" : now()&#10;}]' />
+						<logger level="INFO" doc:name="LOG INFO : Error" doc:id="1bb47f79-ca27-43c2-ba90-0b811febda8f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Errored PO",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poSummary: payload&#10;}]' />
 					</on-error-continue>
 				</error-handler>
 			</try>
 		</parallel-foreach>
-						<logger level="INFO" doc:name="Logger DEBUG:  PO Status" doc:id="194628f8-dbd5-4291-8353-19f5fc40b0a1" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process completed",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	poSummary: payload&#10;}]'/>
+						<logger level="DEBUG" doc:name="Logger DEBUG:  PO Status" doc:id="194628f8-dbd5-4291-8353-19f5fc40b0a1" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process completed",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poSummary: payload&#10;}]'/>
 		<ee:transform doc:name="Prepare payload for transaction API" doc:id="060f9eac-4190-48e6-93f5-d92fcb735172" >
 			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-  UseCodeValues: true,
-  IgnoreDisabled: true,
-  Transactions: payload map (item) -> {
-    Status: "New",
-    DataElements: [
-      {
-        Name: "TABPAGE_1.tp_1_dw_1",
-        Type: "Form",
-        Keys: ["po_no"],
-        Rows: [
-          {
-            Edits: [
-              {
-                Name: "po_no",
-                Value: item.payload.poNumber default ""
-              },
-              {
-                Name: "vendor_id",
-                Value: item.payload.partnerId default ""
-              },
-              {
-                Name: "ufc_po_hdr_ud_edi_po_status",
-                Value: 
-                  if ((item.payload.status default "") == "SUCCESS") 
-                    "Transmitted"
-                  else 
-                    "Failed"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-}]]></ee:set-payload>
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="erroredPOs" ><![CDATA[%dw 2.0
+				<ee:set-variable variableName="parllelForEachResponse" ><![CDATA[%dw 2.0
 output application/json
 ---
-entriesOf(
-  payload
-    filter ($.payload.status == "FAILED")
-    groupBy ($.payload.partnerId)
-)
-map (entry) -> {
-  partnerId: entry.key,
-  errors: entry.value map (item) -> {
-    poNo: item.payload.poNumber,
-    "Error Details": (
-      item.payload.error 
-        scan /\$\.B2BMessage\.Header\.partyInformation\[1\]\.(\w+): null found, string expected/
-    ) map ($[1] ++ " is null")
-  }
-}
-]]></ee:set-variable>
+payload]]></ee:set-variable>
+				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_erroredPOs.dwl" variableName="erroredPOs" />
+				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_transactionRequestPayload.dwl" variableName="transactionRequestPayload" />
 			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="var: httpOperation-post Transaction api" doc:id="2befd336-0a59-43f8-9148-d9d8d5594758">
 				<ee:message>
 				</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
-output application/json
-import toBase64 from dw::core::Binaries
----
-{
-    "method": "POST",
-    "host": Mule::p('b2b-p21-sys-api.host'),
-    "port": Mule::p('b2b-p21-sys-api.port'),
-    "basePath": Mule::p('b2b-p21-sys-api.basePath'),
-    "path": Mule::p('b2b-p21-sys-api.transaction.path'),
-    "headers":{
-    	"client_id": "1234",
-    	"client_secret": "1234"
-    },
-	"queryParams":{
-		"transactionType": "purchaseOrder"
-		    },
-    "uriParams": {
-    },
-    "body":payload,
-    "untilsuccessful":{
-    	"maxRetries": "3",
-    	"interval": "6000"
-    }
-}]]></ee:set-variable>
+				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_httpOperationPostTransaction.dwl" variableName="httpOperation" />
 			</ee:variables>
 			</ee:transform>
 		<try doc:name="Try" doc:id="cc03ad5f-3328-4572-ba14-2e60914b9af5" >
 			<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="b245c1de-a43f-423a-a4a3-20608dfc7294" name="common-http-request-subflow" />
-			<choice doc:name="is Successful?" doc:id="5e8205b6-080d-4e4a-a9c9-f0b9c5b0c5b7" >
+			<choice doc:name="is Flag Updation Successful?" doc:id="5e8205b6-080d-4e4a-a9c9-f0b9c5b0c5b7" >
 				<when expression='#[(payload.TransactionSetResult.Results.Transactions.Transaction.Status) == "Failed"]' >
 					<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="668854ca-ea90-4afd-abfe-bda298eac9fd" type="CUSTOM:P21_FAILED" description='#[payload.Messages joinBy ","]' />
 				</when>
 				<otherwise >
-					<logger level="INFO" doc:name="LOG INFO : AcknowledgementCreated" doc:id="3c3edaa3-eae0-43b1-a25d-c45434800d61" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"flow": (flow.name),&#10;	"message": "Acknowledgement Creation Successful",&#10;    "correlationId": correlationId&#10;}]' />
+					<logger level="DEBUG" doc:name="LOG INFO : Flag Updated" doc:id="3c3edaa3-eae0-43b1-a25d-c45434800d61" message='#[%dw 2.0&#10;output application/json&#10;var t = payload.TransactionSetResult.Results.Transactions.*Transaction---&#10;{&#10;	event: "Flag updation was Successful in P21",&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;    successFlagPO: &#10;		t filter ($.Status == "Passed") &#10;		  map $.DataElements.DataElement.Rows.Row.Edits.Edit.Value,&#10;}]' />
 				</otherwise>
 			</choice>
 			<error-handler >
@@ -410,724 +86,47 @@ import toBase64 from dw::core::Binaries
 						<when expression='#[output json --- error.errorType.identifier == "RETRY_EXHAUSTED"]'>
 							<ee:transform doc:name="Preparing Email Template for P21 connectivity issues, var : subject" doc:id="40e59ebb-8f85-49e5-9f85-93f685fa0523">
 						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-import * from dw::core::Strings
-output text/plain
-
-fun safe(v, d="N/A") =
-    if (v == null or (v is String and trim(v) == "")) d else v
-
-var errResp     = vars.errorResponse     default {}
-var sysInfo     = vars.systemInformation default {}
-var integration = vars.integration default vars.initialVariables default {}
-
-var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
-var cdmHeader = cdm.header default {}
-
-var rawErrNs  = error.errorType.namespace   default "UNKNOWN"
-var rawErrId  = error.errorType.identifier  default "ERROR"
-var rawSup    = error.suppressedErrors[0]   default null
-var rawSupId  = rawSup.errorType.identifier default ""
-var rawSupNs  = rawSup.errorType.namespace  default ""
-
-var isP21Failed =
-    rawErrNs == "CUSTOM" and rawErrId == "P21_FAILED"
-
-var isRetryExhausted =
-    rawErrId == "RETRY_EXHAUSTED"
-    or rawSupId == "RETRY_EXHAUSTED"
-    or rawErrId == "TIMEOUT"
-    or rawErrId == "GATEWAY_TIMEOUT"
-    or rawErrId == "CONNECTION_TIMEOUT"
-    or rawSupId == "TIMEOUT"
-    or rawSupId == "GATEWAY_TIMEOUT"
-
-var isValidationFlow =
-    vars.isValid != null
-    and not isP21Failed
-    and not isRetryExhausted
-
-var errNs   = if (isValidationFlow) "CUSTOM"           else rawErrNs
-var errId   = if (isValidationFlow) "VALIDATION_ERROR" else rawErrId
-var errDesc = if (isValidationFlow) "Validation failed while processing transaction."
-              else (error.detailedDescription default error.description default "Unexpected error")
-
-var suppressed = if (isValidationFlow) null else (rawSup)
-var suppNs     = if (isValidationFlow) "" else rawSupNs
-var suppId     = if (isValidationFlow) "" else rawSupId
-
-var sourceSystem =
-    if (isValidationFlow) "APM"
-    else safe(integration.source, "P21")
-
-var targetSystem =
-    if (isValidationFlow) "P21"
-    else safe(integration.target, "APM")
-
-var flowDirection =
-    if (lower(sourceSystem) == "apm") "INBOUND"
-    else                              "OUTBOUND"
-
-var categoryNs = if (suppressed != null and suppNs != "") suppNs else errNs
-var categoryId = if (suppressed != null and suppId != "") suppId else errId
-
-var errorTypeValue =
-    if (isValidationFlow)
-        "CUSTOM:VALIDATION_ERROR"
-    else if (suppressed != null and (suppNs != "" or suppId != ""))
-        (if (suppNs != "") suppNs else "UNKNOWN") ++ ":" ++
-        (if (suppId != "") suppId else "ERROR")
-    else if (!isEmpty(errResp.statusMessage default ""))
-        errResp.statusMessage as String
-    else
-        errNs ++ ":" ++ errId
-
-var errorCategory =
-    if (isValidationFlow)
-        "VALIDATION"
-    else if (categoryNs == "CUSTOM" and categoryId == "P21_FAILED")
-        "P21_ERROR"
-    else if (categoryId == "BAD_REQUEST"             or categoryId == "SCHEMA_NOT_HONOURED"
-          or categoryId == "INVALID_INPUT"           or categoryId == "UNRECOGNIZED_FIELD"
-          or categoryId == "MISSING_REQUIRED_FIELD"  or categoryId == "PARSE_ERROR"
-          or categoryNs == "VALIDATION"              or categoryNs == "JSON"
-          or categoryNs == "XML"                     or categoryNs == "CSV")
-        "VALIDATION"
-    else if (categoryNs == "APIKIT" and suppressed == null)
-        "APIKIT"
-    else if (categoryId == "UNAUTHORIZED"          or categoryId == "FORBIDDEN"
-          or categoryId == "AUTHENTICATION_FAILED" or categoryId == "INVALID_TOKEN"
-          or categoryId == "TOKEN_EXPIRED"          or categoryId == "ACCESS_DENIED"
-          or categoryNs == "OAUTH2"                 or categoryNs == "JWT"
-          or (categoryNs == "MULE"                  and categoryId == "SECURITY"))
-        "SECURITY"
-    else if (categoryId == "TIMEOUT"                or categoryId == "GATEWAY_TIMEOUT"
-          or categoryId == "BAD_GATEWAY"            or categoryId == "CONNECTIVITY"
-          or categoryId == "CONNECTION_TIMEOUT"     or categoryId == "READ_TIMEOUT"
-          or categoryId == "WRITE_TIMEOUT"          or categoryId == "RETRY_EXHAUSTED"
-          or categoryId == "SERVICE_UNAVAILABLE"    or categoryId == "REMOTELY_CLOSED"
-          or categoryId == "SSL_ERROR")
-        "CONNECTIVITY"
-    else if (categoryId == "NOT_FOUND"              or categoryId == "METHOD_NOT_ALLOWED"
-          or categoryId == "NOT_ACCEPTABLE"         or categoryId == "UNSUPPORTED_MEDIA_TYPE"
-          or categoryId == "CONFLICT"               or categoryId == "GONE"
-          or categoryId == "TOO_MANY_REQUESTS")
-        "CLIENT_ERROR"
-    else if (categoryId == "TRANSFORMATION"         or categoryId == "EXPRESSION"
-          or categoryId == "COERCION"               or categoryId == "SCRIPTING_FAILED"
-          or (categoryNs == "MULE" and (categoryId == "TRANSFORMATION" or categoryId == "EXPRESSION")))
-        "TRANSFORMATION"
-    else if (categoryId == "ROUTING"                or categoryId == "COMPOSITE_ROUTING"
-          or categoryId == "FLOW_NOT_FOUND")
-        "ROUTING"
-    else
-        "GENERIC"
-
-var errorTitle =
-    if      (errorCategory == "P21_ERROR")      "P21 Integration Error"
-    else if (errorCategory == "APIKIT")         "API Error"
-    else if (errorCategory == "SECURITY")       "Security Error"
-    else if (errorCategory == "VALIDATION")     "Validation Error"
-    else if (errorCategory == "CONNECTIVITY")   "Connectivity Error"
-    else if (errorCategory == "CLIENT_ERROR")   "Client Error"
-    else if (errorCategory == "TRANSFORMATION") "Transformation Error"
-    else if (errorCategory == "ROUTING")        "Routing Error"
-    else                                        "System Error"
-
-var bannerColor =
-    if      (errorCategory == "P21_ERROR")      "#0369a1"
-    else if (errorCategory == "SECURITY")       "#f59e0b"
-    else if (errorCategory == "VALIDATION")     "#f59e0b"
-    else if (errorCategory == "CLIENT_ERROR")   "#f97316"
-    else if (errorCategory == "CONNECTIVITY")   "#6366f1"
-    else if (errorCategory == "TRANSFORMATION") "#06b6d4"
-    else if (errorCategory == "ROUTING")        "#0ea5e9"
-    else                                        "#ef4444"
-
-var ve = vars.isValid.validationErrors default {}
-
-var msgPoNumber = safe(cdmHeader.poNumber default "" as String,
-                    safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, "N/A"))
-
-var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as String
-
-var msgVendorId =
-    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-    else "N/A"
-
-var itemRows =
-    flatten(
-        (ve.itemErrors default {}) pluck ((value, key) ->
-            (value default []) map (err) ->
-                "<tr style='background:#fee2e2;color:#b91c1c;'>"
-                ++ "<td style='padding:8px;border:1px solid #ddd;'>Item (" ++ key ++ ")</td>"
-                ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ err ++ "</td>"
-                ++ "</tr>"
-        )
-    )
-
-var carrierRows =
-    (ve.carrierErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>Carrier</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var externalPoRows =
-    (ve.externalPoErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>External PO</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var customerPartRows =
-    (ve.customerPartErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>Customer Part</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var totalRows =
-    (ve.totalErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>Total</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var shipToRows =
-    (ve.shipToErrors default []) map (e) ->
-        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>Ship To</td>"
-        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
-
-var allRows =
-    itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows
-
-var validationHtml =
-    if (sizeOf(allRows) > 0)
-        "<table style='width:100%;border-collapse:collapse;margin-top:10px;'>"
-        ++ "<tr style='background:#fecaca;'>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;'>Type</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;'>Error</th>"
-        ++ "</tr>"
-        ++ (allRows joinBy "")
-        ++ "</table>"
-    else
-        "Validation failed but no detailed errors available."
-
-var errorResolution =
-    if (errorCategory == "VALIDATION")
-        if (isValidationFlow)
-            "The information received does not match what is expected in the system."
-            ++ "\n  1. Review the file or data that was sent and check for incorrect or missing values."
-            ++ "\n  2. Compare the sent data against the expected format and correct any mismatches."
-            ++ "\n  3. Resend the corrected file once all values have been verified."
-            ++ "\n\n  If you are unsure which values are incorrect, contact your EDI coordinator for guidance."
-        else if (categoryId == "BAD_REQUEST" or categoryId == "SCHEMA_NOT_HONOURED")
-            "The data submitted did not match the expected format or structure."
-            ++ "\n  1. This IS a data issue — review the payload sent from " ++ sourceSystem ++ " for incorrect values, wrong data types, or fields outside allowed values."
-            ++ "\n  2. Compare the submitted data against the API schema to identify non-conforming fields."
-            ++ "\n  3. Correct the identified fields in " ++ sourceSystem ++ " and resubmit."
-            ++ "\n  4. Contact the integration support team with the Correlation ID if the schema is unclear."
-            ++ "\n\n  Resubmission is safe once the payload has been corrected."
-        else if (categoryId == "MISSING_REQUIRED_FIELD")
-            "A required field was not included in the data that was sent."
-            ++ "\n  1. Check which field is missing — it will be identified in the error description below."
-            ++ "\n  2. Ensure " ++ sourceSystem ++ " is populating all mandatory fields before sending."
-            ++ "\n  3. Correct the data and resubmit once all required fields are present."
-            ++ "\n\n  Do not resubmit until the missing field has been populated."
-        else if (categoryId == "PARSE_ERROR")
-            "The system was unable to read or interpret the data that was sent."
-            ++ "\n  1. The file or message may be corrupted, incomplete, or in the wrong format."
-            ++ "\n  2. Verify that the Content-Type matches the actual format (e.g. JSON, XML)."
-            ++ "\n  3. Check for special characters, encoding problems, or truncated content."
-            ++ "\n  4. Correct the source data in " ++ sourceSystem ++ " and resubmit."
-        else
-            "The data sent did not pass the required checks before it could be processed."
-            ++ "\n  1. Review the error details below to identify which field or value caused the issue."
-            ++ "\n  2. Correct the identified field(s) in " ++ sourceSystem ++ " before resending."
-            ++ "\n  3. Contact the integration support team with the Correlation ID if the error is unclear."
-            ++ "\n\n  Do not resend the data until the issue has been corrected."
-
-    else if (errorCategory == "P21_ERROR")
-        "The transaction was sent to P21 successfully but P21 was unable to process it."
-        ++ "\n  1. Note the PO Number and error message shown in the details below."
-        ++ "\n  2. Log into P21 and look up the Purchase Order using the PO Number listed."
-        ++ "\n  3. Check whether the order is in the correct status and all required fields are filled in."
-        ++ "\n  4. If the order looks correct in P21, contact your P21 administrator to investigate further."
-        ++ "\n  5. Once the issue is resolved in P21, the transaction can be resubmitted."
-        ++ "\n\n  Do not resubmit until you have confirmed whether the transaction was partially saved in P21."
-
-    else if (errorCategory == "CONNECTIVITY")
-        do {
-            var base  = "The integration was unable to establish a connection with " ++ "P21" ++ "."
-            var steps =
-                if (categoryId == "RETRY_EXHAUSTED")
-                    "\n  1. The system attempted to reach " ++ "P21" ++ " multiple times but all attempts failed."
-                    ++ "\n  2. " ++ "P21" ++ " may be down or unreachable — check whether it is currently available."
-                    ++ "\n  3. Do not retry manually — contact the IT support team to report the outage."
-                    ++ "\n  4. The support team will investigate and reprocess the transaction once " ++ "P21" ++ " is back online."
-                else if (categoryId == "TIMEOUT" or categoryId == "CONNECTION_TIMEOUT" or categoryId == "GATEWAY_TIMEOUT")
-                    "\n  1. " ++ "P21" ++ " did not respond in time — it may be under heavy load or temporarily unavailable."
-                    ++ "\n  2. Wait a few minutes and try resubmitting the transaction."
-                    ++ "\n  3. If the timeout keeps happening, contact the IT support team — do not keep retrying manually."
-                else if (categoryId == "SSL_ERROR")
-                    "\n  1. A security certificate issue prevented the connection to " ++ "P21" ++ "."
-                    ++ "\n  2. This is not a data issue — contact the IT support team immediately with the Correlation ID."
-                    ++ "\n  3. Do not retry until the certificate issue has been confirmed as resolved."
-                else if (categoryId == "SERVICE_UNAVAILABLE")
-                    "\n  1. " ++ "P21" ++ " is currently unavailable — it may be undergoing maintenance."
-                    ++ "\n  2. Wait until " ++ "P21" ++ " is confirmed back online before resubmitting."
-                    ++ "\n  3. Contact the support team if the service remains unavailable for more than 30 minutes."
-                else
-                    "\n  1. Check whether " ++ "P21" ++ " is currently available and accessible."
-                    ++ "\n  2. If " ++ "P21" ++ " is under maintenance or experiencing an outage, wait until it is back online."
-                    ++ "\n  3. Try resubmitting the transaction after a few minutes."
-                    ++ "\n  4. If the problem persists, contact the IT support team with the Correlation ID."
-            ---
-            base ++ steps
-            ++ "\n\n  No data was lost — the transaction can be safely resubmitted once connectivity is restored."
-        }
-
-    else if (errorCategory == "SECURITY")
-        do {
-            var base  = "The system was unable to authenticate or gain access to " ++ targetSystem ++ "."
-            var steps =
-                if (categoryId == "UNAUTHORIZED" or categoryId == "AUTHENTICATION_FAILED")
-                    "\n  1. The login credentials used to connect to " ++ targetSystem ++ " are invalid or have expired."
-                    ++ "\n  2. Contact your IT or integration support team — do not attempt to fix credentials yourself."
-                    ++ "\n  3. Provide the Correlation ID from the error details when raising the issue."
-                else if (categoryId == "FORBIDDEN" or categoryId == "ACCESS_DENIED")
-                    "\n  1. The system connected but does not have permission to perform this action in " ++ targetSystem ++ "."
-                    ++ "\n  2. This is a permissions issue — contact the IT support team."
-                    ++ "\n  3. Do not retry — the transaction will keep failing until permissions are corrected."
-                else if (categoryId == "TOKEN_EXPIRED" or categoryId == "INVALID_TOKEN")
-                    "\n  1. The security token used to connect to " ++ targetSystem ++ " has expired or is invalid."
-                    ++ "\n  2. Contact the integration support team — the token needs to be refreshed or reissued."
-                    ++ "\n  3. Provide the Correlation ID when raising the issue."
-                else
-                    "\n  1. This is typically caused by expired or incorrect login credentials."
-                    ++ "\n  2. Contact your IT or integration support team — do not attempt to fix credentials yourself."
-                    ++ "\n  3. Provide the Correlation ID from the error details when raising the issue."
-            ---
-            base ++ steps
-            ++ "\n\n  Do not retry until the access issue has been resolved by the support team."
-        }
-
-    else if (errorCategory == "CLIENT_ERROR")
-        do {
-            var base  = targetSystem ++ " could not complete the request as submitted."
-            var steps =
-                if (categoryId == "NOT_FOUND")
-                    "\n  1. The record being referenced does not exist in " ++ targetSystem ++ "."
-                    ++ "\n  2. Verify the PO Number or vendor ID is correct."
-                    ++ "\n  3. Check whether the record was recently deleted or archived in " ++ targetSystem ++ "."
-                    ++ "\n  4. Correct the reference and resubmit, or contact the support team if the record should exist."
-                else if (categoryId == "CONFLICT")
-                    "\n  1. A duplicate or conflicting record was detected in " ++ targetSystem ++ "."
-                    ++ "\n  2. Check whether this transaction has already been processed — look up the PO in " ++ targetSystem ++ "."
-                    ++ "\n  3. Contact the support team with the Correlation ID if you are unsure."
-                else if (categoryId == "TOO_MANY_REQUESTS")
-                    "\n  1. Too many requests were sent to " ++ targetSystem ++ " in a short period."
-                    ++ "\n  2. Wait a few minutes before resubmitting."
-                    ++ "\n  3. Contact the integration support team if this occurs frequently."
-                else
-                    "\n  1. Review the error message below for details on what went wrong."
-                    ++ "\n  2. Check whether the record or order being referenced still exists in " ++ targetSystem ++ "."
-                    ++ "\n  3. Contact the support team with the Correlation ID if the issue is unclear."
-            ---
-            base ++ steps
-        }
-
-    else if (errorCategory == "TRANSFORMATION")
-        do {
-            var base  = "The system encountered an issue while preparing the data for processing."
-            var steps =
-                if (categoryId == "COERCION")
-                    "\n  1. A field value could not be converted to the expected data type (e.g. text found where a number was expected)."
-                    ++ "\n  2. Check the source data in " ++ sourceSystem ++ " for the affected field and ensure it contains a valid value."
-                    ++ "\n  3. Contact the integration support team with the Correlation ID if the source data looks correct."
-                else
-                    "\n  1. This is an internal mapping issue — end users do not need to take action on the data itself."
-                    ++ "\n  2. Contact the integration support team and provide the Correlation ID shown below."
-                    ++ "\n  3. The support team will investigate the mapping and redeploy a fix if required."
-            ---
-            base ++ steps
-            ++ "\n\n  Hold off on resubmitting until the support team confirms the mapping has been corrected."
-        }
-
-    else if (errorCategory == "APIKIT")
-        "The request was not formatted correctly and could not be accepted by the system."
-        ++ "\n  1. This is usually caused by a system or integration configuration issue, not a data entry error."
-        ++ "\n  2. Contact the integration support team with the Correlation ID shown below."
-        ++ "\n  3. Do not retry until the support team has identified and resolved the issue."
-
-    else if (errorCategory == "ROUTING")
-        "The transaction could not be directed to the correct processing step."
-        ++ "\n  1. This is an internal routing issue — no action is required on the data itself."
-        ++ "\n  2. Contact the integration support team with the Correlation ID shown below."
-        ++ "\n  3. The support team will investigate and reprocess the transaction if needed."
-
-    else
-        "An unexpected issue occurred while processing this transaction."
-        ++ "\n  1. No immediate action is required on your end."
-        ++ "\n  2. Contact the integration support team and provide the Correlation ID shown below."
-        ++ "\n  3. The support team will investigate the root cause and advise on next steps."
-        ++ "\n\n  Please do not resubmit the transaction until you have heard back from the support team."
-
-var errorDescFull =
-    if (isValidationFlow)
-        validationHtml
-    else
-        (errResp.description default errDesc default "Unexpected error") as String
-        ++ "\n\nCorrelation ID: " ++ (errResp.correlationId default correlationId default uuid())
-        ++ "\nHTTP Status:    " ++ ((errResp.statusCode default vars.httpStatus default 500) as String)
-        ++ "\nStatus Message: " ++ (errResp.statusMessage default errorTypeValue)
-        ++ "\nTimestamp:      " ++ (errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"}))
-
-var corrId =
-    if (isValidationFlow) safe(cdmHeader.transmissionId, uuid())
-    else (errResp.correlationId default correlationId default uuid())
-
-var data = {
-    flowDirection:   flowDirection,
-    documentType:    safe(integration."integration-type",
-                         safe(vars.systemInformation."integration-type",
-                             safe(cdmHeader.documentType, "API"))),
-    appName:         p('api.name') default "Mule Application",
-    transactionType: safe(integration."integration-type",
-                         safe(vars.systemInformation."integration-type",
-                             safe(cdmHeader.documentType, "API"))),
-    environment:     upper(safe(sysInfo.env, p('mule.env'))),
-    route:           sourceSystem ++ " → Mule → " ++ targetSystem,
-    partnerName:     if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-                     else "N/A",
-    errorTitle:      errorTitle,
-    bannerColor:     bannerColor,
-    errorType:       errorTypeValue,
-    errorCategory:   errorCategory,
-    status:          "FAILED",
-    errorCode:       if (isValidationFlow) "VALIDATION_ERROR" else errId,
-    message:
-        if (isValidationFlow)
-            "Validation failed while processing transaction for PO "
-            ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ ")."
-        else if (errorCategory == "P21_ERROR")
-            "P21 rejected the transaction for PO " ++ msgPoNumber
-            ++ " (Vendor: " ++ msgVendorId ++ ") on the "
-            ++ sourceSystem ++ " → " ++ "P21" ++ " route."
-        else if (errorCategory == "CONNECTIVITY")
-            "Failed to reach " ++ "P21" ++ " while processing PO "
-            ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
-            ++ "Error: " ++ categoryId ++ "."
-        else if (errorCategory == "SECURITY")
-            "Access denied while connecting to " ++ "P21"
-            ++ " for PO " ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ "). "
-            ++ "Reason: " ++ categoryId ++ "."
-        else if (errorCategory == "VALIDATION")
-            "Request payload for PO " ++ msgPoNumber
-            ++ " (Vendor: " ++ msgVendorId ++ ") failed validation. "
-            ++ "Reason: " ++ categoryId ++ "."
-        else if (errorCategory == "TRANSFORMATION")
-            "Data mapping failed while processing PO " ++ msgPoNumber
-            ++ " (Vendor: " ++ msgVendorId ++ ") on the "
-            ++ sourceSystem ++ " → " ++ "P21" ++ " route. "
-            ++ "Reason: " ++ categoryId ++ "."
-        else if (errorCategory == "CLIENT_ERROR")
-                    "P21" ++ " returned an error for PO " ++ msgPoNumber
-            ++ " (Vendor: " ++ msgVendorId ++ "). "
-            ++ "Reason: " ++ categoryId ++ "."
-        else if (errorCategory == "APIKIT")
-            "Invalid request received from " ++ sourceSystem
-            ++ " for PO " ++ msgPoNumber ++ ". "
-            ++ "Reason: " ++ categoryId ++ "."
-        else if (errorCategory == "ROUTING")
-            "Message could not be routed for PO " ++ msgPoNumber
-            ++ " (Vendor: " ++ msgVendorId ++ ") on the "
-            ++ sourceSystem ++ " → " ++ targetSystem ++ " route. "
-            ++ "Reason: " ++ categoryId ++ "."
-        else
-            "An error occurred on the " ++ sourceSystem ++ " → " ++ targetSystem
-            ++ " route for PO " ++ msgPoNumber
-            ++ " (Vendor: " ++ msgVendorId ++ "). "
-            ++ "Error: " ++ categoryId ++ ".",
-    errorResolution:  errorResolution,
-    errorDescription: errorDescFull,
-    transmissionId:   if (isValidationFlow) safe(cdmHeader.transmissionId)
-                      else (vars.initialPayload[0].b2bMessage.header.transmissionId default "N/A"),
-    keyLabel:         if (isValidationFlow) "PO Number" else "N/A",
-    key:              if (isValidationFlow) safe(cdmHeader.poNumber) else corrId,
-    timestamp:        errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})
-}
-
-var template =
-    readUrl("classpath://templates/error-template.html", "text/plain")
----
-template replace /\$\{(\w+)\}/ with ((m) ->
-    (data[m[1]] as String) default ""
-)]]></ee:set-payload>
+									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_connectivityError.dwl" />
 						</ee:message>
 								<ee:variables >
-									<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.initialVariables."integration-type"]]></ee:set-variable>
+									<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_connectivityErrorSubject.dwl" variableName="subject" />
 								</ee:variables>
 					</ee:transform>
+							<logger level="INFO" doc:name="Log INFO : Error" doc:id="d8a5d389-2324-4176-815d-8799be95f9ac" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Connectivity Error in P21",&#10;	error: error.errorType.identifier,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]'/>
 							<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="3a905e98-5c05-4b0c-9655-fb32fc138a29" name="send-email-subflow" />
 						</when>
 						<otherwise >
 							<ee:transform doc:name="Prepare Error response for p21 flag updation issues, var : subject" doc:id="ff949245-ccb8-49be-94c6-25a6142e1e4a" >
 								<ee:message >
-									<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
-
-fun getValue(edits, key) =
-    (edits filter ($.Name == key))[0].Value default null
-
-var txns = payload.TransactionSetResult.Results.Transactions.*Transaction
-var msgs = payload.TransactionSetResult.Messages.*string
-
----
-txns map (txn, index) -> {
-    messageIndex: index + 1,
-    message: msgs[index] default null,
-    po_no: getValue(txn.DataElements.DataElement.Rows.Row.Edits.*Edit, "po_no"),
-    vendor_id: getValue(txn.DataElements.DataElement.Rows.Row.Edits.*Edit, "vendor_id")
-}]]></ee:set-payload>
+									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_flagUpdationError.dwl" />
 								</ee:message>
 								<ee:variables >
-									<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.initialVariables."integration-type"]]></ee:set-variable>
+									<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_flagUpdationErrorSubject.dwl" variableName="subject" />
 								</ee:variables>
 							</ee:transform>
 							<ee:transform doc:name="Prepare Template Email" doc:id="863fb8fc-6022-4053-9c88-7261f377aef4">
 								<ee:message>
-									<ee:set-payload><![CDATA[%dw 2.0
-import * from dw::core::Strings
-output text/plain
-
-fun safe(v, d="N/A") =
-    if (v == null or (v is String and trim(v) == "")) d else v
-
-fun resolvePartner(pId) =
-    if (p('partner.' ++ pId) != null)
-        p('partner.' ++ pId)
-    else
-        pId
-
-var transactions = payload
-
-var failedCount    = sizeOf(transactions) as String
-var succeededCount = "0"
-var otherCount     = "0"
-
-var transactionRows =
-    transactions map (t, idx) ->
-        do {
-            var poNo   = safe(t.po_no as String, "N/A")
-            var vendorRaw = safe(t.vendor_id as String, "UNKNOWN")
-            var vendor = resolvePartner(vendorRaw)
-            var msg    = safe(t.message as String, "No message")
-            var status = "Failed"
-            var rowBg  = "background:#fee2e2;color:#b91c1c;"
-            ---
-            "<tr style='" ++ rowBg ++ "'>"
-            ++ "<td style='padding:8px;border:1px solid #ddd;text-align:center;'>" ++ (idx + 1) ++ "</td>"
-            ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ poNo ++ "</td>"
-            ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ vendor ++ "</td>"
-            ++ "<td style='padding:8px;border:1px solid #ddd;font-weight:600;'>" ++ status ++ "</td>"
-            ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ msg ++ "</td>"
-            ++ "</tr>"
-        }
-
-var summaryBar =
-    "<table style='width:100%;border-collapse:collapse;margin-bottom:14px;'>"
-    ++ "<tr>"
-    ++ "<td style='padding:10px;text-align:center;background:#fee2e2;border-radius:6px;color:#b91c1c;font-weight:600;font-size:14px;width:33%;'>Failed: " ++ failedCount ++ "</td>"
-    ++ "<td style='width:2%;'></td>"
-    ++ "<td style='padding:10px;text-align:center;background:#dcfce7;border-radius:6px;color:#166534;font-weight:600;font-size:14px;width:33%;'>Succeeded: " ++ succeededCount ++ "</td>"
-    ++ "<td style='width:2%;'></td>"
-    ++ "<td style='padding:10px;text-align:center;background:#f1f5f9;border-radius:6px;color:#475569;font-weight:600;font-size:14px;width:30%;'>Other: " ++ otherCount ++ "</td>"
-    ++ "</tr>"
-    ++ "</table>"
-
-var transactionTable =
-    "<table style='width:100%;border-collapse:collapse;'>"
-    ++ "<tr style='background:#fecaca;'>"
-    ++ "<th style='padding:8px;border:1px solid #ddd;text-align:center;width:6%;'>#</th>"
-    ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>PO Number</th>"
-    ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Vendor</th>"
-    ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Status</th>"
-    ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;'>Message</th>"
-    ++ "</tr>"
-    ++ (transactionRows joinBy "")
-    ++ "</table>"
-
-var errorDescriptionHtml = summaryBar ++ transactionTable
-
-var poNumbers =
-    (transactions map (t) -> safe(t.po_no as String, "N/A")) distinctBy $ joinBy ", "
-
-var vendorIds =
-    (transactions map (t) -> resolvePartner(safe(t.vendor_id as String, "UNKNOWN")))
-    distinctBy $
-    joinBy ", "
-
-var data = {
-    flowDirection:   "OUTBOUND",
-    documentType:    "850",
-    appName:         p('api.name') default "Mule Application",
-    transactionType: "850",
-    environment:     upper(p('mule.env') default "DEV"),
-    flowName:        safe(vars.flowName, "850 Outbound P21 Handler"),
-    route:           "P21 → Mule → APM",
-    partnerName:     "Vendor ID(s): " ++ vendorIds,
-    errorTitle:      "850 P21 Transaction Error",
-    bannerColor:     "#ef4444",
-    errorType:       "CUSTOM:P21_FAILED",
-    errorCategory:   "P21_ERROR",
-    status:          "FAILED",
-    errorCode:       "P21_FAILED",
-    message:         "P21 returned " ++ failedCount ++ " failed transaction(s) out of "
-                     ++ sizeOf(transactions) ++ " submitted for 850 Purchase Order processing. "
-                     ++ "Please review the transaction details below.",
-    errorResolution: "P21 transaction processing failed for one or more Purchase Orders."
-        ++ "\n  1. Review each failed row in the table — note the PO Number and error message."
-        ++ "\n  2. Log into P21 and locate the Purchase Order using the PO Number listed."
-        ++ "\n  3. Check if 'Save' is enabled for the affected transaction set in P21 configuration."
-        ++ "\n  4. Verify the vendor ID and PO status fields are correctly mapped and populated."
-        ++ "\n  5. Correct the issue in P21 and resubmit the affected transactions."
-        ++ "\n\n  Do NOT resubmit without confirming whether the transaction was partially saved in P21.",
-    errorDescription: errorDescriptionHtml,
-    transmissionId:  correlationId default uuid(),
-    keyLabel:        "PO Number(s)",
-    key:             poNumbers,
-    timestamp:       now() as String {format: "yyyy-MM-dd HH:mm:ss"}
-}
-
-var template =
-    readUrl("classpath://templates/error-template.html", "text/plain")
----
-template replace /\$\{(\w+)\}/ with ((m) ->
-    (data[m[1]] as String) default ""
-)]]></ee:set-payload>
+									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_flagUpdationErrorPrepareEmailTemplate.dwl" />
 								</ee:message>
 							</ee:transform>
+							<logger level="INFO" doc:name="Log INFO : Error" doc:id="378e3784-8c9b-4590-b5a8-7a9df6845025" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Flag Updation Error in P21",&#10;	error: error.errorType.identifier,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]' />
 							<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="ee9213db-758d-4a03-a945-17c15268b1ae" name="send-email-subflow" />
 						</otherwise>
 					</choice>
 				</on-error-continue>
 			</error-handler>
 		</try>
-		<foreach doc:name="For Each Vendor" doc:id="f71b33b6-24c0-4dba-863e-4d0e9a803a1b" collection="#[vars.erroredPOs]">
+		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="f71b33b6-24c0-4dba-863e-4d0e9a803a1b" collection="#[vars.erroredPOs]">
 			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="2375996c-8946-4ca9-991c-58263985c68a" >
 				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
-import * from dw::core::Strings
-output text/plain
- 
-fun safe(v, d="N/A") =
-    if (v == null or (v is String and trim(v) == "")) d else v
-
-fun resolvePartner(pId) =
-    if (p('partner.' ++ pId) != null)
-        p('partner.' ++ pId)
-    else
-        pId
- 
-var rawPayload       = if (payload is String) read(payload, "application/json") else payload
-var validationErrors = if (rawPayload is Array) rawPayload else [rawPayload]
- 
-var partnerRows =
-    flatten(
-        validationErrors map (partner) ->
-            do {
-                var partnerIdRaw = safe(partner.partnerId as String, "UNKNOWN")
-                var partnerId    = resolvePartner(partnerIdRaw)
-                var poList       = partner.errors default []
-                var poCount      = sizeOf(poList)
-                var firstPo      = poList[0]
-                var firstRow =
-                    "<tr style='background:#fee2e2;color:#b91c1c;'>"
-                    ++ "<td style='padding:8px;border:1px solid #ddd;vertical-align:top;font-weight:600;' rowspan='" ++ poCount ++ "'>" ++ partnerId ++ "</td>"
-                    ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(firstPo.poNo as String, "N/A") ++ "</td>"
-                    ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ ((firstPo."Error Details" default []) joinBy ", ") ++ "</td>"
-                    ++ "</tr>"
-                var remainingRows =
-                    (poList[1 to -1] default []) map (poEntry) ->
-                        "<tr style='background:#fee2e2;color:#b91c1c;'>"
-                        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(poEntry.poNo as String, "N/A") ++ "</td>"
-                        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ ((poEntry."Error Details" default []) joinBy ", ") ++ "</td>"
-                        ++ "</tr>"
-                ---
-                [firstRow] ++ remainingRows
-            }
-    )
- 
-var validationHtml =
-    if (sizeOf(partnerRows) > 0)
-        "<table style='width:100%;border-collapse:collapse;margin-top:10px;'>"
-        ++ "<tr style='background:#fecaca;'>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;'>Partner ID</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;'>PO Number</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;'>Error Details</th>"
-        ++ "</tr>"
-        ++ (partnerRows joinBy "")
-        ++ "</table>"
-    else
-        "Validation failed but no detailed errors available."
- 
-var partnerSummary =
-    (validationErrors map (p) ->
-        resolvePartner(safe(p.partnerId as String, "UNKNOWN"))
-        ++ " — " ++ sizeOf(p.errors default []) ++ " PO(s) failed"
-    ) joinBy " | "
- 
-var data = {
-    flowDirection:   "OUTBOUND",
-    documentType:    "850",
-    appName:         p('api.name') default "Mule Application",
-    transactionType: "850",
-    environment:     upper(p('mule.env') default "DEV"),
-    flowName:        safe(vars.flowName, "850 Outbound Validation"),
-    route:           "P21 → Mule → APM",
-    partnerName:     partnerSummary,
-    errorTitle:      "850 Outbound Validation Error",
-    bannerColor:     "#f59e0b",
-    errorType:       "CUSTOM:VALIDATION_ERROR",
-    errorCategory:   "VALIDATION",
-    status:          "FAILED",
-    errorCode:       "VALIDATION_ERROR",
-    message:         "One or more 850 Purchase Orders failed outbound validation. The P21 ship-to address data is incomplete for the partners listed below.",
-    errorResolution: "The outbound 850 validation failed due to missing ship-to address fields in P21."
-        ++ "\n  1. Log into P21 and locate the ship-to address records for each flagged Partner ID."
-        ++ "\n  2. Populate all null fields: name, address1, city, state, postalCode, and country."
-        ++ "\n  3. Verify the address data is complete and accurate for each affected PO number."
-        ++ "\n  4. Once corrected in P21, reprocess or resubmit the affected 850 transactions."
-        ++ "\n  5. If the address fields are intentionally blank, confirm with the business team whether a default address should be applied."
-        ++ "\n\n  Do NOT resubmit until all required address fields are populated in P21.",
-    errorDescription: validationHtml,
-    transmissionId:  uuid(),
-    keyLabel:        "Partner IDs",
-    key:             (validationErrors map (p) -> safe(p.partnerId as String, "UNKNOWN")) joinBy ", ",
-    timestamp:       now() as String {format: "yyyy-MM-dd HH:mm:ss"}
-}
- 
-var template =
-    readUrl("classpath://templates/error-template.html", "text/plain")
----
-template replace /\$\{(\w+)\}/ with ((m) ->
-    (data[m[1]] as String) default ""
-)]]></ee:set-payload>
+					<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_validationError.dwl" />
 				</ee:message>
 				<ee:variables >
-					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.initialVariables."integration-type"]]></ee:set-variable>
+					<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_validationErrorSubject.dwl" variableName="subject" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="f2c8b03a-b7db-436e-82b5-8aeb49ded849" name="send-email-subflow"/>
 		</foreach>
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="4cd72f03-2915-4d5f-89e2-e4b76f6a3981" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="4cd72f03-2915-4d5f-89e2-e4b76f6a3981" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;END&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
 	</sub-flow>
 </mule>

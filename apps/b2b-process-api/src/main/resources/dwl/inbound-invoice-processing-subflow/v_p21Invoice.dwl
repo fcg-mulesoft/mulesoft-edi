@@ -1,8 +1,6 @@
 %dw 2.0
 output application/json
 
-
-
 var poHeader   = vars.purchaseOrderData.value[0]
 
 var b2bMessage = vars.initialPayload[0].b2bMessage
