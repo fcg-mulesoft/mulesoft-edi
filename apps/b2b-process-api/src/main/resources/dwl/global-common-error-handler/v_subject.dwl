@@ -1,8 +1,8 @@
 %dw 2.0
 output application/json
  
-var senderKey    = vars.initialPayload[0].b2bMessage.header.senderId as String
-var msgVendorId  = p('partner.' ++ senderKey) default null
+var senderKey    = vars.initialPayload[0].b2bMessage.header.senderId default " " as String
+var msgVendorId  = if(senderKey != null) (p('partner.inbound.' ++ senderKey) default p('partner.outbound.' ++ senderKey) default null) else null
  
 var env          = p('mule.env')          default null
 var apiName      = p('api.name')          default null
@@ -15,13 +15,10 @@ var poNumber     = vars.initialPayload[0].b2bMessage.header.poNumber default nul
 fun present(v) = v != null and (v as String) != ""
  
 var segments = [
-    "FCG ERROR ALERT",
     if (present(env))       upper(env)            else null,
-    if (present(apiName))   apiName               else null,
-    if (present(msgVendorId)) msgVendorId          else null,
+    "FCG ERROR ALERT",
     if (present(intType))   intType               else null,
-    if (present(companyNo)) companyNo as String   else null,
-    if (present(poNumber))  "PO " ++ (poNumber as String) else null
+    if (present(poNumber)) ("PO(s) " ++ poNumber) as String   else null
 ] filter present($)
 ---
 segments joinBy " | "

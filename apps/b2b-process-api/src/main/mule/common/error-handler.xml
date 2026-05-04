@@ -53,19 +53,12 @@ output application/json
 }]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Response Payload" doc:id="12e07846-cc14-4b6c-a536-b056209e3d36" >
+			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="12e07846-cc14-4b6c-a536-b056209e3d36" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
 				<ee:variables >
-					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
-var senderKey = vars.initialPayload[0].b2bMessage.header.senderId as String
-var msgVendorId =
-    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-    else " "
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ (vars.purchaseOrderData.value.company_no[0] default "N/A")]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ad0d75c3-34ff-4d21-bd60-1d62a1add1dc" name="send-email-subflow" />
@@ -104,19 +97,12 @@ output application/json
 }]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Response Payload" doc:id="6c27e672-1a05-49a1-a263-b2a312a8c8e7" >
+			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="6c27e672-1a05-49a1-a263-b2a312a8c8e7" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
 				<ee:variables >
-					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
-var senderKey = vars.initialPayload[0].b2bMessage.header.senderId as String
-var msgVendorId =
-    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-    else " "
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ (vars.purchaseOrderData.value.company_no[0] default "N/A")]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="dd485f70-15d0-4237-afdf-bfd5683f636a" name="send-email-subflow" />
@@ -174,19 +160,12 @@ var explictHandlerCodes = p('explicitcodes')
 				
 </ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Response Payload" doc:id="d86351f2-cb7d-4cc3-8cac-dd57c08f3567" >
+			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="d86351f2-cb7d-4cc3-8cac-dd57c08f3567" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
 				<ee:variables >
-					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
-var senderKey = vars.initialPayload[0].b2bMessage.header.senderId as String
-var msgVendorId =
-    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-    else " "
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ vars.purchaseOrderData.value.company_no[0]]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ab4ad35a-a573-43a7-a4fe-8d3794087d72" name="send-email-subflow" />
@@ -196,21 +175,6 @@ var msgVendorId =
 	</error-handler>
 	<sub-flow name="send-email-subflow" doc:id="421993f9-c123-453a-8a37-135d2a1821c1" >
 		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="f7577dfb-a02b-4ad8-9ca6-6eb0108c6d8c" message="Start: Email Alert" />
-
-		<ee:transform doc:name="var: subject" doc:id="19499001-3829-4016-978f-97548c22403f" >
-			<ee:message >
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
-var senderKey = vars.initialPayload[0].b2bMessage.header.senderId as String
-var msgVendorId =
-    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-    else " "
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ msgVendorId ++ " | " ++ vars.integration."integration-type" default vars.initialVariables."integration-type" ++ " | " ++ (vars.purchaseOrderData.value.company_no[0] default " ")]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
 		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
 						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","anshul.negi@caeliusconsulting.com","priyanshu.dhawan@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com","bighnesh.sahoo@caeliusconsulting.com"]]' config-ref="Email_SMTP">
 

@@ -140,7 +140,7 @@ var msgPoNumber = safe(cdmHeader.poNumber default "" as String,
 var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as String
 
 var msgVendorId =
-    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
+    if (p('partner.outbound' ++ senderKey) != null) p('partner.outbound' ++ senderKey)
     else "N/A"
 
 var itemRows =

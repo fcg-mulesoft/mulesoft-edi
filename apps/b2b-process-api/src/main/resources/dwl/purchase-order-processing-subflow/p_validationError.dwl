@@ -4,15 +4,24 @@ output text/plain
  
 fun safe(v, d="N/A") =
     if (v == null or (v is String and trim(v) == "")) d else v
-
+fun present(v)          = v != null and (v as String) != ""
 fun resolvePartner(pId) =
-    if (p('partner.' ++ pId) != null)
-        p('partner.' ++ pId)
+    if (p('partner.outbound.' ++ pId) != null)
+        p('partner.outbound.' ++ pId)
     else
         pId
  
 var rawPayload       = if (payload is String) read(payload, "application/json") else payload
 var validationErrors = if (rawPayload is Array) rawPayload else [rawPayload]
+ 
+var poNumbers =
+    flatten(
+        validationErrors map (partner) ->
+            (partner.errors default []) map (poEntry) ->
+                poEntry.poNo as String default null
+    ) filter present($)
+ 
+var poSegment     = if (sizeOf(poNumbers) > 0) ("PO(s) " ++ (poNumbers joinBy ", ")) else "N/A"
  
 var partnerRows =
     flatten(
@@ -84,9 +93,11 @@ var data = {
         ++ "\n\n  Do NOT resubmit until all required address fields are populated in P21.",
     errorDescription: validationHtml,
     transmissionId:  payload.errors[0].transmissionIdApm,
-    keyLabel:        "Partner IDs",
+    keyLabel:        "Correlation ID",
+    vendorName: (validationErrors map (p) -> safe(p.partnerId as String, "UNKNOWN")) joinBy ", ",
     companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
-    key:             (validationErrors map (p) -> safe(p.partnerId as String, "UNKNOWN")) joinBy ", ",
+    key:      correlationId,
+    businessKey: poSegment ,
     timestamp:       now() as String {format: "yyyy-MM-dd HH:mm:ss"}
 }
  

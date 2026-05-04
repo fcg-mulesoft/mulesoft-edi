@@ -140,7 +140,8 @@ var msgPoNumber = safe(cdmHeader.poNumber default "" as String,
 var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as String
 
 var msgVendorId =
-    if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
+    if (p('partner.inbound.' ++ senderKey) != null) p('partner.inbound.' ++ senderKey)
+    else if (p('partner.outbound.' ++ senderKey) != null) p('partner.outbound.' ++ senderKey)
     else " "
 
 var itemRows =
@@ -390,7 +391,7 @@ var data = {
     errorCategory:   errorCategory,
     status:          "FAILED",
     errorCode:       if (isValidationFlow) "VALIDATION_ERROR" else errId,
-    message:
+  	message:
         if (isValidationFlow)
             "Validation failed while processing transaction for PO "
             ++ msgPoNumber ++ " (Vendor: " ++ msgVendorId ++ ")."
@@ -431,10 +432,12 @@ var data = {
         else
             "An error occurred on the " ++ sourceSystem ++ " → " ++ targetSystem
             ++ " route for PO " ++ msgPoNumber
-            ++ " (Vendor: " ++ msgVendorId ++ "). "
+            ++ " Vendor: " ++ msgVendorId ++ " "
             ++ "Error: " ++ categoryId ++ ".",
     errorResolution:  errorResolution,
     errorDescription: errorDescFull,
+    vendorName: msgVendorId,
+    businessKey: "PO " ++ msgPoNumber,
     transmissionId:   if (isValidationFlow) safe(cdmHeader.transmissionId)
                       else (vars.initialPayload[0].b2bMessage.header.transmissionId default "N/A"),
     companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
