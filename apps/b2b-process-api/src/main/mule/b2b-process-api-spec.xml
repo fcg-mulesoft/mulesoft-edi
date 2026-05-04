@@ -54,24 +54,24 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="post:\inboundTransactions:application\json:b2b-process-api-spec-config" doc:id="e445073a-6ac5-4ba8-acea-c05aec807d6a">
-        <!-- [STUDIO:"var : integration, initialPayload"]<ee:transform doc:name="var : integration, initialPayload" doc:id="f7c8a630-5842-43d9-bb3e-0ce2e274d0f4">
+        <ee:transform doc:name="var : integration, initialPayload" doc:id="f7c8a630-5842-43d9-bb3e-0ce2e274d0f4">
             <ee:message />
             <ee:variables>
                 <ee:set-variable variableName="integration"><![CDATA[%dw 2.0
 output application/json
-&#45;&#45;-
+---
 {
 	"source" : "APM" ,
 	"target" : "P21",
-	"integration-type" : "Inbound " ++ attributes.queryParams."type" ++ " " ++ payload[0&#93;."b2bMessage"."header"."documentType",
+	"integration-type" : "Inbound " ++ attributes.queryParams."type" ++ " " ++ payload[0]."b2bMessage"."header"."documentType",
 	"correlationId": correlationId
-}&#93;&#93;></ee:set-variable>
+}]]></ee:set-variable>
                 <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
 output application/json
-&#45;&#45;-
-payload&#93;&#93;></ee:set-variable>
+---
+payload]]></ee:set-variable>
             </ee:variables>
-        </ee:transform> [STUDIO] -->
+        </ee:transform>
         <flow-ref doc:name="Inbound Transaction Processing" doc:id="885af747-f4ce-47cd-bc6f-ea61768d6175" name="#[&quot;inbound-&quot; ++ attributes.queryParams.&quot;type&quot; ++ &quot;-processing-subflow&quot;]" />
     </flow>
     <flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1">

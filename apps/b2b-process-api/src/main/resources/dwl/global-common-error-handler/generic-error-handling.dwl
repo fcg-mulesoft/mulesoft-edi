@@ -384,8 +384,6 @@ var data = {
                              safe(cdmHeader.documentType, "API"))),
     environment:     upper(safe(sysInfo.env, p('mule.env'))),
     route:           sourceSystem ++ " → Mule → " ++ targetSystem,
-    partnerName:     if (p('partner.' ++ senderKey) != null) p('partner.' ++ senderKey)
-                     else "N/A",
     errorTitle:      errorTitle,
     bannerColor:     bannerColor,
     errorType:       errorTypeValue,
@@ -439,6 +437,7 @@ var data = {
     errorDescription: errorDescFull,
     transmissionId:   if (isValidationFlow) safe(cdmHeader.transmissionId)
                       else (vars.initialPayload[0].b2bMessage.header.transmissionId default "N/A"),
+    companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
     keyLabel:        "Correlation ID",
     key:             correlationId default uuid(),
     timestamp:        errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})

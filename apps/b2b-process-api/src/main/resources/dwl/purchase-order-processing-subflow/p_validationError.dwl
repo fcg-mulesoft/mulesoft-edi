@@ -85,6 +85,7 @@ var data = {
     errorDescription: validationHtml,
     transmissionId:  payload.errors[0].transmissionIdApm,
     keyLabel:        "Partner IDs",
+    companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
     key:             (validationErrors map (p) -> safe(p.partnerId as String, "UNKNOWN")) joinBy ", ",
     timestamp:       now() as String {format: "yyyy-MM-dd HH:mm:ss"}
 }

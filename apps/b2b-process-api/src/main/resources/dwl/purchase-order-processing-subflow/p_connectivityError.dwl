@@ -439,8 +439,9 @@ var data = {
     errorDescription: errorDescFull,
     transmissionId:   if (isValidationFlow) safe(cdmHeader.transmissionId)
                       else (vars.initialPayload[0].b2bMessage.header.transmissionId default "N/A"),
-    keyLabel:         if (isValidationFlow) "PO Number" else "N/A",
-    key:              if (isValidationFlow) safe(cdmHeader.poNumber) else corrId,
+    keyLabel:        "Correlation ID",
+    key:             correlationId default uuid(),
+    companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
     timestamp:        errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})
 }
 

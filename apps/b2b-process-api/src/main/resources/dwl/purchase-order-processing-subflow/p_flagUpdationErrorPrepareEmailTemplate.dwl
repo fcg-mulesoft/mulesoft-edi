@@ -95,9 +95,10 @@ var data = {
         ++ "\n  5. Correct the issue in P21 and resubmit the affected transactions."
         ++ "\n\n  Do NOT resubmit without confirming whether the transaction was partially saved in P21.",
     errorDescription: errorDescriptionHtml,
+    companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
     transmissionId:  correlationId default uuid(),
-    keyLabel:        "PO Number(s)",
-    key:             poNumbers,
+    keyLabel:        "Correlation ID",
+    key:             correlationId default uuid(),
     timestamp:       now() as String {format: "yyyy-MM-dd HH:mm:ss"}
 }
 
