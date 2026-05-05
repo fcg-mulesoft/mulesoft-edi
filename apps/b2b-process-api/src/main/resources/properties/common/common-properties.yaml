@@ -35,7 +35,7 @@ https:
   responseTimeout: "40000"
   basePath: "/api/v1/*"
   private:
-    port: "8092"
+    port: "8094"
   keystore:
     path: "keystore.jks"
     alias: "fcg-mule-cert"

@@ -111,7 +111,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 			</otherwise>
 		</choice>
 		
-		<os:store doc:name="lastRun" doc:id="06584ae8-310a-4e5b-a208-39f09b2bd7cd" key="lastRun" objectStore="Object_store1">
+		<os:store doc:name="lastRun" doc:id="06584ae8-310a-4e5b-a208-39f09b2bd7cd" key="lastRun" objectStore="Object_store">
 			<os:value><![CDATA[#[vars.interval.toTime]]]></os:value>
 		</os:store>
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="d2fce8f4-bee4-4e6c-a2e6-aa9528a54e56" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />

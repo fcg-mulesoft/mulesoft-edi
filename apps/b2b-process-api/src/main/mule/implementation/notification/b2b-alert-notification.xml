@@ -16,7 +16,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		<flow-ref doc:name="Flow Reference To retrieve-access-token-subflow"
 			doc:id="57584837-2dad-40e5-9426-cea38cb6887a"
 			name="retrieve-access-token-subflow" />
-		<os:retrieve-all doc:name="lastRun" doc:id="197d87d8-6a57-4464-aba5-3f912e5c1102" objectStore="Object_store1"/>
+		<os:retrieve-all doc:name="lastRun" doc:id="197d87d8-6a57-4464-aba5-3f912e5c1102" objectStore="Object_store"/>
 		<ee:transform doc:name="var : timeStamp"
 			doc:id="46555cbe-bf35-4bfd-af98-8f590120656f">
 			<ee:message>
