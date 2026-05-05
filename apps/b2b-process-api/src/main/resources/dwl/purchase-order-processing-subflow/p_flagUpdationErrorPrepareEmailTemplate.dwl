@@ -73,7 +73,7 @@ var data = {
     flowDirection:   "OUTBOUND",
     documentType:    "850",
     appName:         p('api.name') default "Mule Application",
-    transactionType: "850",
+    transactionType: "Outbound-850",
     environment:     upper(p('mule.env') default "DEV"),
     flowName:        safe(vars.flowName, "850 Outbound P21 Handler"),
     route:           "P21 → Mule → APM",

@@ -10,10 +10,10 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	<sub-flow name="b2b-alert-notification-main-subflow"
 		doc:id="b5487a0a-3471-47ff-88fa-f8cbcf0424d9">
 
-		<logger level="INFO" doc:name="START"
+		<logger level="INFO" doc:name="LOG INFO : START"
 			doc:id="225600a2-9b46-4979-a17b-25ebc53cb2bd"
 			message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />
-		<flow-ref doc:name="retrieve-access-token-subflow"
+		<flow-ref doc:name="Flow Reference To retrieve-access-token-subflow"
 			doc:id="57584837-2dad-40e5-9426-cea38cb6887a"
 			name="retrieve-access-token-subflow" />
 		<os:retrieve-all doc:name="lastRun" doc:id="197d87d8-6a57-4464-aba5-3f912e5c1102" objectStore="Object_store1"/>
@@ -32,10 +32,10 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<ee:set-payload resource="dwl/b2b-alert-notification-main-subflow/p_fromTime.dwl" />
 			</ee:message>
 		</ee:transform>
-		<flow-ref doc:name="apm-error-report-subflow"
+		<flow-ref doc:name="Flow Reference To apm-error-report-subflow"
 			doc:id="f1180b74-485a-4947-9586-c52e3114cffe"
 			name="apm-error-report-subflow" />
-		<logger level="INFO" doc:name="END"
+		<logger level="INFO" doc:name="LOG INFO : END"
 			doc:id="975c02e9-def0-4f1a-9abc-2bf7eead4a4e"
 			message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />
 	</sub-flow>

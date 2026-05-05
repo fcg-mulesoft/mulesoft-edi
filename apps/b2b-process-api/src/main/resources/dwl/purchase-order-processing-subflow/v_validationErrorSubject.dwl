@@ -6,22 +6,12 @@ fun present(v)          = v != null and (v as String) != ""
 fun safe(v, d="N/A")    = if (v == null or (v is String and trim(v) == "")) d else v
 fun resolvePartner(pId) = if (p('partner.outbound.' ++ pId) != null) p('partner.outbound.' ++ pId) else pId
  
-var rawPayload       = if (payload is String) read(payload, "application/json") else payload
-var validationErrors = if (rawPayload is Array) rawPayload else [rawPayload]
+var partner      = if (payload is String) read(payload, "application/json") else payload
  
-var vendorIds =
-    (validationErrors map (partner) ->
-        resolvePartner(safe(partner.partnerId as String, "UNKNOWN"))
-    ) filter present($)
+var partnerId    = resolvePartner(safe(partner.partnerId as String, "UNKNOWN"))
+var poNumbers    = (partner.errors default []) map ((e) -> e.poNo as String) filter present($)
  
-var poNumbers =
-    flatten(
-        validationErrors map (partner) ->
-            (partner.errors default []) map (poEntry) ->
-                poEntry.poNo as String default null
-    ) filter present($)
- 
-var vendorSegment = if (sizeOf(vendorIds) > 0) vendorIds joinBy ", "            else null
+var vendorSegment = if (present(partnerId)) partnerId else null
 var poSegment     = if (sizeOf(poNumbers) > 0) "PO " ++ (poNumbers joinBy ", ") else null
  
 var env       = p('mule.env')  default null
@@ -29,12 +19,11 @@ var apiName   = p('api.name')  default null
 var intType   = vars.integration."integration-type"
                     default vars.initialVariables."integration-type"
                     default null
-var companyNo = vars.purchaseOrderData.value.company_no[0] default null
  
 var segments = [
+    if (present(env))       upper(env)    else null,
     "FCG ERROR ALERT",
-    if (present(env))       upper(env)          else null,
-    if (present(intType))   intType             else null,
+    if (present(intType))   intType       else null,
     poSegment
 ] filter present($)
 ---

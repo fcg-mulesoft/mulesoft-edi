@@ -1,183 +1,120 @@
 %dw 2.0
 output application/json
-var DEBUG = true
+var DEBUG = false
 fun norm(v) =
   if ( v is String ) (upper(trim(v)) replace /[^A-Z0-9]/ with "")
   else if ( v is Number ) (v as String)
-  else
-    ""
+  else ""
 fun isMatch(a, b) = norm(a) == norm(b)
 fun isMismatch(v) = !(v default false)
-var root     = payload[0]
-var ediLines = root.b2bMessage.detail.itemDetails default []
-var header   = root.b2bMessage.header default {
-}
-var odataLines = vars.purchaseOrderData.value default []
-var shipTo =
-    (header.partyInformation default []) filter ($.qualifier == "ST")
-var p21Index =
-    odataLines reduce ((item, acc = {
-}) ->
-        acc ++ {
-	(norm(item.customer_part_number)): item,
-	(norm(item.supplier_part_no)): item,
-	(norm(item.item_id)): item
-})
-var groupedEDI =
-    ediLines groupBy (norm(
-        ($.buyerPartNo default $.vendorPartNo)
-    ))
-var PRICE_TOLERANCE = 0.01
+fun first(v) =
+  if ( v is Array and sizeOf(v) > 0 ) v[0]
+  else v
+fun toNumber(v) =
+  if ( v is Array ) (v[0] default 0)
+  else (v default 0)
+fun cleanPO(v) =
+  if ( v is Array ) cleanPO(v[0])
+  else if ( v is String ) (v replace "/" with "")
+  else if ( v is Number ) (v as String)
+  else ""
 fun isPriceMatch(a, b) =
-    abs((a default 0) - (b default 0)) <= PRICE_TOLERANCE
+  abs(toNumber(a) - toNumber(b)) <= 0.01
+var root = payload[0]
+var header = root.b2bMessage.header default {
+}
+var ediLines = root.b2bMessage.detail.itemDetails default []
+var odataLines = vars.purchaseOrderData.value default []
+var shipToRaw =
+  ((header.partyInformation default []) filter ($.qualifier == "ST"))[0] default {
+}
+var shipTo = {
+	name: shipToRaw.name,
+	address1: shipToRaw.address1,
+	city: shipToRaw.city,
+	state: shipToRaw.state,
+	countryCode: shipToRaw.countryCode,
+	postalCode: shipToRaw.postalCode
+}
 var comparison =
-    groupedEDI pluck (items, key) -> do {
-	var totalQty =
-            items reduce ((i, acc = 0) ->
-                acc + (i.quantityOrdered default 0)
-            )
-	var sample = items[0]
+  ediLines map (line) -> do {
+	var lineNo = first(line.lineNo)
+	var buyerPart = first(line.buyerPartNo)
+	var vendorPart = first(line.vendorPartNo)
+	var matchedByItem =
+      (odataLines filter (norm($.item_id) == norm(buyerPart)))[0]
 	var matched =
-            p21Index[norm(sample.buyerPartNo)]
-            default p21Index[norm(sample.vendorPartNo)]
-            default {
+      if ( matchedByItem != null ) matchedByItem
+      else
+        (odataLines filter (norm($.supplier_part_no) == norm(vendorPart)))[0] default {
 	}
+	var orderedQty = toNumber(line.quantityOrdered)
+	var receivedQty = matched.qty_received default 0
+	var allowedQty = matched.qty_ordered default 0
 	---
 	{
-		productKey: key,
-		lineNos: items.*lineNo,
+		lineNo: lineNo,
+		buyerPart: buyerPart,
+		vendorPart: vendorPart,
+		// ✅ NEW VALIDATION FLAG
+		buyer_match: matchedByItem != null,
 		supplier_part_no: {
-			original: sample.vendorPartNo,
+			original: vendorPart,
 			odata: matched.supplier_part_no,
-			match: isMatch(sample.vendorPartNo, matched.supplier_part_no)
+			match: isMatch(vendorPart, matched.supplier_part_no)
 		},
 		qty_ordered: {
-			original: totalQty,
-			odata: matched.qty_ordered,
-			match: ((matched.qty_received default 0) + totalQty) <= (matched.qty_ordered default 0)
-		},
-		qty_received: {
-			original: 0,
-			odata: matched.qty_received,
-			match: isMatch(0, matched.qty_received)
+			original: orderedQty,
+			odata: allowedQty,
+			match: (orderedQty + receivedQty) <= allowedQty
 		},
 		unit_price: {
-			original: sample.unitPrice,
+			original: toNumber(line.unitPrice),
 			odata: matched.unit_price,
-			match: isPriceMatch(sample.unitPrice, matched.unit_price)
+			match: isPriceMatch(line.unitPrice, matched.unit_price)
 		},
-		unit_quantity: {
-			original: totalQty,
-			odata: matched.unit_quantity,
-			match: isMatch(totalQty, matched.unit_quantity)
-		},
-		config_1: {
-			original: null,
-			odata: matched.config_1,
-			match: isMatch(null, matched.config_1)
-		},
-		config_2: {
-			original: null,
-			odata: matched.config_2,
-			match: isMatch(null, matched.config_2)
-		},
-		carrier_id: {
-			original: null,
-			odata: matched.carrier_id,
-			match: isMatch(null, matched.carrier_id)
-		},
-		ship2_name: {
-			original: shipTo[0].name default null,
-			odata: matched.ship2_name,
-			match: isMatch(shipTo[0].name, matched.ship2_name)
-		},
-		ship2_add1: {
-			original: shipTo[0].address1 default null,
-			odata: matched.ship2_add1,
-			match: isMatch(shipTo[0].address1, matched.ship2_add1)
-		},
-		ship2_add2: {
-			original: null,
-			odata: matched.ship2_add2,
-			match: isMatch(null, matched.ship2_add2)
-		},
-		ship2_city: {
-			original: shipTo[0].city default null,
-			odata: matched.ship2_city,
-			match: isMatch(shipTo[0].city, matched.ship2_city)
-		},
-		ship2_state: {
-			original: shipTo[0].state default null,
-			odata: matched.ship2_state,
-			match: isMatch(shipTo[0].state, matched.ship2_state)
-		},
-		ship2_country: {
-			original: shipTo[0].countryCode default null,
-			odata: matched.ship2_country,
-			match: isMatch(shipTo[0].countryCode, matched.ship2_country)
-		},
-		ship2_zip: {
-			original: shipTo[0].postalCode default null,
-			odata: matched.ship2_zip,
-			match: isMatch(shipTo[0].postalCode, matched.ship2_zip)
-		},
-		external_po_no: {
-			original: header.poNumber,
-			odata: matched.external_po_no,
-			match: isMatch(header.poNumber, matched.external_po_no)
-		},
-		carrier_code: {
-			original: null,
-			odata: matched.carrier_code,
-			match: isMatch(null, matched.carrier_code)
-		},
-		shipping_instruction: {
-			original: null,
-			odata: matched.shipping_instruction,
-			match: isMatch(null, matched.shipping_instruction)
-		},
-		customer_part_number: {
-			original: sample.buyerPartNo,
-			odata: matched.customer_part_number,
-			match: if ( (matched.po_type default "") == "D" and (matched.sales_order_number default null) != null ) isMatch(sample.buyerPartNo, matched.customer_part_number)
-                    else true
+		shipTo: {
+			original: shipTo,
+			odata: {
+				name: matched.ship2_name,
+				address1: matched.ship2_add1,
+				city: matched.ship2_city,
+				state: matched.ship2_state,
+				countryCode: matched.ship2_country,
+				postalCode: matched.ship2_zip
+			},
+			match: {
+				name: isMatch(shipTo.name, matched.ship2_name),
+				address1: isMatch(shipTo.address1, matched.ship2_add1),
+				city: isMatch(shipTo.city, matched.ship2_city),
+				state: isMatch(shipTo.state, matched.ship2_state),
+				countryCode: isMatch(shipTo.countryCode, matched.ship2_country),
+				postalCode: isMatch(shipTo.postalCode, matched.ship2_zip)
+			}
 		}
 	}
 }
 var itemErrors =
-    (comparison map (line) -> do {
-	var errs =
-            flatten([if ( isMismatch(line.supplier_part_no.match) ) ["Supplier Part mismatch"] else [],
-                if ( isMismatch(line.qty_ordered.match) ) ["Qty Ordered mismatch"] else [],
-                if ( isMismatch(line.qty_received.match) ) ["Qty Received mismatch"] else [],
-                if ( isMismatch(line.unit_price.match) ) ["Unit Price mismatch"] else [],
-                if ( isMismatch(line.unit_quantity.match) ) ["Unit Quantity mismatch"] else [],
-                if ( isMismatch(line.shipping_instruction.match) ) ["Shipping Instruction missing"] else []])
-	---
-	if ( sizeOf(errs) > 0 ) {
-		(line.productKey): errs
-	}
-        else {
-	}
+  (comparison map (line) -> {
+	(line.buyerPart): flatten([if ( isMismatch(line.buyer_match) ) ["Item ID mismatch"] else [],
+      if ( isMismatch(line.supplier_part_no.match) ) ["Supplier part number mismatch"] else [],
+      if ( isMismatch(line.qty_ordered.match) ) ["Quantity exceeds ordered amount"] else [],
+      if ( isMismatch(line.unit_price.match) ) ["Unit quantity exceeded"] else []])
 }) reduce ((item, acc = {
-}) -> acc ++ item)
-var warnings =
-    flatten(
-        comparison map (line) ->
-            flatten([if ( isMismatch(line.config_1.match) ) [(line.productKey ++ ": Config1 missing")] else [],
-                if ( isMismatch(line.config_2.match) ) [(line.productKey ++ ": Config2 missing")] else []])
-    )
+}) -> acc ++ item) filterObject (sizeOf($) > 0)
+var firstMatched = (odataLines[0]) default {
+}
 var shipToErrors =
-    if ( sizeOf(comparison) > 0 ) flatten([if ( isMismatch(comparison[0].ship2_name.match) ) ["ShipTo Name mismatch"] else [],
-            if ( isMismatch(comparison[0].ship2_add1.match) ) ["ShipTo Address1 mismatch"] else [],
-            if ( isMismatch(comparison[0].ship2_city.match) ) ["ShipTo City mismatch"] else [],
-            if ( isMismatch(comparison[0].ship2_state.match) ) ["ShipTo State mismatch"] else [],
-            if ( isMismatch(comparison[0].ship2_country.match) ) ["ShipTo Country mismatch"] else [],
-            if ( isMismatch(comparison[0].ship2_zip.match) ) ["ShipTo Zip mismatch"] else []])
-    else []
+  flatten([if ( isMismatch(isMatch(shipTo.name, firstMatched.ship2_name)) ) ["ShipTo Name mismatch"] else [],
+    if ( isMismatch(isMatch(shipTo.address1, firstMatched.ship2_add1)) ) ["ShipTo Address1 mismatch"] else [],
+    if ( isMismatch(isMatch(shipTo.city, firstMatched.ship2_city)) ) ["ShipTo City mismatch"] else [],
+    if ( isMismatch(isMatch(shipTo.state, firstMatched.ship2_state)) ) ["ShipTo State mismatch"] else [],
+    if ( isMismatch(isMatch(shipTo.countryCode, firstMatched.ship2_country)) ) ["ShipTo Country mismatch"] else [],
+    if ( isMismatch(isMatch(shipTo.postalCode, firstMatched.ship2_zip)) ) ["ShipTo Zip mismatch"] else []])
+var itemErrorList = flatten(valuesOf(itemErrors))
+var shipErrorList = shipToErrors default []
 var errorCount =
-    sizeOf(itemErrors) +
-    sizeOf(shipToErrors)
+  sizeOf(itemErrorList) + sizeOf(shipErrorList)
 ---
 {
 	debug: if ( DEBUG ) {
@@ -187,7 +124,10 @@ var errorCount =
 	isValid: errorCount == 0,
 	validationErrors: {
 		itemErrors: itemErrors,
-		shipToErrors: shipToErrors
+		shipToErrors: shipToErrors,
+		carrierErrors: [],
+		externalPoErrors: [],
+		customerPartErrors: []
 	},
-	warnings: warnings
+	warnings: []
 }

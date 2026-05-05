@@ -35,5 +35,6 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
 	<azure-storage:config name="Azure_Storage_Config" doc:name="Azure Storage Config" doc:id="62dd0a7a-502d-4fe5-8e4f-eeda6573ac2b" >
 		<azure-storage:sas-token-azure-connection accountName="${azure.accountname}" sasToken="${secure::azure.sastoken}"/>
 	</azure-storage:config>
+	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="de023e58-4c44-4b28-b57a-f2cb0bcd465b" flowRef="b2b-process-api-spec-main" />
 	
 </mule>
