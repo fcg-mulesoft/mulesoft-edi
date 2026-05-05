@@ -7,7 +7,7 @@
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<sub-flow name="apm-error-report-subflow" doc:id="f65fca5c-7713-490f-a781-9677c7879965" >
-		<logger level="INFO" doc:name="START" doc:id="662dd99e-73ec-48f7-abfc-aff38d95b5b2" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]"/>
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="662dd99e-73ec-48f7-abfc-aff38d95b5b2" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]"/>
 		<ee:transform doc:name="var : interval" doc:id="19fb1aed-10df-429e-89f9-8fdab781ec51">
 					<ee:message>
 					</ee:message>
@@ -22,7 +22,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<ee:set-variable resource="dwl/apm-error-report-subflow/v_httpOperation_transmissions.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="common-request-sub-flow" doc:id="2edb6680-95af-4c03-8d4d-755810d5f83f" name="common-http-request-subflow" target="totalPages" targetValue="#[attributes.headers.'x-totalpages']"/>
+		<flow-ref doc:name="Flow Reference To common-request-subflow" doc:id="2edb6680-95af-4c03-8d4d-755810d5f83f" name="common-http-request-subflow" target="totalPages" targetValue="#[attributes.headers.'x-totalpages']"/>
 		<choice doc:name="totalPages &gt; 0" doc:id="f491c1b6-d830-4704-80a2-3d0cf8a26ca2" >
 			<when expression="#[vars.totalPages &gt; 0]">
 				<foreach doc:name="For Each" doc:id="10660191-6bc5-4991-9690-b427be069bb9" collection="#[1 to vars.totalPages]">
@@ -33,7 +33,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 							<ee:set-variable resource="dwl/apm-error-report-subflow/v_httpOperation_transmissions_paged.dwl" variableName="httpOperation" />
 				</ee:variables>
 			</ee:transform>
-			<flow-ref doc:name="common-http-request-subflow" doc:id="c6c9122e-3013-4d85-9823-3765b42ed9c0" name="common-http-request-subflow" />
+			<flow-ref doc:name="Flow Reference To common-http-request-subflow" doc:id="c6c9122e-3013-4d85-9823-3765b42ed9c0" name="common-http-request-subflow" />
 			<ee:transform doc:name="var : transmissionError" doc:id="d09a3373-debf-40a1-9f5c-73448b1bae71">
 				<ee:message>
 				</ee:message>
@@ -44,7 +44,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		</foreach>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="No transmission errors" doc:id="c1f8871c-cf91-4a49-a4a7-3e7ac5c3370a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"transactionId": correlationId,&#10;	 "message": "There were no transmission errors"&#10;}]'/>
+				<logger level="INFO" doc:name="LOG INFO : No transmission errors" doc:id="c1f8871c-cf91-4a49-a4a7-3e7ac5c3370a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"transactionId": correlationId,&#10;	 "message": "There were no transmission errors"&#10;}]'/>
 			</otherwise>
 		</choice>
 		<ee:transform doc:name="var : httpOperation" doc:id="85564f81-bd11-4e8f-a433-8c11f8e63f8a">
@@ -54,7 +54,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<ee:set-variable resource="dwl/apm-error-report-subflow/v_httpOperation_messages.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="common-http-request-subflow" doc:id="e57ce815-faf1-4be1-9a36-5f1daf1a05f7" name="common-http-request-subflow" target="totalPages" targetValue="#[attributes.headers.'x-totalpages']"/>
+		<flow-ref doc:name="Flow Reference To common-http-request-subflow" doc:id="e57ce815-faf1-4be1-9a36-5f1daf1a05f7" name="common-http-request-subflow" target="totalPages" targetValue="#[attributes.headers.'x-totalpages']"/>
 		<choice doc:name="totalPages &gt; 0" doc:id="bd623747-f632-45a6-9721-49cead774123" >
 			<when expression="#[vars.totalPages &gt; 0]">
 				<foreach doc:name="For Each" doc:id="7726c65c-f1e4-46f3-b9dd-ae3a067ae2f1" collection="#[1 to vars.totalPages]">
@@ -65,7 +65,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 							<ee:set-variable resource="dwl/apm-error-report-subflow/v_httpOperation_messages_paged.dwl" variableName="httpOperation" />
 						</ee:variables>
 		</ee:transform>
-			<flow-ref doc:name="common-http-request-subflow" doc:id="7daae07b-70ce-41d2-b6a8-2e572e0a2865" name="common-http-request-subflow" />
+			<flow-ref doc:name="Flow Reference To common-http-request-subflow" doc:id="7daae07b-70ce-41d2-b6a8-2e572e0a2865" name="common-http-request-subflow" />
 			<ee:transform doc:name="var : messageErrors" doc:id="6465d4dc-6a5b-4980-ba2a-3935b91b1690">
 				<ee:message>
 				</ee:message>
@@ -76,7 +76,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		</foreach>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="No message errors" doc:id="ad160618-9720-46f5-a661-0fdd875819e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"transactionId": correlationId,&#10;	 "message": "There were no message errors"&#10;}]'/>
+				<logger level="INFO" doc:name="LOG INFO : No message errors" doc:id="ad160618-9720-46f5-a661-0fdd875819e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"transactionId": correlationId,&#10;	 "message": "There were no message errors"&#10;}]'/>
 			</otherwise>
 		</choice>
 		<ee:transform doc:name="var : effectiveTransmissions" doc:id="e1762647-2840-470e-8699-114d8a3bf4b7">
@@ -86,7 +86,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<ee:set-variable resource="dwl/apm-error-report-subflow/v_effectiveTransmissions.dwl" variableName="effectiveTransmissions" />
 			</ee:variables>
 		</ee:transform>
-		<ee:transform doc:name="CDM" doc:id="de35fe2a-fc85-4f66-968c-486384a6b093">
+		<ee:transform doc:name="var : messageData, transmissionData" doc:id="de35fe2a-fc85-4f66-968c-486384a6b093">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
@@ -104,15 +104,15 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 						<ee:set-variable resource="dwl/apm-error-report-subflow/v_subject.dwl" variableName="subject" />
 					</ee:variables>
 		</ee:transform>
-				<flow-ref doc:name="Flow Reference send-email-subflow" doc:id="b791b438-4cbf-4136-9bc3-f153dc6f5a7f" name="send-email-subflow"/>
+				<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="b791b438-4cbf-4136-9bc3-f153dc6f5a7f" name="send-email-subflow"/>
 			</when>
 			<otherwise>
-				<logger level="INFO" doc:name="No errors" doc:id="5906a41e-c6ac-473a-b827-916283553d8a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"transactionId": correlationId,&#10;	 "message": "There were no errors"&#10;}]' />
+				<logger level="INFO" doc:name="LOG INFO : No errors" doc:id="5906a41e-c6ac-473a-b827-916283553d8a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"transactionId": correlationId,&#10;	 "message": "There were no errors"&#10;}]' />
 			</otherwise>
 		</choice>
 		
-		<os:store doc:name="lastRun" doc:id="06584ae8-310a-4e5b-a208-39f09b2bd7cd" key="lastRun" objectStore="Object_store1">
+		<os:store doc:name="lastRun" doc:id="06584ae8-310a-4e5b-a208-39f09b2bd7cd" key="lastRun" objectStore="Object_store">
 			<os:value><![CDATA[#[vars.interval.toTime]]]></os:value>
 		</os:store>
-		<logger level="INFO" doc:name="END" doc:id="d2fce8f4-bee4-4e6c-a2e6-aa9528a54e56" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="d2fce8f4-bee4-4e6c-a2e6-aa9528a54e56" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />
 	</sub-flow></mule>

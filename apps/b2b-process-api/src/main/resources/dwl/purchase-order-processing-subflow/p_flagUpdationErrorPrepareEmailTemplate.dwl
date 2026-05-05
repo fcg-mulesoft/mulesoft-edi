@@ -6,8 +6,8 @@ fun safe(v, d="N/A") =
     if (v == null or (v is String and trim(v) == "")) d else v
 
 fun resolvePartner(pId) =
-    if (p('partner.' ++ pId) != null)
-        p('partner.' ++ pId)
+    if (p('partner.outbound.' ++ pId) != null)
+        p('partner.outbound.' ++ pId)
     else
         pId
 
@@ -73,11 +73,12 @@ var data = {
     flowDirection:   "OUTBOUND",
     documentType:    "850",
     appName:         p('api.name') default "Mule Application",
-    transactionType: "850",
+    transactionType: "Outbound-850",
     environment:     upper(p('mule.env') default "DEV"),
     flowName:        safe(vars.flowName, "850 Outbound P21 Handler"),
     route:           "P21 → Mule → APM",
-    partnerName:     "Vendor ID(s): " ++ vendorIds,
+    businessKey: "PO " ++ poNumbers,
+    vendorName:     "Vendor ID(s): " ++ vendorIds,
     errorTitle:      "850 P21 Transaction Error",
     bannerColor:     "#ef4444",
     errorType:       "CUSTOM:P21_FAILED",

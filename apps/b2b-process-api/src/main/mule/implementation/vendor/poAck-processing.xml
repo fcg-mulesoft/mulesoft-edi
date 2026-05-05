@@ -22,7 +22,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		</ee:transform>
 		<choice doc:name="isValid Acknowledgement?" doc:id="e3f7370f-b5f0-4d00-9da3-365687c862be" >
 			<when expression="#[vars.isValid.isValid == false]">
-				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="daf0a59e-db1f-43dd-81bd-7ca2863bb96b" type="CUSTOM:VALIDATION_FAILED" description="#[vars.isValid.validationErrors]" />
+				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="daf0a59e-db1f-43dd-81bd-7ca2863bb96b" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
 			</when>
 			<otherwise >
 				<logger level="INFO" doc:name="LOG INFO : Valid Acknowledgement" doc:id="9852204f-2f4a-46b3-84b2-4811d13ca509" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Acknowledgement validation successful, Moving forward to create the Acknowledgement in p21",&#10;}]' />
