@@ -7,7 +7,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<sub-flow name="retrieve-access-token-subflow" doc:id="ad9cecd6-8225-4009-ab41-03a248438fb6" >
-		<logger level="INFO" doc:name="INFO : START" doc:id="a7b91c5a-7049-4989-881a-f9d738afc73f" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]"/>
+		<logger level="INFO" doc:name="INFO : START" doc:id="a7b91c5a-7049-4989-881a-f9d738afc73f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	message: "Initiating access token retrieval from Anypoint Platform APM API"&#10;}]'/>
 		<ee:transform doc:name="var : httpOperation" doc:id="5b107554-d901-44a1-aeb1-4ce8a82a3fcc">
 			<ee:message />
 			<ee:variables>
@@ -22,6 +22,6 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<ee:set-variable resource="dwl/retrieve-access-token-subflow/v_accessToken.dwl" variableName="accessToken" />
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="INFO : END" doc:id="af643536-9b72-4dd7-a385-6609ee9d7939" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]"/>
+		<logger level="INFO" doc:name="INFO : END" doc:id="af643536-9b72-4dd7-a385-6609ee9d7939" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	message: "Successfully retrieved and stored access token for subsequent API calls."&#10;}]'/>
 	</sub-flow>
 </mule>

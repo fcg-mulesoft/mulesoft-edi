@@ -7,7 +7,7 @@
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<sub-flow name="apm-error-report-subflow" doc:id="f65fca5c-7713-490f-a781-9677c7879965" >
-		<logger level="INFO" doc:name="LOG INFO : START" doc:id="662dd99e-73ec-48f7-abfc-aff38d95b5b2" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: Start&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]"/>
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="662dd99e-73ec-48f7-abfc-aff38d95b5b2" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "Email"&#10;}]'/>
 		<ee:transform doc:name="var : interval" doc:id="19fb1aed-10df-429e-89f9-8fdab781ec51">
 					<ee:message>
 					</ee:message>
@@ -44,7 +44,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		</foreach>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="LOG INFO : No transmission errors" doc:id="c1f8871c-cf91-4a49-a4a7-3e7ac5c3370a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"transactionId": correlationId,&#10;	 "message": "There were no transmission errors"&#10;}]'/>
+				<logger level="INFO" doc:name="LOG INFO : No transmission errors" doc:id="c1f8871c-cf91-4a49-a4a7-3e7ac5c3370a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "Email",&#10;	message: "There were no transmission errors"&#10;}]'/>
 			</otherwise>
 		</choice>
 		<ee:transform doc:name="var : httpOperation" doc:id="85564f81-bd11-4e8f-a433-8c11f8e63f8a">
@@ -107,12 +107,12 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="b791b438-4cbf-4136-9bc3-f153dc6f5a7f" name="send-email-subflow"/>
 			</when>
 			<otherwise>
-				<logger level="INFO" doc:name="LOG INFO : No errors" doc:id="5906a41e-c6ac-473a-b827-916283553d8a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"transactionId": correlationId,&#10;	 "message": "There were no errors"&#10;}]' />
+				<logger level="INFO" doc:name="LOG INFO : No errors" doc:id="5906a41e-c6ac-473a-b827-916283553d8a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "Email",&#10;	message: "There were no errors"&#10;}]' />
 			</otherwise>
 		</choice>
 		
 		<os:store doc:name="lastRun" doc:id="06584ae8-310a-4e5b-a208-39f09b2bd7cd" key="lastRun" objectStore="Object_store">
 			<os:value><![CDATA[#[vars.interval.toTime]]]></os:value>
 		</os:store>
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="d2fce8f4-bee4-4e6c-a2e6-aa9528a54e56" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('mule.env'),&#10;	&quot;transactionId&quot;: correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;&#10;}]" />
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="d2fce8f4-bee4-4e6c-a2e6-aa9528a54e56" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "Email",&#10;}]' />
 	</sub-flow></mule>
