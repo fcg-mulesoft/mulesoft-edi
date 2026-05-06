@@ -176,12 +176,24 @@ var explictHandlerCodes = p('explicitcodes')
 	<sub-flow name="send-email-subflow" doc:id="421993f9-c123-453a-8a37-135d2a1821c1" >
 		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="f7577dfb-a02b-4ad8-9ca6-6eb0108c6d8c" message="Start: Email Alert" />
 		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
-						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","anshul.negi@caeliusconsulting.com","priyanshu.dhawan@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com","bighnesh.sahoo@caeliusconsulting.com"]]' config-ref="Email_SMTP">
+			<try doc:name="Try" doc:id="bd7c772f-cff0-440d-8e15-46f6126b90ce">
+						<choice doc:name="If transmissionId Exists?" doc:id="f04ebe2c-417b-44f2-9be1-860b1a8e5ddd" >
+					<when expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId)]">
+						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="2a3b6006-e755-49e4-988c-672685733d40" idExpression="#[vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
+					</when>
+				</choice>
+				<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","anshul.negi@caeliusconsulting.com","priyanshu.dhawan@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com","bighnesh.sahoo@caeliusconsulting.com"]]' config-ref="Email_SMTP">
 
 				<reconnect />
 				<email:body contentType="text/html">
 				</email:body>
 			</email:send>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1cb3c0c4-d819-4fb4-ac33-2817c87a31bc" type="DUPLICATE_MESSAGE">
+						<logger level="INFO" doc:name="LOG INFO : Duplicate Error - Skipping Email" doc:id="9144ad4f-c0f1-4f38-bfe5-386e075023f3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	timestamp: now(),&#10;	message: "Duplicate Error - Skipping Email"&#10;}]'/>
+					</on-error-continue>
+				</error-handler>
+					</try>
 					</until-successful>
 		<logger level="DEBUG" doc:name="LOG DEBUG: After Email" doc:id="dc455bec-59d5-4b2b-bcde-6d2a7acace49" message="End: Email Alert" />
 	
