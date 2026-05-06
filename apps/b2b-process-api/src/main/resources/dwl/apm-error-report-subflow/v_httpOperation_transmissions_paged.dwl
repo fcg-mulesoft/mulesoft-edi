@@ -3,7 +3,6 @@
 output application/json
 ---
 {
-
 	"method": p('anypoint.apm.method'),
 	"host": "anypoint.mulesoft.com",
 	"port": "443",
@@ -20,8 +19,8 @@ output application/json
 		"dateReceivedFrom": vars.interval.fromTime
 	},
 	"untilsuccessful": {
-		"maxRetries": "5",
-		"interval": "5000"
+		"maxRetries": Mule::p('anypoint.platform.untilsuccessful.maxRetries'),
+		"interval": Mule::p('anypoint.platform.untilsuccessful.interval'),
 	}
 }
 

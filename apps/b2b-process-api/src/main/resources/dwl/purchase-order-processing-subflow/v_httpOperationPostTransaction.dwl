@@ -3,7 +3,7 @@ output application/json
 import toBase64 from dw::core::Binaries
 ---
 {
-	"method": "POST",
+	"method": Mule::p('b2b-p21-sys-api.transaction.method'),
 	"host": Mule::p('b2b-p21-sys-api.host'),
 	"port": Mule::p('b2b-p21-sys-api.port'),
 	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
@@ -12,13 +12,13 @@ import toBase64 from dw::core::Binaries
 		"x-correlation-id": vars.initialVariables.correlationId
 	},
 	"queryParams": {
-		"transactionType": "purchaseOrder"
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrder'),
 	},
 	"uriParams": {
 	},
 	"body": vars.transactionRequestPayload,
 	"untilsuccessful": {
-		"maxRetries": "3",
-		"interval": "6000"
+		"maxRetries": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.interval')
 	}
 }

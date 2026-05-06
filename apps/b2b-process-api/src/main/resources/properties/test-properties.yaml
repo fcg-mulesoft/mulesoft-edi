@@ -9,35 +9,62 @@ b2b-p21-sys-api:
   host: "b2b-p21-sys-api-dev-zrx5fd.internal-y7366p.usa-e1.cloudhub.io"
   basePath: "/api/"
   port: "8092"
+  transactionType:
+    purchaseOrder: "purchaseOrder"
+    purchaseOrderAck: "purchaseOrderAck"
+    purchaseOrderInvoice: "purchaseOrderInvoice"
+    purchaseOrderShipment: "purchaseOrderShipment"
+    salesOrder: "salesOrder"
+    salesOrderAck: "salesOrderAck"
+    salesOrderInvoice: "salesOrderInvoice"
+    salesOrderShipment: "salesOrderShipment"
+  purpose:
+    validation: "validation"
+    outbound: "outbound"
+    total: "total"
   view:
     path: "/views"
-    method: "POST"
+    method: "GET"
+    untilsuccessful:
+      maxRetries: "5"
+      interval: "5000"
   transaction:
     path: "/transactions"
     method: "POST"
+    untilsuccessful:
+      maxRetries: "5"
+      interval: "5000"
 anypoint:
   platform:
+    method: "POST"
     host: "anypoint.mulesoft.com"
     port: "443"
     basePath: "/accounts/api"
     path: "/v2/oauth2/token"
+    untilsuccessful:
+      maxRetries: "5"
+      interval: "5000"
   apm:
    url-prefix: "https://anypoint.mulesoft.com/partnermanager"
    orgid: "d239ff40-5b13-47be-9bb0-a029a64dac2c"
    envid: "fa8f848a-42c7-4ed1-b06d-f7ead0069829"
    method: "GET"
-   
+
 # APM Request Properties
 apm:
   request:
+    method: "POST"
     host: "b2b-inbound-http-9yzw-zrx5fd.y7366p.usa-e1.cloudhub.io"
     port: "443"
     basePath: "/api"
     path: "/out-src-purchase-order"
-   
+    untilsuccessful:
+      maxRetries: "5"
+      interval: "5000"
+
 # Azure Configuration
 azure:
  accountname: "stfcgmulesoftteus2"
  container: "test"
- foldername: "/transition_payload"     
-    
+ foldername: "/transition_payload"
+
