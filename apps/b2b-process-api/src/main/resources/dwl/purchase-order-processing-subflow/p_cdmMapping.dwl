@@ -41,8 +41,8 @@ groupedPOs pluck ((poItems, poNumber) -> {
       references:
         [
           {
-            qualifier: "ST",
-            referenceNumber: (poItems[0].REF_ST_02_Location_Id as String)
+            qualifier: "ZZ",
+            description: "SPECIAL INSTRUCTIONS"
           }
           ++
           (
@@ -53,28 +53,23 @@ groupedPOs pluck ((poItems, poNumber) -> {
                 ]
               }
             else {}
-          ),
- 
-          {
-            qualifier: "ZZ",
-            referenceNumber: (poItems[0].REF_ZZ_02_Vendor_Id as String)
-          }
-          ++
-          (
-            if (poItems[0].N902_HDR_Note != null)
-              {
-                messages: [
-                  { messageText: poItems[0].N902_HDR_Note }
-                ]
-              }
-            else {}
           )
-        ]
-        filter ($.referenceNumber != null),
+        ],
  
       partyInformation: [
         {
           qualifier: "BY",
+          name: poItems[0].N1_BY_Name,
+          idQualifier: "92",
+          idCode: poItems[0].location_id as String,
+          address1: poItems[0].N3_BY_Addr1,
+          city: poItems[0].N4_BY_City,
+          state: poItems[0].N4_BY_State,
+          postalCode: poItems[0].N4_BY_Zip,
+          country: poItems[0].N4_BY_Country
+        },
+        {
+          qualifier: "BT",
           name: poItems[0].N1_BY_Name,
           idQualifier: "92",
           idCode: poItems[0].location_id as String,
@@ -163,12 +158,14 @@ groupedPOs pluck ((poItems, poNumber) -> {
     ]
     filter ($ != null),
  
-        schedules: [
-          {
-            dateQualifier: "002",
-            scheduledDate: item.DTM_002_DeliveryReq
-          }
-        ]
+schedules: [
+  {
+    quantity: item.PO1_02_QtyOrdered,
+    uom: item.PO1_03_UOM,
+    dateQualifier: "002",
+    scheduledDate: item.DTM_002_DeliveryReq
+  }
+]
       }
     },
  
