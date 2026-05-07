@@ -18,8 +18,8 @@ output application/json
 		"dateReceivedFrom": vars.interval.fromTime
 	},
 	"untilsuccessful": {
-		"maxRetries": "5",
-		"interval": "5000"
+		"maxRetries": Mule::p('anypoint.platform.untilsuccessful.maxRetries'),
+		"interval": Mule::p('anypoint.platform.untilsuccessful.interval'),
 	}
 }
 

@@ -3,7 +3,7 @@ output application/json
 import toBase64 from dw::core::Binaries
 ---
 {
-	"method": "POST",
+	"method": Mule::p('apm.request.method'),
 	"host": Mule::p('apm.request.host'),
 	"port": Mule::p('apm.request.port'),
 	"basePath": Mule::p('apm.request.basePath'),
@@ -11,14 +11,13 @@ import toBase64 from dw::core::Binaries
 	"headers": {
 	},
 	"queryParams": {
-		"transactionType": "purchaseOrder",
-		"purpose": "total",
+		
 	},
 	"uriParams": {
 	},
 	"body": payload,
 	"untilsuccessful": {
-		"maxRetries": "3",
-		"interval": "5000"
+		"maxRetries": Mule::p('apm.request.untilsuccessful.maxRetries'),
+		"interval": Mule::p('apm.request.untilsuccessful.interval')
 	}
 }

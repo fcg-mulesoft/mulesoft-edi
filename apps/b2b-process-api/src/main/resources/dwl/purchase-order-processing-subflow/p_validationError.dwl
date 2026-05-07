@@ -46,7 +46,7 @@ fun resolveErrorType(apmType, httpCode) =
 
 fun buildErrorConfig(resolvedType, descStr) =
     if      (resolvedType == "CONNECTIVITY") {
-        title:       "850 Outbound — APM Connection Failure",
+        title:       "APM Connection Failure",
         bannerColor: "#dc2626",
         errorCode:   "APM_CONNECTION_ERROR",
         category:    "CONNECTIVITY",
@@ -60,7 +60,7 @@ fun buildErrorConfig(resolvedType, descStr) =
                      ++ "\n\n  Do NOT resubmit until the connection issue is fully resolved."
     }
     else if (resolvedType == "NOT_FOUND")    {
-        title:       "850 Outbound — APM Endpoint Not Found (404)",
+        title:       "APM Endpoint Not Found (404)",
         bannerColor: "#f59e0b",
         errorCode:   "APM_ENDPOINT_NOT_FOUND",
         category:    "CONFIGURATION",
@@ -74,7 +74,7 @@ fun buildErrorConfig(resolvedType, descStr) =
                      ++ "\n\n  Do NOT resubmit until the APM route is confirmed reachable."
     }
     else if (resolvedType == "TIMEOUT")      {
-        title:       "850 Outbound — APM Request Timeout",
+        title:       "APM Request Timeout",
         bannerColor: "#f97316",
         errorCode:   "APM_TIMEOUT_ERROR",
         category:    "TIMEOUT",
@@ -88,7 +88,7 @@ fun buildErrorConfig(resolvedType, descStr) =
                      ++ "\n\n  Do NOT resubmit until the APM team confirms the service is stable."
     }
     else if (resolvedType == "UNAUTHORIZED") {
-        title:       "850 Outbound — APM Authentication Failure (401)",
+        title:       "APM Authentication Failure (401)",
         bannerColor: "#7c3aed",
         errorCode:   "APM_UNAUTHORIZED",
         category:    "SECURITY",
@@ -102,7 +102,7 @@ fun buildErrorConfig(resolvedType, descStr) =
                      ++ "\n\n  Do NOT resubmit until valid credentials are in place."
     }
     else if (resolvedType == "FORBIDDEN")    {
-        title:       "850 Outbound — APM Access Denied (403)",
+        title:       "APM Access Denied (403)",
         bannerColor: "#7c3aed",
         errorCode:   "APM_FORBIDDEN",
         category:    "SECURITY",
@@ -116,7 +116,7 @@ fun buildErrorConfig(resolvedType, descStr) =
                      ++ "\n\n  Do NOT resubmit until the permission issue is resolved."
     }
     else if (resolvedType == "SERVER_ERROR") {
-        title:       "850 Outbound — APM Internal Server Error (5xx)",
+        title:       "APM Internal Server Error (5xx)",
         bannerColor: "#dc2626",
         errorCode:   "APM_SERVER_ERROR",
         category:    "SERVER_ERROR",
@@ -130,7 +130,7 @@ fun buildErrorConfig(resolvedType, descStr) =
                      ++ "\n\n  Do NOT resubmit until APM confirms the root cause is fixed."
     }
     else if (resolvedType == "BAD_REQUEST")  {
-        title:       "850 Outbound — APM Bad Request (400)",
+        title:       "APM Bad Request (400)",
         bannerColor: "#f59e0b",
         errorCode:   "APM_BAD_REQUEST",
         category:    "PAYLOAD_ERROR",
@@ -144,11 +144,11 @@ fun buildErrorConfig(resolvedType, descStr) =
                      ++ "\n\n  Do NOT resubmit the same payload — fix the data issue first."
     }
     else if (resolvedType == "VALIDATION")   {
-        title:       "850 Outbound — APM Payload Validation Failure",
+        title:       "JSON Schema at Process API Failure",
         bannerColor: "#f59e0b",
         errorCode:   "APM_VALIDATION_ERROR",
         category:    "VALIDATION",
-        message:     "850 transmission failed with error type [VALIDATION] — APM rejected the 850 Purchase Order due to a validation error. " ++ descStr,
+        message:     "850 transmission failed with error type [VALIDATION] — JSON Schema at Process API Failure. " ++ descStr,
         resolution:  "The 850 transmission failed because one or more fields in the payload did not pass APM validation."
                      ++ "\n  1. Review the validation error details returned by APM in the error description above."
                      ++ "\n  2. Identify the specific field(s) that failed validation (e.g., missing mandatory elements, incorrect format, invalid code values)."
@@ -159,7 +159,7 @@ fun buildErrorConfig(resolvedType, descStr) =
                      ++ "\n\n  Do NOT resubmit the same payload — the data issue must be resolved first."
     }
     else                                     {
-        title:       "850 Outbound — APM Transmission Error",
+        title:       "APM Transmission Error",
         bannerColor: "#6b7280",
         errorCode:   "APM_UNKNOWN_ERROR",
         category:    "UNKNOWN",
@@ -176,7 +176,7 @@ var descStr      = ((partner.description  default [])[0] default "") as String
 var apmType      = ((partner.errorType    default [])[0] default "") as String
 var httpCode     = extractHttpCode(descStr)
 var resolvedType = resolveErrorType(apmType, httpCode)
-var errorConfig  = buildErrorConfig(resolvedType,"")
+var errorConfig  = buildErrorConfig(resolvedType, "")
 
 var transmissionId =
     (partnerErrors map ((e) -> safe(e.transmissionIdApm as String, "N/A"))) joinBy " | "

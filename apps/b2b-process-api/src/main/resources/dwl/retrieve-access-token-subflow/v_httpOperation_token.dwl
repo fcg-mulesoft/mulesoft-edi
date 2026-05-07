@@ -3,7 +3,7 @@
 output application/json
 ---
 {
-	method: "POST",
+	method: Mule::p('anypoint.platform.method'),
 	host: Mule::p('anypoint.platform.host'),
 	port: Mule::p('anypoint.platform.port'),
 	basePath: Mule::p('anypoint.platform.basePath'),
@@ -21,8 +21,8 @@ output application/json
 		"client_secret": Mule::p('secure::apm.api.accessToken.clientSecret')
 	},
 	"untilsuccessful": {
-		"maxRetries": "5",
-		"interval": "5000"
+		"maxRetries": Mule::p('anypoint.platform.untilsuccessful.maxRetries'),
+		"interval":  Mule::p('anypoint.platform.untilsuccessful.interval'),
 	}
 }
 

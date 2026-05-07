@@ -4,11 +4,10 @@ output application/json
 ---
 {
 	"method": p('anypoint.apm.method'),
-	"host" : "anypoint.mulesoft.com",
-	"port" : "443",
-	"basePath":"/partnermanager" ,
-	"path":"/tracking/api/v1/organizations/" ++ p('anypoint.apm.orgid') ++"/environments/" ++ p('anypoint.apm.envid') ++"/activity/transmissions",
-//	"url": p('anypoint.apm.url-prefix') ++ "/tracking/api/v1/organizations/" ++ p('anypoint.apm.orgid') ++"/environments/" ++ p('anypoint.apm.envid') ++"/activity/transmissions",
+	"host": "anypoint.mulesoft.com",
+	"port": "443",
+	"basePath": "/partnermanager",
+	"path": "/tracking/api/v1/organizations/" ++ p('anypoint.apm.orgid') ++"/environments/" ++ p('anypoint.apm.envid') ++"/activity/transmissions",
 	headers: {
 		"Content-Type": "application/x-www-form-urlencoded",
 		"Authorization": "Bearer " ++ vars.accessToken
@@ -19,8 +18,8 @@ output application/json
 		"dateReceivedFrom": vars.interval.fromTime
 	},
 	"untilsuccessful": {
-		"maxRetries": "5",
-		"interval": "5000"
+		"maxRetries": Mule::p('anypoint.platform.untilsuccessful.maxRetries'),
+		"interval": Mule::p('anypoint.platform.untilsuccessful.interval'),
 	}
 }
 
