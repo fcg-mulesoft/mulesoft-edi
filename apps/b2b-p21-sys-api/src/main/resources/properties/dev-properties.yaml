@@ -6,6 +6,9 @@ p21:
     basePath:
       Odata: "/odataservice/odata/view"
       transaction: "/uiserver0/api/v2"
+      transaction1: "/api/sales"
     path:
       transaction: "/transaction"
+      ediOrderView: "/fcg_edi_order_vw"
+      coupaOrder: "/orders"
       
