@@ -82,6 +82,7 @@
 				<munit:variables >
 					<munit:variable key="purchaseOrderData" value="#[output json ---readUrl('classpath://dwl/purchase-order-processing-test-suite/payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
 					<munit:variable key="erroredPOs" value='"Exist"' encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="initialVariables" value='{"integration-type": "Outbound-850"}' encoding="UTF-8" mediaType="application/json" />
 				</munit:variables>
 			</munit:set-event>
 			<flow-ref doc:name="Flow-ref to purchase-order-processing-subflow" doc:id="192fa6bd-3878-47d9-b963-d43025a59b67" name="purchase-order-processing-subflow" />

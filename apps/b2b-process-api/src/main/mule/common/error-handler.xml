@@ -53,15 +53,12 @@ output application/json
 }]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Response Payload" doc:id="12e07846-cc14-4b6c-a536-b056209e3d36" >
+			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="12e07846-cc14-4b6c-a536-b056209e3d36" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
 				<ee:variables >
-					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type"]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ad0d75c3-34ff-4d21-bd60-1d62a1add1dc" name="send-email-subflow" />
@@ -71,18 +68,45 @@ output application/json
 </on-error-propagate>
 		<on-error-propagate enableNotifications="true" logException="true" doc:name="Validation Errors" doc:id="0e371a58-d923-4d64-a963-1de85169a38b" when='#[error.errorType.namespace == "CUSTOM" and error.errorType.identifier == "VALIDATION_FAILED"]'>
 			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="cec686b4-7520-427e-a366-128dd66c5d27" message="Start: Global Error Handler: Validation ERROR" />
-			<ee:transform doc:name="Response Payload" doc:id="6c27e672-1a05-49a1-a263-b2a312a8c8e7" >
+			<ee:transform doc:name="Error Response" doc:id="21ba68bd-ca8c-4bf5-9d09-3d2e5d2536dd">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable variableName="systemInformation"><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+{
+	"source": vars.integration.source,
+	"target": vars.integration.target,
+	"env": capitalize(p('mule.env')),	
+	"integration-type": vars.integration."integration-type"
+	
+}]]></ee:set-variable>
+					<ee:set-variable variableName="errorResponse"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationId": (correlationId default uuid()),
+	"statusCode": vars.httpStatus,
+	"statusMessage": (error.errorType.namespace ++ ":" ++ error.errorType.identifier),
+	"description": if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription,
+	"timestamp": (((now() >> "UTC")  as String {
+		format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC"),
+	notificationRequired: true
+}]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="6c27e672-1a05-49a1-a263-b2a312a8c8e7" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
 				<ee:variables >
-					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type"]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="dd485f70-15d0-4237-afdf-bfd5683f636a" name="send-email-subflow" />
+			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="4c56b545-9865-442a-a762-3dccdad79681" />
 			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="bb9686f8-f3e3-45d5-916d-999d5ba2a8e7" message="#[vars.errorResponse]" category="com.validation.errors" />
 		</on-error-propagate>
 		<on-error-propagate enableNotifications="true" logException="true" doc:name="Generic" doc:id="0b4f58a9-df94-47dd-a581-2045b60c3ce7" >
@@ -136,15 +160,12 @@ var explictHandlerCodes = p('explicitcodes')
 				
 </ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Response Payload" doc:id="d86351f2-cb7d-4cc3-8cac-dd57c08f3567" >
+			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="d86351f2-cb7d-4cc3-8cac-dd57c08f3567" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
 				<ee:variables >
-					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ vars.integration."integration-type"]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ab4ad35a-a573-43a7-a4fe-8d3794087d72" name="send-email-subflow" />
@@ -154,24 +175,25 @@ output application/json
 	</error-handler>
 	<sub-flow name="send-email-subflow" doc:id="421993f9-c123-453a-8a37-135d2a1821c1" >
 		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="f7577dfb-a02b-4ad8-9ca6-6eb0108c6d8c" message="Start: Email Alert" />
-
-		<ee:transform doc:name="var: subject" doc:id="19499001-3829-4016-978f-97548c22403f" >
-			<ee:message >
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
-output application/json
----
-"FCG ERROR ALERT | " ++ upper(p('mule.env')) ++ " | " ++ p('api.name') ++ " | " ++ (vars.integration."integration-type" default vars.initialVariables."integration-type" )]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
 		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
-						<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","anshul.negi@caeliusconsulting.com","priyanshu.dhawan@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com","bighnesh.sahoo@caeliusconsulting.com"]]' config-ref="Email_SMTP">
+			<try doc:name="Try" doc:id="bd7c772f-cff0-440d-8e15-46f6126b90ce">
+						<choice doc:name="If transmissionId Exists?" doc:id="f04ebe2c-417b-44f2-9be1-860b1a8e5ddd" >
+					<when expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId)]">
+						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="2a3b6006-e755-49e4-988c-672685733d40" idExpression="#[vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
+					</when>
+				</choice>
+				<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","anshul.negi@caeliusconsulting.com","priyanshu.dhawan@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com","bighnesh.sahoo@caeliusconsulting.com"]]' config-ref="Email_SMTP">
 
 				<reconnect />
 				<email:body contentType="text/html">
 				</email:body>
 			</email:send>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1cb3c0c4-d819-4fb4-ac33-2817c87a31bc" type="DUPLICATE_MESSAGE">
+						<logger level="INFO" doc:name="LOG INFO : Duplicate Error - Skipping Email" doc:id="9144ad4f-c0f1-4f38-bfe5-386e075023f3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	timestamp: now(),&#10;	message: "Duplicate Error - Skipping Email"&#10;}]'/>
+					</on-error-continue>
+				</error-handler>
+					</try>
 					</until-successful>
 		<logger level="DEBUG" doc:name="LOG DEBUG: After Email" doc:id="dc455bec-59d5-4b2b-bcde-6d2a7acace49" message="End: Email Alert" />
 	
