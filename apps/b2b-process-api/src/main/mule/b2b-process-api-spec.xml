@@ -1,23 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-    <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.3:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1635db3f-cb73-4e02-b335-6eee9ea8dbbf">
-        <http:listener-connection host="0.0.0.0" port="${https.private.port}" protocol="HTTPS" tlsContext="TLS_Context" />
-    </http:listener-config>
-    <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="5b9a6f65-5316-48ca-a090-d751d492bc9d">
-        <tls:key-store type="jks" path="${https.keystore.path}" alias="${https.keystore.alias}" keyPassword="${secure::https.keystore.keypass}" password="${secure::https.keystore.storepass}" />
-    </tls:context>
     <flow name="b2b-process-api-spec-main" doc:id="61ca2ba4-6c49-4bb9-8cd1-ad6bd561f615">
-        <http:listener config-ref="HTTP_Listener_config" path="/api/*">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/api/*" doc:name="b2b-process-api-spec-main">
             <http:response statusCode="#[vars.httpStatus default 200]">
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
             <http:error-response statusCode="#[vars.httpStatus default 500]">
-                <http:body>#[payload]</http:body>
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
-        <ee:transform doc:name="var : integration, initialPayload">
+        <ee:transform doc:name="var : integration, initialPayload" doc:id="f7c8a630-5842-43d9-bb3e-0ce2e274d0f4">
             <ee:message />
             <ee:variables>
                 <ee:set-variable variableName="integration"><![CDATA[%dw 2.0
@@ -26,10 +19,9 @@ output application/json
 {
 	"source" : "APM" ,
 	"target" : "P21",
-	"integration-type" : "Inbound " ++ attributes.queryParams."type",
+	"integration-type" : "Inbound " ++ attributes.queryParams."type" ++ " " ++ payload[0]."b2bMessage"."header"."documentType",
 	"correlationId": correlationId
-}
-]]></ee:set-variable>
+}]]></ee:set-variable>
                 <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
 output application/json
 ---
@@ -55,38 +47,18 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="post:\inboundTransactions:application\json:b2b-process-api-spec-config" doc:id="e445073a-6ac5-4ba8-acea-c05aec807d6a">
-        <ee:transform doc:name="var : integration, initialPayload" doc:id="f7c8a630-5842-43d9-bb3e-0ce2e274d0f4">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="integration"><![CDATA[%dw 2.0
-output application/json
----
-{
-	"source" : "APM" ,
-	"target" : "P21",
-	"integration-type" : "Inbound " ++ attributes.queryParams."type",
-	"correlationId": correlationId
-}
-]]></ee:set-variable>
-				<ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<flow-ref doc:name="Inbound Transaction Processing" doc:id="885af747-f4ce-47cd-bc6f-ea61768d6175" name="#[&quot;inbound-&quot; ++ attributes.queryParams.&quot;type&quot; ++ &quot;-processing-subflow&quot;]" />
+        <flow-ref doc:name="Flow Reference To Inbound Transaction Processing Sub Flow" doc:id="885af747-f4ce-47cd-bc6f-ea61768d6175" name="#[&quot;inbound-&quot; ++ attributes.queryParams.&quot;type&quot; ++ &quot;-processing-subflow&quot;]" />
     </flow>
-	<flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1" >
-		<scheduler doc:name="Scheduler" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292" >
-			<scheduling-strategy >
-				<fixed-frequency frequency="6" startDelay="1" timeUnit="HOURS" />
-			</scheduling-strategy>
-		</scheduler>
-		<ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32" >
-			<ee:message >
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="initialVariables" ><![CDATA[%dw 2.0
+    <flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1">
+        <scheduler doc:name="EVERY 6 HOURS" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292">
+            <scheduling-strategy>
+                <fixed-frequency frequency="6" startDelay="1" timeUnit="HOURS" />
+            </scheduling-strategy>
+        </scheduler>
+        <ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="initialVariables"><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -99,23 +71,23 @@ output application/json
 	},
 	status: "STARTED"
 }]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO : START" doc:id="91ec1caa-66f7-4294-8cf8-7cb72d3aa291" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	//transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-		<flow-ref doc:name="Flow Reference to purchase-order-processing-subflow" doc:id="305f024e-419d-45fc-9aa2-c6204fe82f06" name="purchase-order-processing-subflow" />
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="6ee0af0c-950d-4e7b-a2ca-c9dbdf2926ab" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-		<error-handler ref="global-common-error-handler" />
-	</flow>
-	<flow name="b2b-alert-notification-apm-flow" doc:id="150e108b-c71a-4397-8bfb-25faf78f9fb0" >
-		<scheduler doc:name="Scheduler" doc:id="84722158-e1cc-446a-88d8-928188b6be87" >
-			<scheduling-strategy >
-				<fixed-frequency frequency="6" startDelay="1" timeUnit="HOURS" />
-			</scheduling-strategy>
-		</scheduler>
-		<ee:transform doc:name="var: initialVariables" doc:id="7e4fe777-4fbb-4083-831b-50deef3f20bd" >
-			<ee:message />
-			<ee:variables >
-				<ee:set-variable variableName="initialvariables" ><![CDATA[%dw 2.0
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="LOG INFO : START" doc:id="91ec1caa-66f7-4294-8cf8-7cb72d3aa291" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+        <flow-ref doc:name="Flow Reference To purchase-order-processing-subflow" doc:id="305f024e-419d-45fc-9aa2-c6204fe82f06" name="purchase-order-processing-subflow" />
+        <logger level="INFO" doc:name="LOG INFO : END" doc:id="6ee0af0c-950d-4e7b-a2ca-c9dbdf2926ab" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+        <error-handler ref="global-common-error-handler" />
+    </flow>
+    <flow name="b2b-alert-notification-apm-flow" doc:id="150e108b-c71a-4397-8bfb-25faf78f9fb0">
+        <scheduler doc:name="EVERY 6 HOURS" doc:id="84722158-e1cc-446a-88d8-928188b6be87">
+            <scheduling-strategy>
+                <fixed-frequency frequency="6" startDelay="1" timeUnit="HOURS" />
+            </scheduling-strategy>
+        </scheduler>
+        <ee:transform doc:name="var: initialVariables" doc:id="7e4fe777-4fbb-4083-831b-50deef3f20bd">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="initialvariables"><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -124,11 +96,11 @@ output application/json
   source: "scheduler",
   status: "STARTED"
 }]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO : START" doc:id="012ca2d6-040c-419b-a54c-28bcbacb44b7" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	//transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-		<flow-ref doc:name="Flow Reference b2b-alert-notification-main-subflow" doc:id="c7f85bb3-a757-4e9e-a701-e6b1bc5cfa38" name="b2b-alert-notification-main-subflow"/>
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="00053657-e525-43b6-a7a2-8975ae96d6eb" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: "DEV",&#10;	timestamp: now(),&#10;	correlationId: correlationId,&#10;	sourceSystem: "P21",&#10;	targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-		<error-handler ref="global-common-error-handler" />
-	</flow>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="LOG INFO : START" doc:id="012ca2d6-040c-419b-a54c-28bcbacb44b7" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "APM - Anypoint Partner Manager",&#10; targetSystem: "Email",&#10;  message: "B2B Alert Notification process started. Checking for recent errors in APM."&#10;}]' />
+        <flow-ref doc:name="Flow Reference To b2b-alert-notification-main-subflow" doc:id="c7f85bb3-a757-4e9e-a701-e6b1bc5cfa38" name="b2b-alert-notification-main-subflow" />
+        <logger level="INFO" doc:name="LOG INFO : END" doc:id="00053657-e525-43b6-a7a2-8975ae96d6eb" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "Email",&#10;	message: "B2B Alert Notification process completed successfully."&#10;}]' />
+        <error-handler ref="global-common-error-handler" />
+    </flow>
 </mule>

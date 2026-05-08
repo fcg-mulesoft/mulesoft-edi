@@ -20,7 +20,7 @@
 			</munit-tools:mock-when>
 		</munit:behavior>
 		<munit:execution >
-			<flow-ref doc:name="Flow-ref to retrieve-access-token-sub-flow" doc:id="c8bc744b-29a7-40c7-94ff-f049636ed88b" name="retrieve-access-token-sub-flow"/>
+			<flow-ref doc:name="Flow-ref to retrieve-access-token-sub-flow" doc:id="c8bc744b-29a7-40c7-94ff-f049636ed88b" name="retrieve-access-token-subflow"/>
 		</munit:execution>
 		<munit:validation >
 			<munit-tools:verify-call doc:name="LOG INFO : END" doc:id="0412d0b6-cd0c-4e0f-994b-666cda477d3f" processor="logger">
