@@ -212,7 +212,7 @@ output application/json
         "Content-Type": "application/json"
     },
     queryParams: {
-    	"\$filter": vars.poNumber
+    	"\$filter": "po_no eq '" ++ (vars.poNumber default "") ++ "'"
     },
     uriParams: {}
 }]]></ee:set-variable>
@@ -220,8 +220,8 @@ output application/json
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference to common-http-request-subflow" doc:id="8dea0cc8-cccb-4186-93eb-f7bbc65ba257" name="common-http-request-subflow" />
 				<choice doc:name="PO Not Found in P21" doc:id="ed23c31e-6fd1-47bc-b138-afde385e8c28" >
-					<when expression="#[isEmpty(payload)]">
-						<raise-error doc:name="P21:PO_NOT_FOUND" doc:id="6a17f62d-ece1-4b76-a5af-74246318af07" type="P21:PO_NOT_FOUND" description="PO Number is Not Available in P21 System"/>
+					<when expression="#[sizeOf(payload.data default []) &gt; 0]">
+						<raise-error doc:name="P21:DUPLICATE_PO_FOUND" doc:id="6a17f62d-ece1-4b76-a5af-74246318af07" type="P21:DUPLICATE_PO_FOUND" description="PO Number is already Available in P21 System"/>
 					</when>
 					<otherwise >
 						<ee:transform doc:name="var : httpOperation" doc:id="4854b613-4b83-49d7-865f-cc9022b5ec46">
