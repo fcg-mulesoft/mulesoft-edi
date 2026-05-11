@@ -45,5 +45,6 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
     <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="d3e15749-818e-44da-bd1e-7e14863dfb57">
         <tls:key-store type="jks" path="${https.keystore.path}" alias="${https.keystore.alias}" keyPassword="${secure::https.keystore.keypass}" password="${secure::https.keystore.storepass}" />
     </tls:context>
+	<global-property doc:name="Global Property" doc:id="eb57cdfb-0753-4a8c-b0c2-42bd17847f77" name="mule.env" value="dev" />
 	
 </mule>
