@@ -33,7 +33,7 @@ https:
   connectionIdleTimeOut: "30000"
   responseBufferSize: "1024"
   responseTimeout: "40000"
-  basePath: "/api/v1/*"
+  basePath: "/api/*"
   private:
     port: "8094"
   keystore:
@@ -46,3 +46,19 @@ partner:
     "1631404318T": "FESTO"
   outbound:
     "234093": "FESTO"
+    
+#Scheduler Configuration
+scheduler:
+  outbound:
+    purchaseOrder:
+      frequency: "0 0 */3 * * ?"
+      timeZone: "America/Chicago"
+  alertNotification:
+    frequency: "0 0 */3 * * ?"
+    timeZone: "America/Chicago"
+   
+#Logger 
+logger:
+  debug:
+    category: "com.mycompany.b2b.edi"
+  
