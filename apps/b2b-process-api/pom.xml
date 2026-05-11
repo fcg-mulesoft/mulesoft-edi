@@ -73,6 +73,9 @@
 							<ignoreFile>implementation/notification/apm-error-report.xml</ignoreFile>
 							<ignoreFile>common/error-handler.xml</ignoreFile>
 						</ignoreFiles>
+						<ignoreFlows>
+							<ignoreFlow>get:\healthCheck:b2b-process-api-spec-config</ignoreFlow>
+						</ignoreFlows>
 					</coverage>
 				</configuration>
 			</plugin>
