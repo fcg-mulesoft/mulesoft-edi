@@ -90,8 +90,11 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				references: [{
 					qualifier: "ST",
 					referenceNumber: (poItems[0].REF_ST_02_Location_Id as String)
-				},
-            {
+				},    ({
+					qualifier: "CO",
+					referenceNumber: (poItems[0].REF_CO_02_PO_Type as String)
+				}) if ((poItems[0].BEG02_POTypeCode as String) == "DS"),			
+   {
 					qualifier: "ZZ",
 					referenceNumber: (poItems[0].REF_ZZ_02_Vendor_Id as String)
 				}]
@@ -121,7 +124,7 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				buyerPartNo: item.item_id default "",
 				productDescription: [if ( item.PID05_Description != null ) {
 					descriptionType: "F",
-					description: item.PID05_Description ++ " " ++ if ( item.PID05_Extended_Desc != null ) (item.PID05_Extended_Desc) else ""
+					description: item.PID05_Description ++ if ( item.PID05_Extended_Desc != null ) (" " ++ item.PID05_Extended_Desc) else ""
 				}
       else null,
  
