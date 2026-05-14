@@ -115,12 +115,12 @@ var errorTable =
         "<div style='font-size:13px;color:#6b7280;font-style:italic;'>No errors found.</div>"
 
 var data = {
-    flowDirection:    "",
+    flowDirection:    directionContext,
     directionContext: directionContext,
     documentType:     "EDI",
-    appName:          "Mule Application",
+    appName:          Mule::p('app.name'),
     transactionType:  "EDI",
-    environment:      "N/A",
+    environment:      Mule::p("mule.env"),
     flowName:         "EDI Validation Handler",
     route:            "Partner Manager",
     partnerName:      vendorSummary,
