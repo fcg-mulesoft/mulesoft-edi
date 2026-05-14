@@ -5,7 +5,7 @@ output text/plain
 fun safe(v, d="N/A") =
     if (v == null or (v is String and trim(v) == "")) d else v
 
-var errorData = [payload] default []
+var errorData = payload default []
 
 var allPurchaseOrders = flatten(errorData map (v) -> v.purchaseOrders default [])
 var totalErrors       = sizeOf(allPurchaseOrders)
@@ -18,8 +18,9 @@ var directionLabel =
     else if (sizeOf(allDirections) == 1) allDirections[0]
     else                                 "N/A"
 
-var directionContext = "May contain both INBOUND and OUTBOUND transactions (Partner Manager errors)"
-// directionLabel kept for message body only
+var directionContext =
+    if (sizeOf(allDirections) > 1) "INBOUND and OUTBOUND"
+    else                            allDirections[0] default "N/A"
 
 var vendorSummary =
     ((errorData map (v) -> safe(v.vendor as String, "UNKNOWN")) distinctBy $) joinBy ", "
@@ -27,7 +28,6 @@ var vendorSummary =
 var poSummary =
     ((allPurchaseOrders map (po) -> safe(po.poNumber as String, "N/A")) distinctBy $) joinBy ", "
 
-// ── Message-level cells: Doc Number | Doc Version | Ack Type | Ack Status ──
 fun msgCells(msg) =
     "<td style='padding:6px 8px;border:1px solid #ddd;font-size:11px;color:#b91c1c;background:#fff5f5;'>"
         ++ safe(msg.documentNumber        as String) ++ "</td>"
@@ -45,12 +45,10 @@ fun buildRows(v, po) =
         var span     = if (msgCount > 1) " rowspan='" ++ (msgCount as String) ++ "'" else ""
         var tdStyle  = "padding:8px;border:1px solid #ddd;color:#b91c1c;vertical-align:top;background:#fee2e2;"
 
-        // Extract transaction type from first message businessFlow e.g. "X12-004010VICS-810" → "810"
         var rawFlow  = safe((msgs[0].businessFlow default "") as String, "")
         var flowParts = rawFlow splitBy "-"
         var txnType  = if (sizeOf(flowParts) > 1) flowParts[sizeOf(flowParts) - 1] else safe(rawFlow, "N/A")
 
-        // Transmission-level cells (Partner | PO Number | Transmission ID | Direction | Txn Type | Error Details)
         var transmissionCells =
             "<td style='" ++ tdStyle ++ "font-weight:600;white-space:nowrap;'" ++ span ++ ">"
                 ++ safe(v.vendor            as String) ++ "</td>"
@@ -97,16 +95,13 @@ var errorTable =
         ++ "<div style='overflow-x:auto;'>"
         ++ "<table style='width:100%;border-collapse:collapse;margin-bottom:4px;font-size:12px;'>"
 
-        // ── Header row ──────────────────────────────────────────────────────────
         ++ "<tr style='background:#fecaca;'>"
-        // Transmission-level headers
         ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>Partner</th>"
         ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>PO Number</th>"
         ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;'>Transmission ID</th>"
         ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;'>Direction</th>"
         ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>Txn Type</th>"
         ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;'>Error Details</th>"
-        // Message-level headers
         ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;'>Doc Number</th>"
         ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>Doc Version</th>"
         ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>Ack Type</th>"
@@ -120,7 +115,7 @@ var errorTable =
         "<div style='font-size:13px;color:#6b7280;font-style:italic;'>No errors found.</div>"
 
 var data = {
-    flowDirection:    directionContext,
+    flowDirection:    "",
     directionContext: directionContext,
     documentType:     "EDI",
     appName:          "Mule Application",
@@ -156,7 +151,7 @@ var data = {
 }
 
 var template =
-    readUrl("classpath://templates/error-template-apm.html", "text/plain")
+    readUrl("classpath://templates/error-template.html", "text/plain")
 ---
 template replace /\$\{(\w+)\}/ with ((m) ->
     (data[m[1]] as String) default ""

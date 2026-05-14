@@ -208,15 +208,17 @@ pluck ((vendorRecords, vendorName) -> {
 })]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<ee:transform doc:name="Email Payload, var : subject" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
+				<parallel-foreach doc:name="For Each Partner" doc:id="8524ea24-e9e7-41ff-afd3-7057e1b34940" >
+					<ee:transform doc:name="Email Payload, var : subject" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
 			<ee:message>
 						<ee:set-payload resource="dwl/apm-error-report-subflow/p_emailPayload.dwl" />
 			</ee:message>
-					<ee:variables >
+					<ee:variables>
 						<ee:set-variable resource="dwl/apm-error-report-subflow/v_subject.dwl" variableName="subject" />
 					</ee:variables>
 		</ee:transform>
-				<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="b791b438-4cbf-4136-9bc3-f153dc6f5a7f" name="send-email-subflow"/>
+					<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="b791b438-4cbf-4136-9bc3-f153dc6f5a7f" name="send-email-subflow" />
+				</parallel-foreach>
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="LOG INFO : No errors" doc:id="5906a41e-c6ac-473a-b827-916283553d8a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "Email",&#10;	message: "There were no errors"&#10;}]' />
