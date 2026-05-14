@@ -2,7 +2,7 @@
 output application/json
 
 ---
-vars.effectiveTransmissions map (item) -> {
+vars.transmissionError map (item) -> {
 
     partnerFrom: item.partnerFrom.name,
 

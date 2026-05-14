@@ -5,7 +5,7 @@ output text/plain
 fun safe(v, d="N/A") =
     if (v == null or (v is String and trim(v) == "")) d else v
 
-var errorData = payload default []
+var errorData = [payload] default []
 
 var allPurchaseOrders = flatten(errorData map (v) -> v.purchaseOrders default [])
 var totalErrors       = sizeOf(allPurchaseOrders)
@@ -151,7 +151,7 @@ var data = {
 }
 
 var template =
-    readUrl("classpath://templates/error-template.html", "text/plain")
+    readUrl("classpath://templates/error-template-apm.html", "text/plain")
 ---
 template replace /\$\{(\w+)\}/ with ((m) ->
     (data[m[1]] as String) default ""

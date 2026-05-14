@@ -15,6 +15,7 @@ output application/json
 	queryParams: {
 		"dateReceivedTo": vars.interval.toTime,
 		"expandCustomAttributes": true,
+		"status": "ERRORED",
 		"dateReceivedFrom": vars.interval.fromTime
 	},
 	"untilsuccessful": {
