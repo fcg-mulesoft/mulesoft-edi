@@ -96,6 +96,118 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		</ee:transform>
 		<choice doc:name="Errors exist ?" doc:id="f4e462f6-d3f6-42d9-a8ba-b537d4249e8d">
 			<when expression="#[!isEmpty(vars.transmissionData) or !isEmpty(vars.messagesData)]">
+				<ee:transform doc:name="Accumulate Error Data" doc:id="d7379f39-9c2c-4b43-88e8-63ae35205f8f">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+var enrichedTransmissions =
+    vars.transmissionData map (transmission) ->
+
+        do {
+
+            var relatedMessages =
+                vars.messageData
+                    filter (msg) ->
+                        msg is Object
+                        and
+                        (
+                            msg.transmissionId
+                                ==
+                            transmission.transmissionId
+                        )
+
+            var vendorName =
+                if (transmission.direction == "INBOUND")
+                    transmission.partnerFrom
+                else
+                    transmission.partnerTo
+
+            ---
+            {
+                vendor: vendorName,
+
+                poNumber:
+                    transmission.businessKey default "UNKNOWN_PO",
+
+                transmissionId:
+                    transmission.transmissionId,
+
+                direction:
+                    transmission.direction,
+
+                transaction:
+                    transmission.transaction default "N/A",
+
+                partnerFrom:
+                    transmission.partnerFrom,
+
+                partnerTo:
+                    transmission.partnerTo,
+
+                errorDetails:
+                    transmission.errorDetails
+                        default "No Error Found",
+
+                messages:
+                    relatedMessages map (msg) -> {
+                        partnerFrom: msg.partnerFrom,
+                        partnerTo: msg.partnerTo,
+                        transaction: msg.transaction,
+                        transmissionId: msg.transmissionId,
+                        businessKey: msg.businessKey,
+                        receivedDateTime: msg.receivedDateTime,
+                        messageDirection: msg.messageDirection,
+                        documentVersion: msg.documentVersion,
+                        businessFlow: msg.businessFlow,
+                        documentNumber: msg.documentNumber,
+                        batchGroupNumber: msg.batchGroupNumber,
+                        acknowledgementType: msg.acknowledgementType,
+                        acknowledgementStatus: msg.acknowledgementStatus
+                    }
+            }
+        }
+
+---
+(
+    enrichedTransmissions
+        groupBy (item) -> item.vendor
+)
+pluck ((vendorRecords, vendorName) -> {
+
+    vendor: vendorName,
+
+    purchaseOrders:
+
+        vendorRecords map (record) -> {
+
+            poNumber:
+                record.poNumber,
+
+            transmissionId:
+                record.transmissionId,
+
+            direction:
+                record.direction,
+
+            transaction:
+                record.transaction,
+
+            partnerFrom:
+                record.partnerFrom,
+
+            partnerTo:
+                record.partnerTo,
+
+            errorDetails:
+                record.errorDetails,
+
+            messages:
+                record.messages
+        }
+})]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
 				<ee:transform doc:name="Email Payload, var : subject" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
 			<ee:message>
 						<ee:set-payload resource="dwl/apm-error-report-subflow/p_emailPayload.dwl" />
