@@ -41,10 +41,12 @@ payload]]></ee:set-variable>
 output application/json
 ---
 {
-  apiName: "b2b-process-api",
+  application: app.name,
   apiVersion: "1.0.0",
   status: "success",
-  timeStamp: "2024-07-05T17:28:25.848Z"
+  timeStamp: "2024-07-05T17:28:25.848Z",
+  environment: Mule::p("mule.env"),
+  
 } as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
             </ee:message>
         </ee:transform>
