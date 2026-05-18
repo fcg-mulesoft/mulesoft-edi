@@ -9,6 +9,6 @@ p21:
       transaction1: "/api/sales"
     path:
       transaction: "/transaction"
-      ediOrderView: "/fcg_edi_order_vw"
+      ediOrderView: "/fcg_edi_xref_vw"
       coupaOrder: "/orders"
       

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<sub-flow name="post-p21-coupa-purchaseorder-processing-subflow"
 		doc:id="3ff36c89-ebb5-41a1-a620-7f1d9979b778">
 		<logger level="INFO" doc:name="LOG INFO : START"
@@ -19,177 +20,22 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<ee:set-variable variableName="poNumber" ><![CDATA[%dw 2.0
 output application/java
 ---
-(payload.Transactions[0].DataElements
-    flatMap ((de) -> de.Rows flatMap ((r) -> r.Edits))
-    filter ((e) -> e.Name == "po_no")
-    map ((e) -> e.Value))[0] default ""
-]]></ee:set-variable>
-				<ee:set-variable variableName="p21Request" ><![CDATA[%dw 2.0
-output application/xml skipNullOn="everywhere"
-ns xsd http://www.w3.org/2001/XMLSchema
-ns xsi http://www.w3.org/2001/XMLSchema-instance
-var req = payload
-
-/*
-  Helper: search all DataElements -> Rows -> Edits for an edit by name.
-  Returns the edit.Value as String or the provided default (String or null).
-*/
-fun findEdit(editName, defaultVal) =
-(payload.Transactions[0].DataElements
-    flatMap ((de) -> de.Rows flatMap ((r) -> r.Edits))
-    filter ((e) -> e.Name == editName)
-    map ((e) -> e.Value))[0] default defaultVal
-
-var rawReqDate = findEdit("required_date", null)
-var requiredDate =
-  if (rawReqDate != null and rawReqDate != "")  rawReqDate ++ "T00:00:00" else null
-
-var hdrNoteRaw = findEdit("hdr_note", null)
-var itemDescRaw = findEdit("item_desc", null)
-var itemDesc = if (itemDescRaw == null) "" else itemDescRaw
-var hdrNote = if (hdrNoteRaw != null and hdrNoteRaw != "")  hdrNoteRaw else ("Line1 | " ++ itemDesc)
+//(payload.Transactions[0].DataElements
+  //  flatMap ((de) -> de.Rows flatMap ((r) -> r.Edits))
+   // filter ((e) -> e.Name == "po_no")
+   // map ((e) -> e.Value))[0] default ""
+payload.Order.PoNo]]></ee:set-variable>
+				<ee:set-variable variableName="p21Request" ><![CDATA[output application/xml
 ---
-Order @( 
-    "xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
-    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"
-): {
-  Lines: {
-    OrderLine: {
-      Serials: null,
-      Lots: null,
-      Bins: null,
-      LotBins: null,
-      Notes: {
-        OrderLineNote: {
-          Topic: findEdit("line_note_topic", "EDI_LINE1"),
-          Note: findEdit("line_note", "DFS60S-TEOC01024 DFS60S-TEOC01024 | Cost: \$185.00 | Qty: 2 | Price: \$220.54"),
-          NotepadClassId: findEdit("line_note_notepad_class", "ITEMS"),
-          Mandatory: findEdit("line_note_mandatory", "Y")
-        }
-      },
-      LineRooms: null,
-      LineNo: findEdit("ufc_oe_line_ud_line_number", null),
-      ItemId: findEdit("item_id", "1069529"),
-      UnitQuantity: findEdit("unit_quantity", null),
-      UnitOfMeasure: findEdit("unit_of_measure", null),
-      UnitPrice: findEdit("unit_price", "0"),
-      SourceLocId: findEdit("sales_loc_id", null),
-      ShipLocId: findEdit("sales_loc_id", null),
-      ProductGroupId: findEdit("product_group_id", "DEFAULT"),
-      SupplierId: findEdit("supplier_id", null),
-      RequiredDate: requiredDate,
-      ExpediteDate: requiredDate,
-      WillCall: findEdit("will_call", "N"),
-      TaxItem: findEdit("tax_item", "Y"),
-      PricingUnit: findEdit("pricing_unit", "EA"),
-      CommissionCost: findEdit("commission_cost", null),
-      OtherCost: findEdit("other_cost", null),
-      PoCost: findEdit("po_cost", null),
-      Disposition: findEdit("disposition", "B"),
-      ManualPriceOveride: findEdit("manual_price_override", "Y"),
-      CaptureUsage: findEdit("capture_usage", "Y"),
-      ContractBinId: findEdit("contract_bin_id", null),
-      JobNo: findEdit("job_no", null),
-      PromiseDate: findEdit("promise_date", "2026-05-15T00:00:00"),
-      ExtendedPrice: findEdit("extended_price", findEdit("unit_price", "0")),
-      CompanyId: findEdit("company_id", null),
-      QtyOrdered: findEdit("unit_quantity", "1"),
-      Delete: findEdit("delete_flag", "N"),
-      Buy: findEdit("buy_flag", "Y"),
-      SecondaryUnitPrice: findEdit("secondary_unit_price", "0"),
-      SecondaryExtendedPrice: findEdit("secondary_extended_price", "0"),
-      OtherCostEdited: findEdit("other_cost_edited", "P"),
-      CommissionCostEdited: findEdit("commission_cost_edited", "P"),
-      UserDefinedFields: null
-    }
-  },
-  Notes: {
-    OrderNote: {
-      Topic: findEdit("hdr_note_topic", "EDI_HEADER"),
-      Note: hdrNote,
-      NotepadClassId: findEdit("hdr_note_notepad_class", "ITEMS"),
-      Mandatory: findEdit("hdr_note_mandatory", "true")
-    }
-  },
-  Salesreps: {
-    OrderSalesrep: {
-      SalesrepId: findEdit("salesrep_id", null),
-      CommissionSplit: findEdit("commission_split", "100"),
-      Delete: findEdit("salesrep_delete", "N"),
-      PrimarySalesrep: findEdit("primary_salesrep", "true"),
-      ExcludeSplitValidationFlag: findEdit("exclude_split_validation_flag", "false"),
-      UserDefinedFields: null
-    }
-  },
-  BuilderSelectionSheets: null,
-  Samples: null,
-  CustomerId: findEdit("customer_id", null),
-  CompanyId: findEdit("company_id", null),
-  LocationId: findEdit("sales_loc_id", null),
-  PoNo: findEdit("po_no", null),
-  ContactId: findEdit("contact_id", null),
-  Taker: findEdit("taker", null),
-  JobName: null,
-  OrderDate: findEdit("order_date", null),
-  RequestedDate: requiredDate,
-  Approved: findEdit("approved", "true"),
-  ShipToId: findEdit("ship_to_id", null),
-  ShipToName: findEdit("ship_to_name", null),
-  ShipToAddress1: findEdit("ship_to_address1", null),
-  ShipToAddress2: findEdit("ship_to_address2", null),
-  ShipToAddress3: findEdit("ship_to_address3", null),
-  ShipToCity: findEdit("ship_to_city", null),
-  OeHdrShip2State: findEdit("ship_to_state", null),
-  ZipCode: findEdit("ship_to_zip", null),
-  ShipToCountry: findEdit("ship_to_country", null),
-  ShipToMailAddress: findEdit("ship_to_mail_address", null),
-  SourceLocationId: findEdit("sales_loc_id", null),
-  CarrierId: findEdit("carrier_id", null),
-  Route: findEdit("route", null),
-  PackingBasis: findEdit("packing_basis", "Partial"),
-  DeliveryInstructions: findEdit("delivery_instructions", null),
-  Terms: findEdit("terms", "1"),
-  WillCall: findEdit("will_call", "N"),
-  Class1id: findEdit("class1id", null),
-  Class2id: findEdit("class2id", null),
-  Class3id: findEdit("class3id", null),
-  Class4id: findEdit("class4id", null),
-  Class5id: findEdit("class5id", null),
-  RMA: findEdit("rma", "N"),
-  FreightCd: findEdit("freight_cd", null),
-  BillingDescription: findEdit("billing_description", "Bill Recipient"),
-  CaptureUsage: findEdit("capture_usage", "true"),
-  JobNo: findEdit("job_no", null),
-  InvoiceBatchNumber: findEdit("invoice_batch_number", null),
-  InvoiceExchangeRateSource: findEdit("invoice_exchange_rate_source", "Invoice"),
-  ShipToPhone: findEdit("ship_to_phone", null),
-  ApplyBuilderAllowanceFlag: findEdit("apply_builder_allowance_flag", "N"),
-  QuoteExpirationDate @(xsi#nil: "true"): null,
-  PromiseDate: findEdit("promise_date", "2026-05-15T00:00:00"),
-  CreateInvoice: findEdit("create_invoice", "false"),
-  CStrategicPriceLibraryId: findEdit("cstrategicpricelibraryid", null),
-  MerchandiseCreditFlag: findEdit("merchandise_credit_flag", "N"),
-  OrderPriorityId: findEdit("order_priority_id", null),
-  UpsCode: findEdit("ups_code", null),
-  PlacedByName: findEdit("placed_by_name", null),
-  RequiredPaymentUponRelease: findEdit("required_payment_upon_release", "N"),
-  FreightOut: findEdit("freight_out", "0"),
-  PickTicketType: findEdit("pick_ticket_type", "UT"),
-  ThirdPartyBilling: findEdit("third_party_billing", "B"),
-  UserDefinedFields: null,
-  CurrencyID: findEdit("currency_id", "1"),
-  Completed: findEdit("completed", "N"),
-  Quote: findEdit("quote", "N"),
-  DeletedFlag: findEdit("deleted_flag", "N"),
-  CancelledFlag: findEdit("cancelled_flag", "N"),
-  InvoiceNo: findEdit("invoice_no", null),
-  QuoteType @(xsi#nil: "true"): null,
-  WebReferenceNo: findEdit("web_reference_no", null)
-}]]></ee:set-variable>
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="edixRefId" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.Order.edixRefId]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<choice doc:name="PO Number Empty" doc:id="b8e11970-faa7-4b83-8973-fdb5d96603f7" >
-			<when expression="#[isEmpty(vars.poNumber)]">
+			<when expression="#[isEmpty(vars.poNumber) or isEmpty(vars.edixRefId)]">
 				<raise-error doc:name="COUPA:PO_NOT_PRESENT" doc:id="4ced789a-791b-4e15-b7e4-d28fec8de128" type="COUPA:PO_NOT_PRESENT" description="P21 Number Not present in Coupa Payload"/>
 			</when>
 			<otherwise>
@@ -212,7 +58,7 @@ output application/json
         "Content-Type": "application/json"
     },
     queryParams: {
-    	"\$filter": "po_no eq '" ++ (vars.poNumber default "") ++ "'"
+    	"\$filter": "edi_x_ref_id eq '" ++ (vars.edixRefId default "") ++ "' and (po_no eq '" ++ (vars.poNumber default "") ++ "' or po_no eq null or po_no eq ' ')"
     },
     uriParams: {}
 }]]></ee:set-variable>
@@ -220,13 +66,34 @@ output application/json
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference to common-http-request-subflow" doc:id="8dea0cc8-cccb-4186-93eb-f7bbc65ba257" name="common-http-request-subflow" />
 				<choice doc:name="PO Not Found in P21" doc:id="ed23c31e-6fd1-47bc-b138-afde385e8c28" >
-					<when expression="#[sizeOf(payload.data default []) &gt; 0]">
+					<when expression="#[sizeOf(payload.value filter (!isEmpty($.po_no)) default []) &gt; 0]">
 						<raise-error doc:name="P21:DUPLICATE_PO_FOUND" doc:id="6a17f62d-ece1-4b76-a5af-74246318af07" type="P21:DUPLICATE_PO_FOUND" description="PO Number is already Available in P21 System"/>
 					</when>
 					<otherwise >
 						<ee:transform doc:name="var : httpOperation" doc:id="4854b613-4b83-49d7-865f-cc9022b5ec46">
 			<ee:message>
-				<ee:set-payload resource="dwl/post-p21-transaction-processing-subflow/p_httpOperationPostTransaction.dwl" />
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	Order @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd": "http://www.w3.org/2001/XMLSchema"): {
+		CustomerId: payload.value[0].customer_id,
+		CompanyId: 	payload.value[0].company_id,
+		LocationId: vars.p21Request.Order.LocationId,
+		ShipToId: payload.value[0].ship_to_id,
+		PoNo: vars.poNumber,
+		ContactId: vars.p21Request.Order.ContactId,
+		Taker: vars.p21Request.Order.Taker,
+		Notes: {
+			OrderNote: {
+				Topic: vars.p21Request.Order.Notes.OrderNote.Topic,
+				Note: vars.p21Request.Order.Notes.OrderNote.Note,
+				NotepadClassId: vars.p21Request.Order.Notes.OrderNote.NotepadClassId
+			}
+		},
+		Lines: vars.p21Request.Order.Lines
+	}
+}]]></ee:set-payload>
 			</ee:message>
 			<ee:variables>
 								<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
