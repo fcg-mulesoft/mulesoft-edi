@@ -5,7 +5,7 @@ output text/plain
 fun safe(v, d="N/A") =
     if (v == null or (v is String and trim(v) == "")) d else v
 
-var errorData = [payload] default []
+var errorData = if (payload is Array) payload else [payload]
 
 var allPurchaseOrders = flatten(errorData map (v) -> v.purchaseOrders default [])
 var totalErrors       = sizeOf(allPurchaseOrders)
@@ -43,7 +43,7 @@ fun buildRows(v, po) =
         var msgs     = po.messages default []
         var msgCount = sizeOf(msgs)
         var span     = if (msgCount > 1) " rowspan='" ++ (msgCount as String) ++ "'" else ""
-        var tdStyle  = "padding:8px;border:1px solid #ddd;color:#b91c1c;vertical-align:top;background:#fee2e2;"
+        var tdStyle  = "padding:8px;border:1px solid #ddd;color:#b91c1c;vertical-align:top;background:#fee2e2;word-break:break-word;"
 
         var rawFlow  = safe((msgs[0].businessFlow default "") as String, "")
         var flowParts = rawFlow splitBy "-"
@@ -63,13 +63,14 @@ fun buildRows(v, po) =
             ++ "<td style='" ++ tdStyle ++ "'"                                 ++ span ++ ">"
                 ++ safe(po.errorDetails      as String) ++ "</td>"
 
+        var emptyMsgCells =
+            "<td colspan='4' style='padding:8px;border:1px solid #ddd;background:#fff5f5;"
+            ++ "color:#cbd5e1;font-size:11px;font-style:italic;text-align:center;"
+            ++ "letter-spacing:0.5px;'>No acknowledgement data</td>"
+
         var firstRow =
             if (msgCount == 0)
-                "<tr>"
-                ++ transmissionCells
-                ++ "<td colspan='4' style='padding:8px;border:1px solid #ddd;font-size:11px;"
-                   ++ "color:#999;font-style:italic;background:#fff5f5;'>No messages</td>"
-                ++ "</tr>"
+                "<tr>" ++ transmissionCells ++ emptyMsgCells ++ "</tr>"
             else
                 "<tr>" ++ transmissionCells ++ msgCells(msgs[0]) ++ "</tr>"
 
@@ -93,19 +94,19 @@ var errorTable =
         "<div style='font-size:13px;font-weight:600;color:#9a3412;margin-bottom:10px;'>"
             ++ "Partner Manager Errors (" ++ (totalErrors as String) ++ ")</div>"
         ++ "<div style='overflow-x:auto;'>"
-        ++ "<table style='width:100%;border-collapse:collapse;margin-bottom:4px;font-size:12px;'>"
+        ++ "<table style='width:100%;border-collapse:collapse;margin-bottom:4px;font-size:12px;table-layout:fixed;'>"
 
         ++ "<tr style='background:#fecaca;'>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>Partner</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>PO Number</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;'>Transmission ID</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;'>Direction</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>Transaction</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;'>Error Details</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;'>Doc Number</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>Doc Version</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>Ack Type</th>"
-        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;'>Ack Status</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;width:120px;'>Partner</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;width:130px;'>PO Number</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;width:130px;'>Transmission ID</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;width:80px;'>Direction</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;width:70px;'>Txn Type</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;width:180px;'>Error Details</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;width:80px;'>Doc Number</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;width:90px;'>Doc Version</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;width:70px;'>Ack Type</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;text-align:left;color:#7f1d1d;white-space:nowrap;width:75px;'>Ack Status</th>"
         ++ "</tr>"
 
         ++ (errorRows joinBy "")
@@ -118,7 +119,7 @@ var data = {
     flowDirection:    directionContext,
     directionContext: directionContext,
     documentType:     "EDI",
-    appName:          Mule::p('app.name'),
+    appName:           Mule::p('app.name'),
     transactionType:  "EDI",
     environment:      Mule::p("mule.env"),
     flowName:         "EDI Validation Handler",

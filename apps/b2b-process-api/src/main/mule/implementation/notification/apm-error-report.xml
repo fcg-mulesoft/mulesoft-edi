@@ -101,13 +101,19 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 						<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 
+var messageData =
+    if (vars.messaegData is Array)
+        vars.messaegData
+    else
+        []
+
 var enrichedTransmissions =
-    vars.transmissionData map (transmission) ->
+    (vars.transmissionData default []) map (transmission) ->
 
         do {
 
             var relatedMessages =
-                vars.messageData
+                messageData
                     filter (msg) ->
                         msg is Object
                         and
@@ -125,7 +131,7 @@ var enrichedTransmissions =
 
             ---
             {
-                vendor: vendorName,
+                vendor: vendorName default "UNKNOWN_VENDOR",
 
                 poNumber:
                     transmission.businessKey default "UNKNOWN_PO",
@@ -203,12 +209,12 @@ pluck ((vendorRecords, vendorName) -> {
                 record.errorDetails,
 
             messages:
-                record.messages
+                record.messages default []
         }
 })]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<parallel-foreach doc:name="For Each Partner" doc:id="8524ea24-e9e7-41ff-afd3-7057e1b34940" >
+				<parallel-foreach doc:name="For Each Partner" doc:id="3f9aee78-130a-4447-aca7-5111fd96f90f" >
 					<ee:transform doc:name="Email Payload, var : subject" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
 			<ee:message>
 						<ee:set-payload resource="dwl/apm-error-report-subflow/p_emailPayload.dwl" />
