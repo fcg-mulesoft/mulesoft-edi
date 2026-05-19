@@ -11,7 +11,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<logger level="DEBUG" doc:name="LOG INFO : START"
 			doc:id="7438f7c1-93d2-4e89-a4ba-d8b968d1dd72"
 			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
-		<http:request method="#[vars.httpOperation.method]" doc:name="Common HTTP Request" doc:id="d4276718-e20e-45f3-9599-f2e2138594ca" config-ref="HTTP_Request_Configuration" path="#[vars.httpOperation.path]" sendCorrelationId="ALWAYS" responseTimeout="40000">
+		<http:request method="#[vars.httpOperation.method]" doc:name="Common HTTP Request " doc:id="d4276718-e20e-45f3-9599-f2e2138594ca" config-ref="HTTP_Request_Configuration" path="#[vars.httpOperation.path]" sendCorrelationId="ALWAYS" responseTimeout="40000">
 				<http:headers><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
 				<http:query-params><![CDATA[#[vars.httpOperation.queryParams]]]></http:query-params>
 			</http:request>

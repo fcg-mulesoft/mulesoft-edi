@@ -2,7 +2,6 @@
 output application/json
 var transactionType = attributes.queryParams.transactionType
 var purpose = attributes.queryParams.purpose
-var ediRefId = attributes.queryParams.ediRefId default ""
 var businesskey =
     (attributes.queryParams.businesskey default "") splitBy "," map (trim($)) filter ($ != "") distinctBy $
 var routingConfig = {
@@ -40,39 +39,6 @@ var routingConfig = {
 			view: "PURCHASE_ORDER_SHIPMENT_TOTAL_VIEW",
 			queryParams: {
 				"\$filter": (businesskey map ("po_no eq " ++ $)) joinBy " or "
-			}
-		}
-	},
-	salesOrder: {
-		total: {
-			view: "fcg_edi_xref_vw",
-			queryParams: {
-				"\$filter" : "edi_x_ref_id eq '"++ ediRefId ++"' and (po_no eq '"++ businesskey++ "' or po_no eq null or po_no eq ' ')"
-			}
-		}
-	},
-	salesOrderAck: {
-		total: {
-			view: "fcg_edi_poack_855_outbound_vw",
-			queryParams: {
-				
-			}
-		}
-	},
-	salesOrderInvoice: {
-		total: {
-			view: "fcg_edi_invoice_810_outbound_vw",
-			queryParams: {
-				
-			}
-		}
-	},
-	salesOrderShipment: {
-		
-		total: {
-			view: "fcg_edi_asn_856_outbound_vw",
-			queryParams: {
-				
 			}
 		}
 	}

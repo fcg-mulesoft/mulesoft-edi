@@ -6,7 +6,6 @@ var serviceMapping = {
 	purchaseOrderAck: Mule::p('serviceNames.purchaseOrderAck'),
 	purchaseOrderInvoice: Mule::p('serviceNames.purchaseOrderInvoice'),
 	purchaseOrderShipment: Mule::p('serviceNames.purchaseOrderShipment'),
-	salesOrderAck: "Order"
 }
 var serviceName = serviceMapping[transactionType]
 ---
