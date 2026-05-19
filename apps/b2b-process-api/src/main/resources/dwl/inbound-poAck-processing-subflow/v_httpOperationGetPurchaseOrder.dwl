@@ -14,7 +14,8 @@ import toBase64 from dw::core::Binaries
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrderAck'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
-		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0]
+		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0],
+		"ediRefId" : "GPCR71NT"
 	},
 	"uriParams": {
 	},

@@ -17,8 +17,8 @@ output application/json
 	},
 	body: {
 		"grant_type": Mule::p('secure::apm.api.accessToken.grantType'),
-		"client_id": Mule::p('secure::apm.api.accessToken.clientId'),
-		"client_secret": Mule::p('secure::apm.api.accessToken.clientSecret')
+		"client_id": "e74eeb31b0bf43339daacd81e123d41a",
+		"client_secret": "687f40434106404984Aff58d8549D0B1"
 	},
 	"untilsuccessful": {
 		"maxRetries": Mule::p('anypoint.platform.untilsuccessful.maxRetries'),
