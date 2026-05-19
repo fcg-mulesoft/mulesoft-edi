@@ -76,6 +76,7 @@
 						<ignoreFiles>
 							<ignoreFile>common/common-error-handler.xml</ignoreFile>
 							<ignoreFile>implementations/post-p21-coupa-purchaseorder-processing.xml</ignoreFile>
+							<ignoreFile>post:\coupa\purchaseOrder:application\xml:b2b-p21-sys-api-spec-config</ignoreFile>
 						</ignoreFiles>
 					</coverage>
 				</configuration>
