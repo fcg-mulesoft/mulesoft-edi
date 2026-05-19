@@ -79,11 +79,11 @@ output application/xml
 	Order @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd": "http://www.w3.org/2001/XMLSchema"): {
 		CustomerId: payload.value[0].customer_id,
 		CompanyId: 	payload.value[0].company_id,
-		LocationId: vars.p21Request.Order.LocationId,
-		ShipToId: payload.value[0].ship_to_id,
+		LocationId: payload.value.preferred_location_id[0],
+		ShipToId:payload.value.ship_to_id[0],
 		PoNo: vars.poNumber,
-		ContactId: vars.p21Request.Order.ContactId,
-		Taker: vars.p21Request.Order.Taker,
+		ContactId: payload.value.edi_default_contact_id[0],
+		Taker: vars.p21Request.Order.Taker default "MULESOFTINT",
 		Notes: {
 			OrderNote: {
 				Topic: vars.p21Request.Order.Notes.OrderNote.Topic,
@@ -109,7 +109,7 @@ output application/json
 
     headers: {
         "Authorization": "Bearer "++ (vars.accessToken default ""),
-        "Content-Type": "application/json"
+        "Content-Type": "application/xml"
     },
     queryParams: {},
     uriParams: {}
