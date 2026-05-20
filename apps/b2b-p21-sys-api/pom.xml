@@ -84,6 +84,7 @@
 						   <ignoreFile>get-healthcheck-subflow</ignoreFile>
 						   <ignoreFile>get-p21-view-processing-subflow</ignoreFile>
 						   <ignoreFile>post-p21-transaction-processing-subflow</ignoreFile>
+						  <ignoreFile>post-p21-coupa-purchaseorder-processing-subflow</ignoreFile>
 						</ignoreFiles>
 					</coverage>
 				</configuration>
