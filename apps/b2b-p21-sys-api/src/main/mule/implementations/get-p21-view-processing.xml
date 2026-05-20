@@ -39,16 +39,16 @@ output application/json
 payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<choice doc:name="Choice" doc:id="62c2d624-d5fb-4d8e-bb7e-fb978abebe4e" >
-			<when expression="#[vars.reqQueryParams.coupa as Boolean]">
+		<!-- [STUDIO:"Choice"]<choice doc:name="Choice" doc:id="62c2d624-d5fb-4d8e-bb7e-fb978abebe4e" >
+			<when expression="#[(vars.reqQueryParams.coupa as Boolean) default false&#93;">
 				<parallel-foreach doc:name="Parallel For Each" doc:id="285663c8-cf10-4d38-8838-47c62d5e0a9b" >
-					<logger level="INFO" doc:name="HTTP Call to EDI" doc:id="a8dcbe76-e1fd-47ad-9d67-38c3f0d8b4bf" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Coupa Outbound Processing flow is not required",&#10;    "correlationId": correlationId&#10;}]' />
+					<logger level="INFO" doc:name="HTTP Call to EDI" doc:id="a8dcbe76-e1fd-47ad-9d67-38c3f0d8b4bf" message='#[%dw 2.0&#10;output application/json&#10;&#45;&#45;-&#10;{&#10;	"Message": "Coupa Outbound Processing flow is not required",&#10;    "correlationId": correlationId&#10;}&#93;' />
 				</parallel-foreach>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="Logger" doc:id="53dddc39-e313-4126-adb4-f4f4fe8488ed" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Coupa Outbound Processing flow is not required",&#10;    "correlationId": correlationId&#10;}]'/>
+				<logger level="INFO" doc:name="Logger" doc:id="53dddc39-e313-4126-adb4-f4f4fe8488ed" message='#[%dw 2.0&#10;output application/json&#10;&#45;&#45;-&#10;{&#10;	"Message": "Coupa Outbound Processing flow is not required",&#10;    "correlationId": correlationId&#10;}&#93;'/>
 			</otherwise>
-		</choice>
+		</choice> [STUDIO] -->
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="134ace73-d305-49a9-b801-f05190eb0490" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
 	
 </sub-flow>
