@@ -86,6 +86,7 @@
 						  <ignoreFile>post-p21-coupa-purchaseorder-processing-subflow</ignoreFile>
 						 <ignoreFile>get-p21-view-processing-subflow-test</ignoreFile>
 						 <ignoreFile>b2b-p21-sys-api-spec.xml</ignoreFile>
+						 <ignoreFile>get-p21-view-processing-subflow-test</ignoreFile>
 						</ignoreFiles>
 					</coverage>
 				</configuration>
