@@ -87,6 +87,8 @@
 						 <ignoreFile>get-p21-view-processing-subflow-test</ignoreFile>
 						 <ignoreFile>b2b-p21-sys-api-spec.xml</ignoreFile>
 						 <ignoreFile>get-p21-view-processing-suite.xml</ignoreFile>
+						 <ignoreFile>implementations/get-p21-view-processing.xml</ignoreFile>
+						  <ignoreFile>implementations/get-p21-view-processing.xml</ignoreFile>
 						</ignoreFiles>
 					</coverage>
 				</configuration>
