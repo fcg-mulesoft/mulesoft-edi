@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
 	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
 	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
 	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
@@ -8,6 +9,7 @@
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
 http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
 http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd 
 http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
@@ -42,7 +44,14 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
  <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="7b4dc940-9257-467b-b7be-ed3db4de2f3a" >
 		<tls:key-store type="jks" path="${https.keystore.path}" alias="${https.keystore.alias}" keyPassword="${secure::https.keystore.keypass}" password="${secure::https.keystore.storepass}"/>
 	</tls:context>
-
+  <email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="8d0b39b0-3025-446a-9404-b31af84d432a">
+        <email:smtp-connection host="${email.host}" port="${email.port}" user="${email.username}" password="${secure::email.password}" connectionTimeout="${email.connectionTimeout}" readTimeout="${email.readTimeout}" writeTimeout="${email.writeTimeout}">
+            <reconnection />
+            <email:properties>
+                <email:property key="mail.smtp.starttls.enable" value="true" />
+            </email:properties>
+        </email:smtp-connection>
+    </email:smtp-config>
 
 
 </mule>

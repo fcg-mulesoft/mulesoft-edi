@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
 	<sub-flow name="post-p21-coupa-purchaseorder-processing-subflow"
 		doc:id="3ff36c89-ebb5-41a1-a620-7f1d9979b778">
 		<logger level="INFO" doc:name="LOG INFO : START"
@@ -36,8 +37,8 @@ payload.Order.edixRefId]]></ee:set-variable>
 		</ee:transform>
 		<choice doc:name="PO Number Empty" doc:id="b8e11970-faa7-4b83-8973-fdb5d96603f7" >
 			<when expression="#[isEmpty(vars.poNumber) or isEmpty(vars.edixRefId)]">
-				<raise-error doc:name="COUPA:PO_NOT_PRESENT" doc:id="4ced789a-791b-4e15-b7e4-d28fec8de128" type="COUPA:PO_NOT_PRESENT" description="P21 Number Not present in Coupa Payload"/>
-			</when>
+				<raise-error doc:name="COUPA:PO_NOT_PRESENT" doc:id="4ced789a-791b-4e15-b7e4-d28fec8de128" type="COUPA:PO_NOT_PRESENT" description="P21 Number Not present in Coupa Payload"/>	
+</when>
 			<otherwise>
 				<ee:transform doc:name="var : httpOperation" doc:id="45990208-7480-44f3-bb0e-4eb4fd24bf4e" >
 					<ee:message >

@@ -75,7 +75,10 @@
 					<coverage>
 						<ignoreFiles>
 							<ignoreFile>common/common-error-handler.xml</ignoreFile>
+							<ignoreFile>get:\views:b2b-p21-sys-api-spec-config</ignoreFile>
+							<ignoreFile>get:\healthCheck:b2b-p21-sys-api-spec-config</ignoreFile>
 							<ignoreFile>implementations/post-p21-coupa-purchaseorder-processing.xml</ignoreFile>
+							<ignoreFile>post:\transactions:application\json:b2b-p21-sys-api-spec-config</ignoreFile>
 							<ignoreFile>post:\coupa\purchaseOrder:application\xml:b2b-p21-sys-api-spec-config</ignoreFile>
 						</ignoreFiles>
 					</coverage>
@@ -141,6 +144,12 @@
 			<version>1.0.8</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-email-connector</artifactId>
+			<version>1.7.6</version>
+			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
 
