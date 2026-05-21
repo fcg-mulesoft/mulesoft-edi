@@ -1,17 +1,32 @@
 %dw 2.0
 output application/json
+
 ---
-vars.messageErrors default [] map (msg) -> {
+vars.messageErrors map (item) -> {
 
-    messageType: msg.messageType,
-    direction: msg.direction,
-    partnerFrom: msg.partnerFrom.name,
-    partnerTo: msg.partnerTo.name,
-    businessKey: if (sizeOf(msg.customAttributes) > 0) 
-                  (msg.customAttributes[0].alias default "") 
-                  ++ "-" 
-                  ++ (msg.customAttributes[0].values[0] default "")
-              else 
-                   (msg.businessDocumentKey default "")
+    partnerFrom: item.partnerFrom.name,
+
+    partnerTo: item.partnerTo.name,
+
+    transaction: item.messageType,
+
+    transmissionId: item.transmissionId,
+
+    businessKey: item.businessDocumentKey,
+
+    receivedDateTime: item.receivedTime,
+
+    messageDirection: item.direction,
+
+    documentVersion: item.messageVersion,
+
+    businessFlow: item.documentFlowName,
+
+    documentNumber: item.businessDocumentId,
+
+    batchGroupNumber: item.businessDocumentGroupId,
+
+    acknowledgementType: item.messageAckType,
+
+    acknowledgementStatus: item.messageAckStatus
 }
-
