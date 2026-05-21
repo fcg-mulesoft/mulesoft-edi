@@ -38,21 +38,6 @@
 	</flow>
 	<flow
 		name="post:\transactions:application\json:b2b-p21-sys-api-spec-config">
-		<choice doc:name="Choice"
-			doc:id="5cae3d8b-6388-41df-8cd8-c7dce07e811b">
-			<when
-				expression='#[attributes.queryParams.processingMode == "direct"]'>
-				<flow-ref
-					doc:name="Flow Reference to post-p21-entity-processing-subflow"
-					doc:id="2e6fe0dc-f88d-4e4b-aee0-4bfe2b6ce294"
-					name="post-p21-entity-processing-subflow" />
-			</when>
-			<otherwise>
-				<flow-ref
-					doc:name="Flow Reference to post-p21-transaction-processing-subflow"
-					doc:id="67a6a553-8d52-484d-adcb-26fc66df83ac"
-					name="post-p21-transaction-processing-subflow" />
-			</otherwise>
-		</choice>
+		<flow-ref doc:name="Flow Reference to post-p21-transaction-processing-subflow" doc:id="67a6a553-8d52-484d-adcb-26fc66df83ac" name="post-p21-transaction-processing-subflow" />
 	</flow>
 </mule>

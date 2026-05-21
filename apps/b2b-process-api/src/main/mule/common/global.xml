@@ -38,12 +38,11 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
 		<azure-storage:sas-token-azure-connection accountName="${azure.accountname}" sasToken="${secure::azure.sastoken}"/>
 	</azure-storage:config>
 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="de023e58-4c44-4b28-b57a-f2cb0bcd465b" flowRef="b2b-process-api-spec-main" />
-	    <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.4:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <http:listener-config name="HTTP_Listener_Configuration" doc:name="HTTP Listener config" doc:id="b3a610ec-8fc7-4e97-ba71-d56808c9f6cb">
+	 <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.6:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <http:listener-config name="HTTP_Listener_Configuration" doc:name="HTTP Listener config" doc:id="80b975ac-8a2f-4ec1-8a50-678514e7690e">
         <http:listener-connection host="0.0.0.0" port="${https.private.port}" protocol="HTTPS" tlsContext="TLS_Context" />
     </http:listener-config>
-    <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="d3e15749-818e-44da-bd1e-7e14863dfb57">
+    <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="847f670d-8d9f-4478-8c0b-92f5314af4db">
         <tls:key-store type="jks" path="${https.keystore.path}" alias="${https.keystore.alias}" keyPassword="${secure::https.keystore.keypass}" password="${secure::https.keystore.storepass}" />
     </tls:context>
-	
 </mule>
