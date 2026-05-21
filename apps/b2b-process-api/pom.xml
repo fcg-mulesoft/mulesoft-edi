@@ -72,9 +72,14 @@
 						<ignoreFiles>
 							<ignoreFile>implementation/notification/apm-error-report.xml</ignoreFile>
 							<ignoreFile>common/error-handler.xml</ignoreFile>
+						<ignoreFile>	implementation/vendor/coupa-purchase-order-processing.xml
+						</ignoreFile>
+					<ignoreFile>implementation/vendor/coupa-purchase-order-processing.xml
+						</ignoreFile>
 						</ignoreFiles>
 						<ignoreFlows>
 							<ignoreFlow>get:\healthCheck:b2b-process-api-spec-config</ignoreFlow>
+							
 						</ignoreFlows>
 					</coverage>
 				</configuration>
