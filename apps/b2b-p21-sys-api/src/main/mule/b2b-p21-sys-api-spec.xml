@@ -26,41 +26,5 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
     </flow>
     <flow name="post:\transactions\custom:application\xml:b2b-p21-sys-api-spec-config">
         <flow-ref doc:name="Flow Reference to post-p21-transaction-xml-processing-subflow" doc:id="16d90ea2-7267-470a-8630-cf852e9da331" name="post-p21-transaction-xml-processing-subflow" />
-		<error-handler >
-			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6f66fb35-8b05-473d-88f1-5b42edb3f157" type="COUPA:PO_NOT_PRESENT">
-				<set-payload value='#[output application/json --- {"message": "PO Number Not Present in Request from Coupa"}]' doc:name="Set Payload" doc:id="c0e3f18d-7c7e-4cf2-aca7-758bb8de775b" />
-				<set-variable value="400" doc:name="HTTP Status Code" doc:id="1463d53c-dac5-4cc0-9cc4-10ebc419a493" variableName="httpStatus"/>
-				<email:send doc:name="sendErrorAlertEmail" doc:id="0a979c50-5ba8-4ed2-91c9-160eddbf7cae" config-ref="Email_SMTP" fromAddress="#[p('email.username')]" subject="#[upper(p('mule.env')) ++ ' - ' ++ (app.name) ++ p('email.subject1')]" toAddresses="#[(p('email.supportGroups.mulesoft') splitBy ',') map trim($)]" >
-					<email:body contentType="text/plain" >
-						<email:content ><![CDATA[#['Hello,\n\n'++
-'The application has encountered an error.\n\n' ++
-'Application: ' ++ (app.name default 'Unknown App') ++
-'\n\nError: ' ++ (error.description default error.errorType.identifier default 'Unknown error')]]]></email:content>
-					</email:body>
-				</email:send>
-				<logger level="INFO" doc:name="Logger" doc:id="de3d4f7d-fbee-47c9-962b-b0b592d92ab5" message="#[%dw 2.0&#10;output application/json&#10;---&#10;payload]" />
-			</on-error-continue>
-			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6a6cc41a-47de-489a-8e56-db17d19c1ed1" type="P21:DUPLICATE_PO_FOUND">
-				<set-payload value='#[output application/json --- {"message": "PO Number is already Available in P21 System"}]' doc:name="Set Payload" doc:id="be2ab498-17f5-4e23-b69b-e00f90518590" />
-				<set-variable value="500" doc:name="HTTP Status Code" doc:id="fce2b354-0b77-44a6-a63a-ce9d2b39bcb1" variableName="httpStatus" />
-
-<email:send
-    doc:name="sendErrorAlertEmail"
-    config-ref="Email_SMTP"
-    fromAddress="#[p('email.username')]"
-    subject="#[upper(p('mule.env')) ++ ' - ' ++ (app.name) ++ p('email.subject')]"
-    toAddresses="#[(p('email.supportGroups.mulesoft') splitBy ',') map trim($)]">
-
-    <email:body contentType="text/plain">
-        <email:content><![CDATA[#['Hello,\n\n'++
-'The application has encountered an error.\n\n' ++
-'Application: ' ++ (app.name default 'Unknown App') ++
-'\n\nError: ' ++ (error.description default error.errorType.identifier default 'Unknown error')]]]></email:content>
-    </email:body>
-
-</email:send>
-				<logger level="INFO" doc:name="Logger" doc:id="394d601e-13ae-4b76-9df3-e99acc9c661a" message="#[%dw 2.0&#10;output application/json&#10;---&#10;payload]"/>
-			</on-error-continue>
-		</error-handler>
     </flow>
 </mule>
