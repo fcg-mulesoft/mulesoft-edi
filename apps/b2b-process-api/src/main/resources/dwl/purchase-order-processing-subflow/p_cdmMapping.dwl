@@ -47,7 +47,7 @@ groupedPOs pluck ((poItems, poNumber) -> {
 			}] filter ($.scac != null),
 			references: [{
 				qualifier: "ZZ",
-				description: "SPECIAL INSTRUCTIONS"
+				description: poItems[0].N902_HDR_Note
 			} ++
           (if ( poItems[0].MSG01_Shipping_instruction != null ) {
 				messages: [{
@@ -55,7 +55,14 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				}]
 			}
             else {
-			})],
+			}),{
+				qualifier: "ZZ",
+				description: poItems[0].N902_Carrier_Account_Number,
+				messages: [{
+					messageText: poItems[0].MSG01_carrier_id
+				}]
+			}],
+			
 			partyInformation: [{
 				qualifier: "BY",
 				name: poItems[0].N1_BY_Name,
