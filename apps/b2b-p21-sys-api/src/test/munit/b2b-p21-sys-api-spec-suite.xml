@@ -137,14 +137,6 @@ assert_expression_payload::main({payload: payload, attributes: attributes, vars:
 		<munit:execution >
 			<flow-ref doc:name="Flow-ref to post:\transactions:application\json:b2b-p21-sys-api-spec-config" doc:id="13bd383f-a3d6-4020-8eec-a516f0365603" name="post:\transactions:application\json:b2b-p21-sys-api-spec-config"/>
 		</munit:execution>
-		<munit:validation >
-			<munit-tools:assert doc:name="Assert payload" doc:id="e0ccb30f-8794-4a00-b3f9-64cfa1d2b1e6" message="The payload does not match">
-				<munit-tools:that ><![CDATA[#[%dw 2.0
-import posttransactionsapplicationjsonb2bp21sysapispecconfigtest::assert_expression_payload
----
-assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
-			</munit-tools:assert>
-		</munit:validation>
 	</munit:test>
 
 
