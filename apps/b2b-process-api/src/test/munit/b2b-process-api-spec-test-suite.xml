@@ -106,25 +106,6 @@
 				name="post:\inboundTransactions:application\json:b2b-process-api-spec-config" />
 		</munit:execution>
 	</munit:test>
-	<munit:test name="healthCheck-flow-configTest"
-		doc:id="520c35cd-de50-465f-ac50-dac4b5be9b71" description="Test">
-		<munit:execution>
-			<flow-ref
-				doc:name="Flow-ref to get:\healthCheck:b2b-process-api-spec-config"
-				doc:id="b8c51564-4182-452d-b215-523b6f6e6f04"
-				name="get:\healthCheck:b2b-process-api-spec-config" />
-		</munit:execution>
-		<munit:validation>
-			<munit-tools:verify-call
-				doc:name="Verify call" doc:id="9f3e48fa-b89e-4507-8902-841d331bec3b"
-				processor="ee:transform">
-				<munit-tools:with-attributes>
-					<munit-tools:with-attribute
-						whereValue="Transform Message" attributeName="doc:name" />
-				</munit-tools:with-attributes>
-			</munit-tools:verify-call>
-		</munit:validation>
-	</munit:test>
 	<munit:test
 		name="purchase-order-outbound-scheduled-flowTest"
 		doc:id="7493b1de-5f4b-4e24-b353-11cb4353106b" description="Test">

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
     <flow name="b2b-process-api-spec-main" doc:id="61ca2ba4-6c49-4bb9-8cd1-ad6bd561f615">
-        <http:listener config-ref="HTTP_Listener_Configuration" path="/api/*" doc:name="b2b-process-api-spec-main">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="${https.basePath}" doc:name="b2b-process-api-spec-main">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
@@ -20,7 +20,10 @@ output application/json
 	"source" : "APM" ,
 	"target" : "P21",
 	"integration-type" : "Inbound " ++ attributes.queryParams."type" ++ " " ++ payload[0]."b2bMessage"."header"."documentType",
-	"correlationId": correlationId
+	"correlationId": correlationId,
+	"timestamp": now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+	}
 }]]></ee:set-variable>
                 <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
 output application/json
@@ -32,16 +35,18 @@ payload]]></ee:set-variable>
         <error-handler ref="global-common-error-handler" />
     </flow>
     <flow name="get:\healthCheck:b2b-process-api-spec-config">
-        <ee:transform doc:name="Transform Message">
+        <ee:transform doc:name="Prepare Response Payload">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-  apiName: "b2b-process-api",
+  application: app.name,
   apiVersion: "1.0.0",
   status: "success",
-  timeStamp: "2024-07-05T17:28:25.848Z"
+  timeStamp: "2024-07-05T17:28:25.848Z",
+  environment: Mule::p("mule.env"),
+  
 } as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
             </ee:message>
         </ee:transform>
@@ -50,9 +55,9 @@ output application/json
         <flow-ref doc:name="Flow Reference To Inbound Transaction Processing Sub Flow" doc:id="885af747-f4ce-47cd-bc6f-ea61768d6175" name="#[&quot;inbound-&quot; ++ attributes.queryParams.&quot;type&quot; ++ &quot;-processing-subflow&quot;]" />
     </flow>
     <flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1">
-        <scheduler doc:name="EVERY 6 HOURS" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292">
+        <scheduler doc:name="EVERY 3 HOURS" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292">
             <scheduling-strategy>
-                <fixed-frequency frequency="6" startDelay="1" timeUnit="HOURS" />
+				<cron expression="${scheduler.outbound.purchaseOrder.frequency}" timeZone="${scheduler.outbound.purchaseOrder.timeZone}"/>
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32">
@@ -79,9 +84,9 @@ output application/json
         <error-handler ref="global-common-error-handler" />
     </flow>
     <flow name="b2b-alert-notification-apm-flow" doc:id="150e108b-c71a-4397-8bfb-25faf78f9fb0">
-        <scheduler doc:name="EVERY 6 HOURS" doc:id="84722158-e1cc-446a-88d8-928188b6be87">
+        <scheduler doc:name="EVERY 3 HOURS" doc:id="84722158-e1cc-446a-88d8-928188b6be87">
             <scheduling-strategy>
-                <fixed-frequency frequency="6" startDelay="1" timeUnit="HOURS" />
+				<cron expression="${scheduler.alertNotification.frequency}" timeZone="${scheduler.alertNotification.timeZone}"/>
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="7e4fe777-4fbb-4083-831b-50deef3f20bd">
