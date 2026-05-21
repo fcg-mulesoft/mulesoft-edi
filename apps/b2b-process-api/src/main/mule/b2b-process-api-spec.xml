@@ -108,4 +108,32 @@ output application/json
         <logger level="INFO" doc:name="LOG INFO : END" doc:id="00053657-e525-43b6-a7a2-8975ae96d6eb" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "Email",&#10;	message: "B2B Alert Notification process completed successfully."&#10;}]' />
         <error-handler ref="global-common-error-handler" />
     </flow>
+	<flow name="poAck-outbound-scheduled-flow" doc:id="7b2c2a57-7574-44e6-80e8-54bf4cd5a92d" maxConcurrency="1" >
+		<scheduler doc:name="EVERY 3 HOURS" doc:id="0238c76d-7949-40a3-855e-24bd6975964e" >
+			<scheduling-strategy >
+				<cron expression="${scheduler.outbound.purchaseOrder.frequency}" timeZone="${scheduler.outbound.purchaseOrder.timeZone}" />
+			</scheduling-strategy>
+		</scheduler>
+		<ee:transform doc:name="var: initialVariables" doc:id="0932a7bd-ad4a-40bd-94fa-8027bf672904" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="initialVariables" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"source": "P21",
+	"target": "APM",
+	"integration-type": "Outbound-855",
+	correlationId: correlationId default uuid(),
+	timestamp: now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+	},
+	status: "STARTED"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="88047a81-3b0a-4efa-b1b1-e74e5dba20a8" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+		<flow-ref doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="674cd290-af17-4b28-908e-52b31dc6bd39" name="outbound-poAck-processing-subflow" />
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="2e80fac5-e113-46be-97b1-7842dc2085c6" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+	</flow>
 </mule>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="outbound-poAck-processing-subflow" doc:id="32400225-6332-4357-9d81-41574e4995c7" >
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="d5ab11d1-0528-47bd-9b37-d8e497f329d3" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;START&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
+		<ee:transform doc:name="var : httpOperation - get Ack Data" doc:id="de81ff63-a1cc-49e3-987e-eedc384445de" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+---
+{
+	"method": Mule::p('b2b-p21-sys-api.view.method'),
+	"host": Mule::p('b2b-p21-sys-api.host'),
+	"port": Mule::p('b2b-p21-sys-api.port'),
+	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
+	"path": Mule::p('b2b-p21-sys-api.view.path'),
+	"headers": {
+		"x-correlation-id": vars.initialVariables.correlationId
+	},
+	"queryParams": {
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderAck'),
+		"purpose": Mule::p('b2b-p21-sys-api.purpose.total'),
+	},
+	"uriParams": {
+	},
+	"body": {
+	},
+	"untilsuccessful": {
+		"maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="924795c2-b69a-42a8-9fc8-15248a4fbe64" name="common-http-request-subflow" target="ackData" />
+		<ee:transform doc:name="View to CDM transformation" doc:id="29cb1dbb-24da-4cde-8623-83e17b29ae85" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>
