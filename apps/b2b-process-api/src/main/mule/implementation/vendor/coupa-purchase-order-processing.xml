@@ -7,17 +7,93 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<sub-flow name="inbound-coupa-po-processing-subflow" doc:id="0f3b0ec8-ab83-4254-a92f-ce1b7e4e5fca" >
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="f3eaae67-8060-4585-9b21-8949893def16" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	sourceSystem: "Coupa",&#10;	targetSystem: "P21"&#10;}]'/>
 		<choice doc:name="Choice" doc:id="33daa089-b78c-4f89-a758-88319a3d5d8b" >
-			<when expression="#[isEmpty(vars.initialPayload.Order.edixRefId) or isEmpty(vars.initialPayload.Order.PoNo)]">
+			<when expression="#[isEmpty(vars.integration..edixRefId[0]) or isEmpty(vars.integration..PoNo[0])]">
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="02261f0a-ec38-4558-9583-a3fa3b85e1e0" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Missing PO Number or EDI X Ref Id in request" />
 			</when>
 			<otherwise >
-				<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="0f587fa5-6fc6-4c33-aa38-3c2478ca3fe8">
-			<ee:message>
-			</ee:message>
-			<ee:variables>
-				<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationGetPurchaseOrder.dwl" variableName="httpOperation" />
-			</ee:variables>
-		</ee:transform>
+				<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="49ed92c2-63a4-40d1-8ce7-b87e17f9431a">
+					<ee:message>
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+var order = payload.Order default payload
+---
+Order @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"): {
+    Lines: order.Lines,
+    Notes: order.Notes,
+    Salesreps: order.Salesreps,
+    BuilderSelectionSheets: order.BuilderSelectionSheets default null,
+    Samples: order.Samples default null,
+    CustomerId: order.CustomerId,
+    CompanyId: order.CompanyId,
+    LocationId: order.LocationId,
+    PoNo: order.PoNo,
+    ContactId: order.ContactId,
+    Taker: order.Taker,
+    JobName: order.JobName,
+    OrderDate: order.OrderDate,
+    RequestedDate: order.RequestedDate,
+    Approved: order.Approved,
+    ShipToId: order.ShipToId,
+    edixRefId: order.edixRefId,
+    ShipToName: order.ShipToName,
+    ShipToAddress1: order.ShipToAddress1,
+    ShipToAddress2: order.ShipToAddress2,
+    ShipToAddress3: order.ShipToAddress3,
+    ShipToCity: order.ShipToCity,
+    OeHdrShip2State: order.OeHdrShip2State,
+    ZipCode: order.ZipCode,
+    ShipToCountry: order.ShipToCountry,
+    ShipToMailAddress: order.ShipToMailAddress,
+    ShipToPhone: order.ShipToPhone,
+    SourceLocationId: order.SourceLocationId,
+    CarrierId: order.CarrierId,
+    Route: order.Route,
+    PackingBasis: order.PackingBasis,
+    DeliveryInstructions: order.DeliveryInstructions,
+    Terms: order.Terms,
+    WillCall: order.WillCall,
+    Class1id: order.Class1id,
+    Class2id: order.Class2id,
+    Class3id: order.Class3id,
+    Class4id: order.Class4id,
+    Class5id: order.Class5id,
+    RMA: order.RMA,
+    FreightCd: order.FreightCd,
+    BillingDescription: order.BillingDescription,
+    CaptureUsage: order.CaptureUsage,
+    JobNo: order.JobNo,
+    InvoiceBatchNumber: order.InvoiceBatchNumber,
+    InvoiceExchangeRateSource: order.InvoiceExchangeRateSource,
+    ApplyBuilderAllowanceFlag: order.ApplyBuilderAllowanceFlag,
+
+    QuoteExpirationDate @("xsi:nil": "true"): null,
+
+    PromiseDate: order.PromiseDate,
+    CreateInvoice: order.CreateInvoice,
+    CStrategicPriceLibraryId: order.CStrategicPriceLibraryId,
+    MerchandiseCreditFlag: order.MerchandiseCreditFlag,
+    OrderPriorityId: order.OrderPriorityId,
+    UpsCode: order.UpsCode,
+    PlacedByName: order.PlacedByName,
+    RequiredPaymentUponRelease: order.RequiredPaymentUponRelease,
+    FreightOut: order.FreightOut,
+    PickTicketType: order.PickTicketType,
+    ThirdPartyBilling: order.ThirdPartyBilling,
+    UserDefinedFields: order.UserDefinedFields default null,
+    CurrencyID: order.CurrencyID,
+    Completed: order.Completed,
+    Quote: order.Quote,
+    DeletedFlag: order.DeletedFlag,
+    CancelledFlag: order.CancelledFlag,
+    InvoiceNo: order.InvoiceNo,
+    QuoteType @("xsi:nil": "true"): null,
+    WebReferenceNo: order.WebReferenceNo
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationPostPurchaseOrder.dwl" variableName="httpOperation" />
+					</ee:variables>
+				</ee:transform>
 				<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="fe068a4b-652e-4c31-a9e9-4aac018cbed3" name="common-http-request-subflow" target="purchaseOrderData" />
 				<choice doc:name="isValid Invoice?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
 			<when expression="#[sizeOf(payload.value filter (!isEmpty($.po_no)) default []) &gt; 0]">
