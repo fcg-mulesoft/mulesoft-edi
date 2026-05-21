@@ -1,138 +1,104 @@
 %dw 2.0
 output application/json
-
 var transactionType = attributes.queryParams.transactionType
 var purpose = attributes.queryParams.purpose
 var ediRefId = attributes.queryParams.ediRefId default ""
-
 var businesskey =
-    (attributes.queryParams.businesskey default "")
-        splitBy ","
-        map (trim($))
-        filter ($ != "")
-        distinctBy $
 
+    (attributes.queryParams.businesskey default "") splitBy "," map (trim($)) filter ($ != "") distinctBy $
 var routingConfig = {
+	purchaseOrder: {
+		total: {
+			view: Mule::p('viewNames.purchaseOrderOutbound'),
+			queryParams: {
+			}
+		}
+	},
+	purchaseOrderAck: {
+		validation: {
+			view: Mule::p('viewNames.purchaseOrderAckInbound'),
+			queryParams: {
+				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
+			}
+		}
+	},
+	purchaseOrderInvoice: {
+		validation: {
+			view: Mule::p('viewNames.purchaseOrderInvoiceInbound'),
+			queryParams: {
+				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
+			}
+		}
+	},
+	purchaseOrderShipment: {
+		validation: {
+			view: "PURCHASE_ORDER_SHIPMENT_VALIDATION_VIEW",
+			queryParams: {
+				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
+			}
+		},
+		total: {
+			view: "PURCHASE_ORDER_SHIPMENT_TOTAL_VIEW",
+			queryParams: {
+				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
+			}
+		}
+	},
+	salesOrder: {
+		total: {
+			view: "fcg_edi_xref_vw",
+			queryParams: {
+				"\$filter": "edi_x_ref_id eq '" ++ ediRefId ++
 
-    purchaseOrder: {
-        total: {
-            view: Mule::p('viewNames.purchaseOrderOutbound'),
-            queryParams: {
-            }
-        }
-    },
-
-    purchaseOrderAck: {
-        validation: {
-            view: Mule::p('viewNames.purchaseOrderAckInbound'),
-            queryParams: {
-                "\$filter":
-                    (businesskey map ("po_no eq '" ++ $ ++ "'"))
-                        joinBy " or "
-            }
-        }
-    },
-
-    purchaseOrderInvoice: {
-        validation: {
-            view: Mule::p('viewNames.purchaseOrderInvoiceInbound'),
-            queryParams: {
-                "\$filter":
-                    (businesskey map ("po_no eq '" ++ $ ++ "'"))
-                        joinBy " or "
-            }
-        }
-    },
-
-    purchaseOrderShipment: {
-
-        validation: {
-            view: "PURCHASE_ORDER_SHIPMENT_VALIDATION_VIEW",
-            queryParams: {
-                "\$filter":
-                    (businesskey map ("po_no eq '" ++ $ ++ "'"))
-                        joinBy " or "
-            }
-        },
-
-        total: {
-            view: "PURCHASE_ORDER_SHIPMENT_TOTAL_VIEW",
-            queryParams: {
-                "\$filter":
-                    (businesskey map ("po_no eq '" ++ $ ++ "'"))
-                        joinBy " or "
-            }
-        }
-    },
-
-    salesOrder: {
-
-        total: {
-            view: "fcg_edi_xref_vw",
-            queryParams: {
-                "\$filter":
-                    "edi_x_ref_id eq '" ++ ediRefId ++
                     "' and ((" ++
-                    (
-                        (businesskey map ("po_no eq '" ++ $ ++ "'"))
-                            joinBy " or "
-                    )
-                    ++ ") or po_no eq null or po_no eq ' ')"
-            }
-        }
-    },
 
-    salesOrderAck: {
-        total: {
-            view: "fcg_edi_poack_855_outbound_vw",
-            queryParams: {
-            }
-        }
-    },
-
-    salesOrderInvoice: {
-        total: {
-            view: "fcg_edi_invoice_810_outbound_vw",
-            queryParams: {
-            }
-        }
-    },
-
-    salesOrderShipment: {
-
-        total: {
-            view: "fcg_edi_asn_856_outbound_vw",
-            queryParams: {
-            }
-        }
-    }
+                    ((businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ") or po_no eq null or po_no eq ' ')"
+			}
+		}
+	},
+	salesOrderAck: {
+		total: {
+			view: "fcg_edi_poack_855_outbound_vw",
+			queryParams: {
+			}
+		}
+	},
+	salesOrderInvoice: {
+		total: {
+			view: "fcg_edi_invoice_810_outbound_vw",
+			queryParams: {
+			}
+		}
+	},
+	salesOrderShipment: {
+		total: {
+			view: "fcg_edi_asn_856_outbound_vw",
+			queryParams: {
+			}
+		}
+	}
 }
-
 var selectedConfig =
-    (routingConfig[transactionType] default {})[purpose] default {}
 
+    (routingConfig[transactionType] default {
+})[purpose] default {
+}
 ---
 {
-    method: Mule::p('p21.request.method.OData'),
-
-    host: Mule::p('p21.request.host'),
-
-    port: Mule::p('p21.request.port'),
-
-    basePath: Mule::p('p21.request.basePath.Odata'),
-
-    path: "/" ++ (selectedConfig.view default ""),
-
-    headers: {
-        Authorization: "Bearer " ++ (vars.accessToken default ""),
-        "Content-Type": "application/json"
-    },
-
-    queryParams: selectedConfig.queryParams default {},
-
-    uriParams: {
-    },
-
-    body: {
-    }
+	method: Mule::p('p21.request.method.OData'),
+	host: Mule::p('p21.request.host'),
+	port: Mule::p('p21.request.port'),
+	basePath: Mule::p('p21.request.basePath.Odata'),
+	path: "/" ++ (selectedConfig.view default ""),
+	headers: {
+		Authorization: "Bearer " ++ (vars.accessToken default ""),
+		"Content-Type": "application/json"
+	},
+	queryParams: selectedConfig.queryParams default {
+	},
+	uriParams: {
+	},
+	body: {
+	}
 }
+ 

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="inbound-salesOrder-processing-subflow" doc:id="41bbc87c-c7d9-4aca-9fb4-d14f708d99f2" >
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="01555037-44eb-4221-924a-11795ca781d0" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
+		<ee:transform doc:name="var httpOperation" doc:id="33f45b6a-9d4d-414d-9b53-70d4b8e6801f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+---
+{
+	"method": Mule::p('b2b-p21-sys-api.view.method'),
+	"host": Mule::p('b2b-p21-sys-api.host'),
+	"port": Mule::p('b2b-p21-sys-api.port'),
+	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
+	"path": Mule::p('b2b-p21-sys-api.view.path'),
+	"headers": {
+		"x-correlation-id": vars.integration.correlationId
+	},
+	"queryParams": {
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
+		"purpose": Mule::p('b2b-p21-sys-api.purpose.total'),
+		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0]
+	},
+	"uriParams": {
+	},
+	"body": {
+	},
+	"untilsuccessful": {
+		"maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="6c7ede21-481c-4fed-97b3-2db0694bde51" name="common-http-request-subflow" target="salesOrderLookUpData" />
+		<ee:transform doc:name="var : isDuplicate" doc:id="5a172f1c-58e2-4c38-8ad3-d51f8e86eafe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<!-- [STUDIO:"isDuplicate salesOrder?"]<choice doc:name="isDuplicate salesOrder?" doc:id="1fe107bd-2165-4afa-99bc-57c020e660ce" >
+			<when expression="#[vars.isValid.isValid == false&#93;" >
+				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="e71784f5-94be-48d4-9934-32247f928906" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO : Valid Acknowledgement" doc:id="5967ecdf-18a9-451f-a33e-67b251001caf" message='#[%dw 2.0&#10;output application/json&#10;&#45;&#45;-&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0&#93;.b2bMessage.header.transmissionId default "",&#10;	"message": "Acknowledgement validation successful, Moving forward to create the Acknowledgement in p21",&#10;}&#93;' />
+			</otherwise>
+		</choice> [STUDIO] -->
+			<logger level="INFO" doc:name="LOG INFO : END" doc:id="b2d7df61-f9f8-47df-a129-6ac9f69f049a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
+	</sub-flow>
+</mule>
