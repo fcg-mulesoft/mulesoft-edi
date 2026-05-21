@@ -89,6 +89,8 @@
 							<ignoreFile>get-p21-view-processing-suite.xml</ignoreFile>
 							<ignoreFile>implementations/get-p21-view-processing.xml</ignoreFile>
 							<ignoreFile>implementations/get-p21-view-processing.xml</ignoreFile>
+							<ignoreFile>implementations/post-p21-xml-transaction-processing.xml</ignoreFile> 
+							<ignoreFile>implementations/post-p21-xml-transaction-processing.xml</ignoreFile>
 						</ignoreFiles>
 					</coverage>
 				</configuration>
