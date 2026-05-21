@@ -12,6 +12,7 @@ groupedPOs pluck ((poItems, poNumber) -> {
 			purchaseOrderType: poItems[0].BEG01_PurposeCode default "",
 			purchaseOrderTypeCode: poItems[0].BEG02_POTypeCode default "",
 			currencyCode: poItems[0].CUR02_currency default "",
+			contract_no: poItems[0].BEG06_contract_no default "",
 			contacts: [{
 				contactFunction: "BD",
 				name: poItems[0].PER02_Name default "",
