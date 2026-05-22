@@ -3,7 +3,7 @@ output application/json
 
 ---
 {
-    method: Mule::p('p21.request.method.transaction'),
+	method: Mule::p('p21.request.method.transaction'),
     host: Mule::p('p21.request.host'),
     port: Mule::p('p21.request.port'),
     basePath: Mule::p('p21.request.basePath.transaction'),

@@ -2,6 +2,7 @@
 output application/json
 var transactionType = attributes.queryParams.transactionType
 var purpose = attributes.queryParams.purpose
+
 var businesskey =
     (attributes.queryParams.businesskey default "") splitBy "," map (trim($)) filter ($ != "") distinctBy $
 var routingConfig = {
