@@ -1,28 +1,27 @@
 %dw 2.0
-output application/xml
+output application/json
 import toBase64 from dw::core::Binaries
 ---
 {
-	"method": Mule::p('b2b-p21-sys-api.transaction.method'),
+	"method": Mule::p('b2b-p21-sys-api.view.method'),
 	"host": Mule::p('b2b-p21-sys-api.host'),
 	"port": Mule::p('b2b-p21-sys-api.port'),
 	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
-	"path": Mule::p('b2b-p21-sys-api.transaction.path'),
+	"path": Mule::p('b2b-p21-sys-api.view.path'),
 	"headers": {
-		"x-correlation-id": vars.integration.correlationId,
-		"Content-Type": "application/xml"
+		"x-correlation-id": vars.integration.correlationId
 	},
 	"queryParams": {
-		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.partsPrice'),
-		"companyId": payload.value[0].company_id,
-		"customerId": payload.value[0].customer_id,
-		"salesLocId": payload.value[0].preferred_location_id
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrderInvoice'),
+		"purpose": Mule::p('b2b-p21-sys-api.purpose.outbound'),
+		"businesskey": (vars.initialPayload.Order.edixRefId default "") ++ ":" ++ (vars.initialPayload.Order.PoNo default "")
 	},
 	"uriParams": {
 	},
-	"untilsuccessful": {
-		"maxRetries": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.maxRetries'),
-		"interval": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.interval')
+	"body": {
 	},
-	"body": vars.p21PartsPrice
+	"untilsuccessful": {
+		"maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
+	}
 }
