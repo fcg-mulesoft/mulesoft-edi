@@ -13,7 +13,10 @@ import toBase64 from dw::core::Binaries
 		"Content-Type": "application/xml"
 	},
 	"queryParams": {
-		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrder'),
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.partsPrice'),
+		"companyId": payload.value[0].company_id,
+		"customerId": payload.value[0].customer_id,
+		"salesLocId": payload.value[0].preferred_location_id
 	},
 	"uriParams": {
 	},
@@ -21,5 +24,5 @@ import toBase64 from dw::core::Binaries
 		"maxRetries": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.maxRetries'),
 		"interval": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.interval')
 	},
-	"body": vars.p21PurchaseOrder
+	"body": vars.p21PartsPrice
 }

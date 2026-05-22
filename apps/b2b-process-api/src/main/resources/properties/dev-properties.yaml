@@ -18,6 +18,7 @@ b2b-p21-sys-api:
     salesOrderAck: "salesOrderAck"
     salesOrderInvoice: "salesOrderInvoice"
     salesOrderShipment: "salesOrderShipment"
+    partsPrice: "partsPrice"
   purpose:
     validation: "validation"
     outbound: "outbound"

@@ -95,12 +95,25 @@ Order @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"): {
 					</ee:variables>
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="fe068a4b-652e-4c31-a9e9-4aac018cbed3" name="common-http-request-subflow" target="purchaseOrderData" />
-				<choice doc:name="isValid Invoice?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
+				<choice doc:name="isValid Purchase Order?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
 			<when expression="#[sizeOf(payload.value filter (!isEmpty($.po_no)) default []) &gt; 0]">
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="7ead687f-13fd-40c6-87a7-c586405347d4" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. PO Number in Coupa Request is already Available in P21 System." />
 			</when>
 			<otherwise>
-				<logger level="INFO" doc:name="LOG INFO : Valid Invoice" doc:id="5f5af8b4-e52c-4e60-850d-cde8a78887e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Invoice validation successful, Moving forward to create the Invoice in p21",&#10;}]' />
+				<ee:transform doc:name="var : p21PartsPrice" doc:id="6842f74a-e9b4-4058-bac8-2b7f011250dd">
+							<ee:message />
+							<ee:variables>
+								<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_partsPriceRequest.dwl" variableName="p21PartsPrice" />
+							</ee:variables>
+						</ee:transform>
+						<ee:transform doc:name="var : httpOperation - post retrieve p21PartsPrice" doc:id="c416483b-244d-45a4-939d-228971f3bea2">
+							<ee:message />
+							<ee:variables>
+								<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationPostPurchaseOrder.dwl" variableName="httpOperation" />
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d971c28d-c576-4f75-85f1-a029a835d134" name="common-http-request-subflow" target="partsPriceResponse"/>
+						<logger level="INFO" doc:name="LOG INFO : Valid PO Number" doc:id="5f5af8b4-e52c-4e60-850d-cde8a78887e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "PO Number validation successful, Moving forward to create the Purchase Order in p21",&#10;}]' />
 						<ee:transform doc:name="var : p21PurchaseOrder" doc:id="4dc242d7-5131-44a4-a93a-f72e5a3cc70d">
 			<ee:message>
 			</ee:message>

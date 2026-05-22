@@ -21,26 +21,35 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 								<ee:set-variable variableName="httpOperation"><![CDATA[%dw 2.0
 output application/json
 var transactionType = attributes.queryParams.transactionType
-var basePathMapping = {
-	purchaseOrder: Mule::p('p21.request.basePath.sales')
+var routingConfig = {
+	purchaseOrder: {
+		basepath: Mule::p('p21.request.basePath.sales'),
+		path: Mule::p('p21.request.path.coupaOrder'),
+		queryParams: {}
+	},
+	partsPrice: {
+		basepath: Mule::p('p21.request.basePath.parts'),
+		path: Mule::p('p21.request.path.partsPrices'),
+		queryParams: attributes.queryParams
+	}
 }
-var pathMapping = {
-	purchaseOrder: Mule::p('p21.request.path.coupaOrder')
+var selectedConfig =
+    (routingConfig[transactionType] default {
+}) default {
 }
-var basePath = basePathMapping[transactionType]
-var path = pathMapping[transactionType]
 ---
 {
     method: Mule::p('p21.request.method.transaction'),
     host: Mule::p('p21.request.host'),
     port: Mule::p('p21.request.port'),
-    basePath: basePath,
-    path: path,
+    basePath: selectedConfig.basePath,
+    path: selectedConfig.path,
     headers: {
         "Authorization": "Bearer "++ (vars.accessToken default ""),
         "Content-Type": "application/xml"
     },
-    queryParams: {},
+    queryParams: selectedConfig.queryParams default {
+	},
     uriParams: {}
 }]]></ee:set-variable>
 			</ee:variables>

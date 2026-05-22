@@ -7,8 +7,10 @@ p21:
       Odata: "/odataservice/odata/view"
       transaction: "/uiserver0/api/v2"
       sales: "/api/sales"
+      parts: "/api/inventory/v2/parts"
     path:
       transaction: "/transaction"
       ediOrderView: "/fcg_edi_xref_vw"
       coupaOrder: "/orders"
+      partsPrices: "/prices"
       
