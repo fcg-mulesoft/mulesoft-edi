@@ -1,0 +1,554 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["b2bMessage"],
+  "additionalProperties": false,
+
+  "properties": {
+
+    "b2bMessage": {
+      "type": "object",
+      "required": [
+        "header",
+        "detail",
+        "summary"
+      ],
+      "additionalProperties": false,
+
+      "properties": {
+
+        "header": {
+          "type": "object",
+          "required": [
+            "senderId",
+            "receiverId",
+            "acknowledgmentPurposeCode",
+            "acknowledgmentType",
+            "purchaseOrderNumber",
+            "purchaseOrderDate",
+            "sellerOrderNumber",
+            "partyInformation"
+          ],
+          "additionalProperties": false,
+
+          "properties": {
+
+            "senderId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+
+            "receiverId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+
+            "acknowledgmentPurposeCode": {
+              "type": "string",
+              "enum": [
+                "00",
+                "01",
+                "04",
+                "06",
+                "16",
+                "19"
+              ]
+            },
+
+            "acknowledgmentType": {
+              "type": "string",
+              "enum": [
+                "AC",
+                "AD",
+                "AE",
+                "AH",
+                "AK",
+                "AT",
+                "RD",
+                "RF",
+                "RJ",
+                "ZZ"
+              ]
+            },
+
+            "purchaseOrderNumber": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 22
+            },
+
+            "purchaseOrderDate": {
+              "type": "string",
+              "pattern": "^[0-9]{8}$"
+            },
+
+            "sellerOrderNumber": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+
+            "references": {
+              "type": "array",
+
+              "items": {
+                "type": "object",
+                "required": [
+                  "qualifier",
+                  "referenceNumber"
+                ],
+                "additionalProperties": false,
+
+                "properties": {
+
+                  "qualifier": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 3
+                  },
+
+                  "referenceNumber": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                }
+              }
+            },
+
+            "dates": {
+              "type": "array",
+
+              "items": {
+                "type": "object",
+                "required": [
+                  "qualifier",
+                  "date"
+                ],
+                "additionalProperties": false,
+
+                "properties": {
+
+                  "qualifier": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 3
+                  },
+
+                  "date": {
+                    "type": "string",
+                    "pattern": "^[0-9]{8}$"
+                  }
+                }
+              }
+            },
+
+            "partyInformation": {
+              "type": "array",
+              "minItems": 1,
+
+              "items": {
+                "type": "object",
+                "required": [
+                  "qualifier",
+                  "name"
+                ],
+                "additionalProperties": false,
+
+                "properties": {
+
+                  "qualifier": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9]{2}$"
+                  },
+
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+
+                  "idQualifier": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2
+                  },
+
+                  "idCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+
+                  "address1": {
+                    "type": "string",
+                    "maxLength": 55
+                  },
+
+                  "city": {
+                    "type": "string",
+                    "maxLength": 30
+                  },
+
+                  "state": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 2
+                  },
+
+                  "postalCode": {
+                    "type": "string",
+                    "maxLength": 15
+                  }
+                },
+
+                "allOf": [
+
+                  {
+                    "if": {
+                      "required": [
+                        "idQualifier"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "idCode"
+                      ]
+                    }
+                  },
+
+                  {
+                    "if": {
+                      "required": [
+                        "idCode"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "idQualifier"
+                      ]
+                    }
+                  },
+
+                  {
+                    "if": {
+                      "required": [
+                        "state"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "city"
+                      ]
+                    }
+                  },
+
+                  {
+                    "if": {
+                      "required": [
+                        "postalCode"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "city",
+                        "state"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+
+        "detail": {
+          "type": "object",
+          "required": [
+            "lineItems"
+          ],
+          "additionalProperties": false,
+
+          "properties": {
+
+            "lineItems": {
+              "type": "array",
+              "minItems": 1,
+
+              "items": {
+                "type": "object",
+                "required": [
+                  "lineNo",
+                  "qty",
+                  "uom",
+                  "unitPrice",
+                  "acknowledgments"
+                ],
+                "additionalProperties": false,
+
+                "properties": {
+
+                  "lineNo": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+
+                  "qty": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+
+                  "uom": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 2
+                  },
+
+                  "unitPrice": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+
+                  "priceQualifier": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 2
+                  },
+
+                  "buyerPartQualifier": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 2
+                  },
+
+                  "buyerPartNo": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+
+                  "vendorPartQualifier": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 2
+                  },
+
+                  "vendorPartNo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 80
+                  },
+
+                  "productDescriptions": {
+                    "type": "array",
+                    "minItems": 1,
+
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "descriptionType",
+                        "description"
+                      ],
+                      "additionalProperties": false,
+
+                      "properties": {
+
+                        "descriptionType": {
+                          "type": "string",
+                          "enum": [
+                            "F",
+                            "S",
+                            "X"
+                          ]
+                        },
+
+                        "description": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        }
+                      }
+                    }
+                  },
+
+                  "acknowledgments": {
+                    "type": "array",
+                    "minItems": 1,
+
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "statusCode",
+                        "quantity",
+                        "uom"
+                      ],
+                      "additionalProperties": false,
+
+                      "properties": {
+
+                        "statusCode": {
+                          "type": "string",
+                          "enum": [
+                            "IA",
+                            "IB",
+                            "IC",
+                            "ID",
+                            "IE",
+                            "IH",
+                            "IP",
+                            "IQ",
+                            "IR",
+                            "IS",
+                            "IT",
+                            "IV",
+                            "R1",
+                            "R2",
+                            "R3",
+                            "R4",
+                            "R5",
+                            "RJ"
+                          ]
+                        },
+
+                        "quantity": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+
+                        "uom": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 2
+                        },
+
+                        "dateQualifier": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 3
+                        },
+
+                        "date": {
+                          "type": "string",
+                          "pattern": "^[0-9]{8}$"
+                        }
+                      },
+
+                      "allOf": [
+
+                        {
+                          "if": {
+                            "required": [
+                              "dateQualifier"
+                            ]
+                          },
+                          "then": {
+                            "required": [
+                              "date"
+                            ]
+                          }
+                        },
+
+                        {
+                          "if": {
+                            "required": [
+                              "date"
+                            ]
+                          },
+                          "then": {
+                            "required": [
+                              "dateQualifier"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+
+                "allOf": [
+
+                  {
+                    "if": {
+                      "required": [
+                        "buyerPartQualifier"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "buyerPartNo"
+                      ]
+                    }
+                  },
+
+                  {
+                    "if": {
+                      "required": [
+                        "buyerPartNo"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "buyerPartQualifier"
+                      ]
+                    }
+                  },
+
+                  {
+                    "if": {
+                      "required": [
+                        "vendorPartQualifier"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "vendorPartNo"
+                      ]
+                    }
+                  },
+
+                  {
+                    "if": {
+                      "required": [
+                        "vendorPartNo"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "vendorPartQualifier"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+
+        "summary": {
+          "type": "object",
+          "required": [
+            "totalLineItems"
+          ],
+          "additionalProperties": false,
+
+          "properties": {
+
+            "totalLineItems": {
+              "type": "integer",
+              "minimum": 1
+            },
+
+            "totalAcknowledgedQuantity": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}
