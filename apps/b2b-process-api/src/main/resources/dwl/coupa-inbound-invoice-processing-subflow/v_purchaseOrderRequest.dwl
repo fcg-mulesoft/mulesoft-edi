@@ -1,5 +1,15 @@
 %dw 2.0
 output application/xml
+var itemIDSearch = vars.partsPriceResponse.ArrayOfItemPrice.*ItemPrice.ItemId default []
+var hardCodedNotes = {
+    Notes: {
+        OrderLineNote: {
+            Topic: "TEST EDI LINE",
+            Note: "Item is not matching",
+            NotepadClassId: "ITEMS"
+        }
+    }
+}
 ---
 {
 	Order @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd": "http://www.w3.org/2001/XMLSchema"): {
@@ -10,6 +20,8 @@ output application/xml
 		PoNo: vars.initialPayload.Order.PoNo,
 		ContactId: payload.value.edi_default_contact_id[0],
 		Taker: vars.initialPayload.Order.Taker default "MULESOFTINT",
+		Quote: "N",
+        Approved: "false",
 		Notes: {
 			OrderNote: {
 				Topic: vars.initialPayload.Order.Notes.OrderNote.Topic,
@@ -17,6 +29,14 @@ output application/xml
 				NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId
 			}
 		},
-		Lines: vars.initialPayload.Order.Lines
+		Lines: vars.initialPayload.Order.Lines update {
+    			case line at .OrderLine ->
+        			if (itemIDSearch contains (line.ItemId as Number))
+            			line - "Notes"
+        		else
+            		line update {
+                		case .Notes -> hardCodedNotes.Notes
+            	}
+		}
 	}
 }
