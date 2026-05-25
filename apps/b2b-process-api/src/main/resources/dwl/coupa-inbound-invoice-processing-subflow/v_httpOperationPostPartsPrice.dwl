@@ -12,7 +12,10 @@ output application/json
 		"Content-Type": "application/xml"
 	},
 	"queryParams": {
-		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrder')
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.partsPrice'),
+		"companyId": vars.poSearchResponse.value[0].company_id,
+		"customerId": vars.poSearchResponse.value[0].customer_id,
+		"salesLocId": vars.poSearchResponse.value[0].preferred_location_id
 	},
 	"uriParams": {
 	},

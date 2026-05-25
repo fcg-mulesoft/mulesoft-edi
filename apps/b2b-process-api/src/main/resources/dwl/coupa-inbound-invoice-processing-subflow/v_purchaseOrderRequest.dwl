@@ -3,10 +3,10 @@ output application/xml
 ---
 {
 	Order @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd": "http://www.w3.org/2001/XMLSchema"): {
-		CustomerId: payload.value[0].customer_id,
-		CompanyId: 	payload.value[0].company_id,
-		LocationId: payload.value.preferred_location_id[0],
-		ShipToId:payload.value.ship_to_id[0],
+		CustomerId: vars.poSearchResponse.value[0].customer_id,
+		CompanyId: 	vars.poSearchResponse.value[0].company_id,
+		LocationId: vars.poSearchResponse.value[0].preferred_location_id,
+		ShipToId: vars.poSearchResponse.value[0].ship_to_id,
 		PoNo: vars.initialPayload.Order.PoNo,
 		ContactId: payload.value.edi_default_contact_id[0],
 		Taker: vars.initialPayload.Order.Taker default "MULESOFTINT",

@@ -42,7 +42,7 @@ var selectedConfig =
     method: Mule::p('p21.request.method.transaction'),
     host: Mule::p('p21.request.host'),
     port: Mule::p('p21.request.port'),
-    basePath: selectedConfig.basePath,
+    basePath: selectedConfig.basepath,
     path: selectedConfig.path,
     headers: {
         "Authorization": "Bearer "++ (vars.accessToken default ""),

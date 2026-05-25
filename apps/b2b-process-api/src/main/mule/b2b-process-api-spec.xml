@@ -55,7 +55,25 @@ output application/json
         <flow-ref doc:name="Flow Reference To Inbound Transaction Processing Sub Flow" doc:id="885af747-f4ce-47cd-bc6f-ea61768d6175" name="#[&quot;inbound-&quot; ++ attributes.queryParams.&quot;type&quot; ++ &quot;-processing-subflow&quot;]" />
     </flow>
      <flow name="post:\coupainboundTransactions:application\xml:b2b-process-api-spec-config" doc:id="9f7fbd0f-8145-4965-b56b-3dd9a0ec6062">
-        <flow-ref doc:name="Flow Reference To Coupa Inbound Transaction Processing Sub Flow" doc:id="b63e5733-d383-4cb9-a8f2-bda5ac0f894a" name="inbound-coupa-po-processing-subflow" />
+        <ee:transform doc:name="Transform Message" doc:id="7b7aa26b-3fa6-4fbb-985b-86648e592f16" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="integration" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"source" : "COUPA" ,
+	"target" : "P21",
+	"integration-type" : "Inbound " ++ " Coupa Purchase Order " default payload,
+	"correlationId": correlationId,
+	"timestamp": now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To Coupa Inbound Transaction Processing Sub Flow" doc:id="b63e5733-d383-4cb9-a8f2-bda5ac0f894a" name="inbound-coupa-po-processing-subflow" />
     </flow>
     <flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292">
