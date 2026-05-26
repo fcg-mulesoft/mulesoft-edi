@@ -65,7 +65,7 @@ var poNumbers =
     (transactions map (t) -> safe(t.po_no as String, "N/A")) distinctBy $ joinBy ", "
 
 var vendorIds =
-    (transactions map (t) -> resolvePartner(safe(t.vendor_id as String, "UNKNOWN")))
+    (transactions map (t) -> resolvePartner(safe(t.vendor_id as String, "N/A")))
     distinctBy $
     joinBy ", "
 
