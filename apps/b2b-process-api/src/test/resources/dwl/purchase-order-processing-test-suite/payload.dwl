@@ -1,6 +1,7 @@
 {
     "value": [
         {
+        	"customer_isa_id": "1631404318T",
             "po_no": 40418062,
             "line_no": 1,
             "company_no": "FFP",

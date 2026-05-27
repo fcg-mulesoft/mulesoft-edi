@@ -6,7 +6,7 @@ groupedPOs pluck ((poItems, poNumber) -> {
 	B2BMessage: {
 		Header: {
 			senderId: "117414135T", // Hardcoded
-			receiverId: poItems[0].customer_isa_id as String,
+			receiverId: poItems[0].customer_isa_id,
 			purchaseOrderNumber: poNumber,
 			purchaseOrderDate: poItems[0].BEG05_PODate default "",
 			purchaseOrderType: poItems[0].BEG01_PurposeCode default "",
