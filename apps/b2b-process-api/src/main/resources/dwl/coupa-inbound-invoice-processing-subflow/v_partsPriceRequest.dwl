@@ -1,0 +1,16 @@
+%dw 2.0
+output application/xml
+---
+{
+	ArrayOfItemPriceInfo @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd": "http://www.w3.org/2001/XMLSchema"): {
+		ItemPriceInfo: vars.initialPayload.Order.Lines.*OrderLine map ((item, index) -> 
+        {
+            ItemId: item.ItemId,
+            SourceLocId: vars.poSearchResponse.value[0].preferred_location_id,
+            //CustomerPartNo: "049880002", //To be Mapped
+            UnitQuantity: item.UnitQuantity,
+            //UnitSize: "1", //To be Mapped
+            UOM: item.UnitOfMeasure
+        })
+    }
+}
