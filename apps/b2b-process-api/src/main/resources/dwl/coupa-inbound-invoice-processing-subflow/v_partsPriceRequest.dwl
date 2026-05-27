@@ -6,10 +6,10 @@ output application/xml
 		ItemPriceInfo: vars.initialPayload.Order.Lines.*OrderLine map ((item, index) -> 
         {
             ItemId: item.ItemId,
-            SourceLocId: item.SourceLocId,
-            CustomerPartNo: "049880002", //To be Mapped
+            SourceLocId: vars.poSearchResponse.value[0].preferred_location_id,
+            //CustomerPartNo: "049880002", //To be Mapped
             UnitQuantity: item.UnitQuantity,
-            UnitSize: "1", //To be Mapped
+            //UnitSize: "1", //To be Mapped
             UOM: item.UnitOfMeasure
         })
     }
