@@ -90,16 +90,6 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
 			keyPassword="${secure::https.keystore.keypass}"
 			password="${secure::https.keystore.storepass}" />
 	</tls:context>
-	<apikit:config name="b2b-process-api-spec-config"
-		api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.5:raml:zip:b2b-process-api-spec.raml"
-		outboundHeadersMapName="outboundHeaders"
-		httpStatusVarName="httpStatus" />
-	<http:listener-config
-		name="HTTP_Listener_Configuration" doc:name="HTTP Listener config"
-		doc:id="f55ed275-d0ae-4359-8e6f-b63a04b6603a">
-		<http:listener-connection host="0.0.0.0"
-			port="${https.private.port}" protocol="HTTPS"
-			tlsContext="TLS_Context" />
-	</http:listener-config>
+	
 
 </mule>

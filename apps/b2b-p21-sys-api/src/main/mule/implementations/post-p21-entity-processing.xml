@@ -16,15 +16,11 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			doc:name="Flow Reference to get-oauth-token-subflow"
 			doc:id="39b507e3-bccc-4ce1-873d-beb855e61b73"
 			name="get-oauth-token-subflow" target="accessToken" />
-		<ee:transform doc:name="var : httpOperation"
-			doc:id="fa2aadff-52b7-45a0-893d-a3f788c90990">
-			<ee:message>
+		<ee:transform doc:name="var: httpOperaion ,selectScript" doc:id="c6415982-eb8b-42d4-87de-58d55aa8311b" >
+			<ee:message >
 			</ee:message>
-			<ee:variables>
-				<ee:set-variable
-					resource="dwl/post-p21-transaction-processing-subflow/v_httpOperationPostTransaction.dwl"
-					variableName="httpOperation" />
-				<ee:set-variable variableName="selectScript"><![CDATA[ %dw 2.0
+			<ee:variables >
+				<ee:set-variable variableName="selectScript" ><![CDATA[ %dw 2.0
 output application/json
 
 var transactionType = attributes.queryParams.transactionType
@@ -36,9 +32,50 @@ var mappingName =
 
 ---
 readUrl('classpath://dwl/post-p21-entity-processing-subflow/v_' ++ mappingName,'text/plain')]]></ee:set-variable>
+				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+var transactionType = attributes.queryParams.transactionType
+var checkType = attributes.queryParams.checkType default "default"
+var routingConfig = {
+	salesOrder: {
+		"default": {
+			entity: "",
+			queryParams: {
+				
+			}
+		},
+		catalogPrice: {
+			entity: "inventory/v2/parts/prices",
+			queryParams: {
+				"companyId": attributes.queryParams.companyId ,
+				"customerId": attributes.queryParams.customerId,
+				"salesLocId": attributes.queryParams.salesLocId
+			}
+		}
+	}
+}
+var selectedConfig = routingConfig[transactionType][checkType] default routingConfig[transactionType]."default"
+output application/json
+---
+{
+	method: "POST",
+	host: Mule::p("p21.request.host"),
+	port: Mule::p("p21.request.port"),
+	basePath: "/api",
+	path: "/" ++ (selectedConfig.entity default ""),
+	headers: {
+		Authorization: "Bearer " ++ (vars.accessToken default ""),
+
+	},
+	queryParams: selectedConfig.queryParams default {
+	},
+	uriParams: {
+	},
+	body: {
+	}
+}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<ee:dynamic-evaluate doc:name="Dynamic Evaluate"
+		<ee:dynamic-evaluate doc:name="Pick Dynamic mapping"
 			doc:id="43ee2fbb-3716-4670-a874-4392a1375d7f"
 			expression="#[vars.selectScript]" />
 		<flow-ref
