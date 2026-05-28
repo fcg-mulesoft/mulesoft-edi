@@ -75,6 +75,7 @@ output application/json
 		</ee:transform>
 		<choice doc:name="isDuplicate salesOrder?" doc:id="1fe107bd-2165-4afa-99bc-57c020e660ce" >
 			<when expression="#[vars.isValid.isValid != true]" >
+				<logger level="INFO" doc:name="Logger" doc:id="c728d8dd-d54e-4f96-81f5-6305163fd972" />
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="e71784f5-94be-48d4-9934-32247f928906" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
 			</when>
 			<otherwise >
@@ -230,9 +231,23 @@ var lineComparisons =
                         "Line " ++ poItem.lineNo ++
                         " | Item: " ++ ediItemId ++
                         " | EDI Price: " ++ (ediUnitPrice as String) ++
-                        " | P21 Price: " ++ (p21UnitPrice as String) ++
-                        " | EDI Qty: " ++ (ediQty as String) ++
-                        " | Available Qty: " ++ (p21AvailableQty as String)
+                        " | P21 Price: " ++ (p21UnitPrice as String)
+                    else
+                        null,
+
+                orderLineNotes:
+                    if (requiresP21Override)
+                        {
+                            lineNo: poItem.lineNo,
+                            notes: {
+                                OrderLineNote: {
+                                    Topic: "LINE LEVEL VALIDATION",
+                                    Note: "Line Item Id is incorrect or pricing mismatch found",
+                                    NotepadClassId: "ITEMS",
+                                    Mandatory: "Y"
+                                }
+                            }
+                        }
                     else
                         null,
 
@@ -279,6 +294,10 @@ var headerLevelNotes =
         map ($.headerLevelNote)
         joinBy " || "
 
+var orderLineSection =
+    failedLines
+        map ($.orderLineNotes)
+
 var validationSummary = {
     totalLines: sizeOf(lineComparisons),
     failedLines: sizeOf(failedLines),
@@ -293,19 +312,6 @@ var validationSummary = {
 }
 
 ---
-if (debug)
-{
-    validationSummary: validationSummary,
-
-    notesPreparation: {
-        addHeaderLevelNote:
-            sizeOf(failedLines) > 0,
-
-        headerLevelNote:
-            headerLevelNotes
-    }
-}
-else
 {
     validationSummary: validationSummary,
 
@@ -317,15 +323,227 @@ else
             headerLevelNotes
     },
 
+    orderLineSection: orderLineSection,
+
     lineComparisons: lineComparisons
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="cbdcaed5-583f-4d4a-adbb-c662ec68c69c" />
+		<ee:transform doc:name="var: httpOperation" doc:id="24670e5c-892a-46c2-8ed7-2a2646b8efde">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="httpOperation"><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+
+var inputPayload = vars.initialPayload[0].b2bMessage
+
+var header =
+    inputPayload.header
+
+var orderLines =
+    inputPayload.detail.itemDetails
+
+var salesPricing =
+    vars.salesPricing.ArrayOfItemPrice.ItemPrice
+
+var salesOrderLookUpData =
+    vars.salesOrderLookUpData[0]
+
+var validationData =
+    vars.isValid
+
+var pricingLines =
+    if (salesPricing is Array)
+        salesPricing
+    else
+        [salesPricing]
+
+var hasHeaderErrors =
+    validationData.validationSummary.overallStatus == "FAILED"
+
+var headerMessage =
+    if (hasHeaderErrors)
+        validationData.notesPreparation.headerLevelNote
+    else
+        "Purchase Order validation completed successfully. No mismatches found."
+
+---
+{
+	"method": Mule::p('b2b-p21-sys-api.transaction.method'),
+//	"host": Mule::p('b2b-p21-sys-api.host'),
+//	"port": Mule::p('b2b-p21-sys-api.port'),
+	"host": "localhost",
+	"port": "8092",
+	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
+	"path": Mule::p('b2b-p21-sys-api.transaction.path'),
+	"headers": {
+		"x-correlation-id": vars.integration.correlationId
+	},
+	"queryParams": {
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
+		"processingMode": "direct",
+		"checkType": "default",
+		
+	},
+	"uriParams": {
+	},
+	"untilsuccessful": {
+		"maxRetries": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.interval')
+	},
+	"body": {
+  UseCodeValues: true,
+
+  IgnoreDisabled: true,
+
+  Transactions: [
+    {
+      Status: "New",
+
+      DataElements: [
+        {
+          Order: {
+
+            CustomerId:
+              salesOrderLookUpData.customer_id,
+
+            CompanyId:
+              salesOrderLookUpData.company_id,
+
+            LocationId:
+              pricingLines[0].LocationId default "",
+
+            ShipToId:
+              salesOrderLookUpData.ship_to_id,
+
+            PoNo:
+              header.poNumber,
+
+            ContactId:
+              salesOrderLookUpData.edi_default_contact_id default "",
+
+            Taker:
+              salesOrderLookUpData.edi_default_contact_id
+              default "MULESOFTINT",
+
+            Quote: "N",
+
+            Approved: "false",
+
+            Notes: {
+              OrderNote: {
+                Topic:
+                  if (hasHeaderErrors)
+                    "HEADER LEVEL VALIDATION"
+                  else
+                    "PO VALIDATION SUCCESS",
+
+                Note:
+                  headerMessage,
+
+                NotepadClassId: "ITEMS",
+
+                Mandatory:
+                  if (hasHeaderErrors)
+                    "true"
+                  else
+                    "false"
+              }
+            },
+
+            Lines: {
+              OrderLine:
+
+                orderLines map ((detail, index) -> do {
+
+                  var matchedPricing =
+                    pricingLines filter (
+                      ($.ItemId default "")
+                      ==
+                      (detail.buyersPartNumber default "")
+                    )
+
+                  var pricing =
+                    if (sizeOf(matchedPricing) > 0)
+                      matchedPricing[0]
+                    else
+                      {}
+
+                  var matchedLineNote =
+                    (
+                      validationData.lineComparisons
+                      filter (
+                        (($.lineNo default "") as String)
+                        ==
+                        ((detail.lineNo default "") as String)
+                      )
+                    )[0] default null
+
+                  var hasLineError =
+                    matchedLineNote != null
+                    and
+                    matchedLineNote.orderLineNotes != null
+
+                  ---
+                  {
+
+                    (Notes:
+                      matchedLineNote.orderLineNotes.notes)
+                      if (hasLineError),
+
+                    LineNo:
+                      detail.lineNo,
+
+                    ItemId:
+                      pricing.ItemId default "",
+
+                    ItemDesc:
+                      (detail.descriptions[0].description default "")
+                      ++ " "
+                      ++
+                      (detail.manufacturersPartNumber default ""),
+
+                    ExtendedDesc:
+                      detail.descriptions[0].description default "",
+
+                    UnitQuantity:
+                      detail.quantityOrdered as String,
+
+                    UnitOfMeasure:
+                      pricing.UOM default "",
+
+                    UnitPrice:
+                      pricing.UnitPrice default "",
+
+                    QtyOrdered:
+                      detail.quantityOrdered as String,
+
+                    ExtendedPrice:
+                      pricing.ExtendedPrice default "",
+
+                    SourceLocId:
+                      pricing.LocationId default ""
+                  }
+                })
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="5a90d143-a74e-40b4-ab5d-db30a3238ccb" name="common-http-request-subflow" target="salesPricing" />
 		<choice doc:name="PO details Mismatch" doc:id="3de6e3a6-8ebb-4e16-9a6a-04e39729f3cd" >
 			<when expression='#[vars.isValid.validationSummary.overallStatus == "FAILED"]'>
-				<ee:transform doc:name="Transform Message" doc:id="d096ef49-0626-4045-987f-93e3157fce31" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
+				<logger level="INFO" doc:name="Logger" doc:id="841783a2-6789-4454-9339-bc9e7dcbdf24" />
+				<ee:transform doc:name="Transform Message" doc:id="1e2ca3c5-c4a2-4618-bd29-dfd5112a9966">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 {
@@ -334,19 +552,10 @@ output application/java
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="180d4597-2c63-41f6-b4e0-0a9b61bc7b35" name="send-email-subflow"/>
 			</when>
-			<otherwise >
-				<ee:transform doc:name="Transform Message" doc:id="0f33ba12-b845-4795-9698-bb6ba88dfd6d" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
----
-{
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="2efd245d-291e-4f13-9011-d52b0fee8308" />
 			</otherwise>
 		</choice>
-		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="5a90d143-a74e-40b4-ab5d-db30a3238ccb" name="common-http-request-subflow" target="salesPricing" />
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="b2d7df61-f9f8-47df-a129-6ac9f69f049a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
 	</sub-flow>
 </mule>

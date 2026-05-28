@@ -38,7 +38,7 @@ var checkType = attributes.queryParams.checkType default "default"
 var routingConfig = {
 	salesOrder: {
 		"default": {
-			entity: "",
+			entity: "sales/orders/",
 			queryParams: {
 				
 			}
