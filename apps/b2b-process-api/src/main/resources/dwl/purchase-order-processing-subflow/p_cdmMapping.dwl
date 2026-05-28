@@ -1,12 +1,13 @@
 %dw 2.0
 output application/json
 var groupedPOs = vars.purchaseOrderData.value groupBy $.po_no
+var senderId = Mule::p('fcg.edi_id')
 ---
 groupedPOs pluck ((poItems, poNumber) -> {
 	B2BMessage: {
 		Header: {
-			senderId: "117414135T", // Hardcoded
-			receiverId: poItems[0].customer_isa_id,
+			senderId: senderId default "117414135T",
+			receiverId: poItems[0].TP_edi_isa05_id,
 			purchaseOrderNumber: poNumber,
 			purchaseOrderDate: poItems[0].BEG05_PODate default "",
 			purchaseOrderType: poItems[0].BEG01_PurposeCode default "",
@@ -55,14 +56,7 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				}]
 			}
             else {
-			}),{
-				qualifier: "ZZ",
-				description: poItems[0].N902_Carrier_Account_Number,
-				messages: [{
-					messageText: poItems[0].MSG01_carrier_id
-				}]
-			}],
-			
+			})],
 			partyInformation: [{
 				qualifier: "BY",
 				name: poItems[0].N1_BY_Name,
