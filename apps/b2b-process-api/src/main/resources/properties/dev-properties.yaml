@@ -70,6 +70,10 @@ azure:
  accountname: "stfcgmulesoftteus2"
  container: "test"
  foldername: "/transition_payload"
+ 
+#Fcg sender Id
+fcg:
+  edi_id: "117414135T"
 
 email:
   toRecipient: "harshavardhan.reddy@caeliusconsulting.com,anshul.negi@caeliusconsulting.com,priyanshu.dhawan@caeliusconsulting.com,gopi.makutam@caeliusconsulting.com,bighnesh.sahoo@caeliusconsulting.com,Mulesoft_nonprod_support@flowcontrolgroup.com"

@@ -67,4 +67,8 @@ azure:
  accountname: "stfcgmulesoftteus2"
  container: "test"
  foldername: "/transition_payload"
+ 
+#Fcg sender Id
+fcg:
+  edi_id: "117414135T"
 
