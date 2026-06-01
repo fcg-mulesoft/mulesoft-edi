@@ -76,6 +76,7 @@
 						</ignoreFile>
 							<ignoreFile>implementation/vendor/coupa-purchase-order-processing.xml
 						</ignoreFile>
+							<ignoreFile>implementation/vendor/coupa-invoice-processing.xml</ignoreFile>
 							<ignoreFile>b2b-process-api-spec.xml</ignoreFile>
 						</ignoreFiles>
 						<ignoreFlows>
