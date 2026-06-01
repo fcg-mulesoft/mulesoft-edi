@@ -16,7 +16,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 
     <scheduler doc:name="Scheduler">
 			<scheduling-strategy >
-				<fixed-frequency frequency="1" timeUnit="HOURS" />
+				<fixed-frequency frequency="12" timeUnit="HOURS" />
 			</scheduling-strategy>
 		</scheduler>
 
@@ -25,7 +25,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			<os:default-value ><![CDATA[#[%dw 2.0
 output application/json
 ---
-(now() - |PT2280H|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
+(now() - |PT1H|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
 		</os:retrieve>
 		<set-variable value="#[now()]" doc:name="Current Run Time" doc:id="79f9f378-8dde-4947-ae55-a6dda422fb0f" variableName="currentRunDateTime"/>
 		<logger level="INFO" message="Starting P21 Invoice Sync - Watermark: #[vars.watermark]" />
