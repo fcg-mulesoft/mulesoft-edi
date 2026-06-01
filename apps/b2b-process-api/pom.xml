@@ -4,7 +4,7 @@
 
 	<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 	<artifactId>b2b-process-api-app</artifactId>
-	<version>1.0.15</version>
+	<version>1.0.16</version>
 	<packaging>mule-application</packaging>
 	<parent>
 		<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
@@ -71,12 +71,14 @@
 					<coverage>
 						<ignoreFiles>
 							<ignoreFile>implementation/notification/apm-error-report.xml</ignoreFile>
+							<ignoreFile>implementation/vendor/coupa-invoice-processing.xml</ignoreFile>
 							<ignoreFile>common/error-handler.xml</ignoreFile>
 							<ignoreFile>	implementation/vendor/coupa-purchase-order-processing.xml
 						</ignoreFile>
 							<ignoreFile>implementation/vendor/coupa-purchase-order-processing.xml
 						</ignoreFile>
-						<ignoreFile>b2b-process-api-spec.xml</ignoreFile>
+							<ignoreFile>implementation/vendor/coupa-invoice-processing.xml</ignoreFile>
+							<ignoreFile>b2b-process-api-spec.xml</ignoreFile>
 						</ignoreFiles>
 						<ignoreFlows>
 							<ignoreFlow>get:\healthCheck:b2b-process-api-spec-config</ignoreFlow>
@@ -159,9 +161,15 @@
 		<dependency>
 			<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 			<artifactId>b2b-process-api-spec</artifactId>
-			<version>1.0.7</version>
+			<version>1.0.8</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-vm-connector</artifactId>
+			<version>2.0.1</version>
+			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
 
