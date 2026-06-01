@@ -13,7 +13,7 @@ fun resolvePartner(pId) =
 
 var partner      = if (payload is String) read(payload, "application/json") else payload
 
-var partnerId    = resolvePartner(safe(partner.partnerId as String, "UNKNOWN"))
+var partnerId    = resolvePartner(safe(partner.partnerId as String, "N/A"))
 var partnerErrors = partner.errors default []
 
 var poNumbers =
