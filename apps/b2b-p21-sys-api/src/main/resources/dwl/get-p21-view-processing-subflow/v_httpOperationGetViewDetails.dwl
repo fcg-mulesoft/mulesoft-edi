@@ -33,6 +33,10 @@ var routingConfig = {
 			queryParams: {
 				"\$filter": (businesskey map ("edi_x_ref_id eq '" ++ (($ splitBy ":")[0]) ++ "' and (" ++  (([(($ splitBy ":")[1]), 'null', " "] map ("po_no eq '" ++ $ ++ "'")) joinBy " or " ) ++ ")")) joinBy " or "
 			}
+		},
+		total: {
+			view: Mule::p('viewNames.coupaInvoiceInbound'),
+			queryParams: attributes.queryParams
 		}
 	},
 	purchaseOrderShipment: {
