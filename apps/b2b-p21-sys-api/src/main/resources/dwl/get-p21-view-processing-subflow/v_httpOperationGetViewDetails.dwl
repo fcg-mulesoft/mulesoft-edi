@@ -3,6 +3,7 @@ output application/json
 var transactionType = attributes.queryParams.transactionType
 var purpose = attributes.queryParams.purpose
 var ediRefId = attributes.queryParams.ediRefId default ""
+var date_last_modified= attributes.queryParams.lastModified default ""
 var businesskey =
 
     (attributes.queryParams.businesskey default "") splitBy "," map (trim($)) filter ($ != "") distinctBy $
@@ -67,6 +68,7 @@ var routingConfig = {
 		total: {
 			view: "fcg_edi_invoice_810_outbound_vw",
 			queryParams: {
+				"\$filter" : "date_last_modified ge  " ++ date_last_modified
 			}
 		}
 	},

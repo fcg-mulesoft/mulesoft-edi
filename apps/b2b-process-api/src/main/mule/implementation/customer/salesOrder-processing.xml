@@ -75,11 +75,11 @@ output application/json
 		</ee:transform>
 		<choice doc:name="isDuplicate salesOrder?" doc:id="1fe107bd-2165-4afa-99bc-57c020e660ce" >
 			<when expression="#[vars.isValid.isValid != true]" >
-				<logger level="INFO" doc:name="Logger" doc:id="c728d8dd-d54e-4f96-81f5-6305163fd972" />
+				<logger level="INFO" doc:name="LOG INFO : invalid PurchaseOrder" doc:id="c728d8dd-d54e-4f96-81f5-6305163fd972" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "PO validation successful, Moving forward to create the salesOrder in p21",&#10;}]'/>
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="e71784f5-94be-48d4-9934-32247f928906" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="LOG INFO : Valid Acknowledgement" doc:id="5967ecdf-18a9-451f-a33e-67b251001caf" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Acknowledgement validation successful, Moving forward to create the Acknowledgement in p21",&#10;}]' />
+				<logger level="INFO" doc:name="LOG INFO : Valid PurchaseOrder" doc:id="5967ecdf-18a9-451f-a33e-67b251001caf" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Acknowledgement validation successful, Moving forward to create the Acknowledgement in p21",&#10;}]' />
 			</otherwise>
 		</choice>
 		<ee:transform doc:name="var: httpOperation" doc:id="eb9a9296-3190-4e32-8530-539c5e8d8a95" >
@@ -329,7 +329,7 @@ var validationSummary = {
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="Logger" doc:id="cbdcaed5-583f-4d4a-adbb-c662ec68c69c" />
+		<logger level="INFO" doc:name="LOG INFO : PurchaseOrder Price Validation" doc:id="cbdcaed5-583f-4d4a-adbb-c662ec68c69c" />
 		<ee:transform doc:name="var: httpOperation" doc:id="24670e5c-892a-46c2-8ed7-2a2646b8efde">
 			<ee:message />
 			<ee:variables>

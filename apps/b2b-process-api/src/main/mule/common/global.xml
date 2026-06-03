@@ -90,6 +90,7 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
 			keyPassword="${secure::https.keystore.keypass}"
 			password="${secure::https.keystore.storepass}" />
 	</tls:context>
+	<os:object-store name="Object_Store_Invoice_Vantage" doc:name="Object store" doc:id="69519148-d63b-4300-a4e5-f0a3e2577484" persistent="false" maxEntries="2" entryTtl="12" entryTtlUnit="HOURS" expirationInterval="3" expirationIntervalUnit="HOURS" />
 	
 
 </mule>
