@@ -14,7 +14,7 @@ output application/json
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrderInvoice'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.total'),
 		"businesskey": (vars.initialPayload.Order.edixRefId default "dummy") ++ ":" ++ (vars.initialPayload.Order.PoNo default "dummy"),
-		"\$filter": "date_last_modified ge " ++ (vars.vmPayload.watermark),
+		"\$filter": "date_last_modified ge " ++ (vars.vmPayload.watermark) ++ " and corp_id eq 481272" ,
 		"\$top": vars.vmPayload.top,
 		"\$skip": vars.vmPayload.skip,
 		"\$orderby": "date_last_modified asc"

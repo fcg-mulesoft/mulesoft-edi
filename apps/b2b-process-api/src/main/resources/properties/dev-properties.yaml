@@ -37,6 +37,17 @@ b2b-p21-sys-api:
       interval: "5000"
     custom:
       path: "/transactions/custom"
+b2b-inbound-partner-mgmt-api:
+  timeout: "150000"
+  host: "b2b-inbound-http-9yzw-zrx5fd.y7366p.usa-e1.cloudhub.io"
+  basePath: "/api/"
+  port: "443"
+  coupa-invoice:
+    path: "/JSON-json-to-xml-inbound-invoice-coupa"
+    method: "POST"
+    untilsuccessful:
+      maxRetries: "5"
+      interval: "5000"
 anypoint:
   platform:
     method: "POST"
