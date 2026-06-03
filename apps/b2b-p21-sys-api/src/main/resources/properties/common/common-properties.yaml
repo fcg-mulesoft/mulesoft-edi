@@ -52,6 +52,7 @@ viewNames:
   purchaseOrderAckInbound: "fcg_po_hdr_line_udf_vw"
   purchaseOrderInvoiceInbound: "fcg_po_hdr_line_udf_vw"
   coupaInvoiceOutbound: "fcg_edi_xref_vw"
+  coupaInvoiceInbound: "fcg_kft_coupa_invoice_outbound_vw"
 #Service Types
 serviceNames:
   purchaseOrder: "PurchaseOrder"
