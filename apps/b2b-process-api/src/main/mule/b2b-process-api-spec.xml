@@ -35,19 +35,19 @@ payload]]></ee:set-variable>
         <error-handler ref="global-common-error-handler" />
     </flow>
     <flow name="get:\healthCheck:b2b-process-api-spec-config">
-        <ee:transform doc:name="Prepare Response Payload">
+        <ee:transform doc:name="Prepare healthCheck Response">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
   application: app.name,
-  apiVersion: "1.0.0",
   status: "success",
-  timeStamp: "2024-07-05T17:28:25.848Z",
+  timestamp: now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+	},
   environment: Mule::p("mule.env"),
-  
-} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
+ }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
     </flow>
