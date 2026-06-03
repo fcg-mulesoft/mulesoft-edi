@@ -76,6 +76,7 @@ var routingConfig = {
 		total: {
 			view: "fcg_edi_asn_856_outbound_vw",
 			queryParams: {
+				"\$filter" : "date_last_modified ge  " ++ date_last_modified
 			}
 		}
 	}
