@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-    <flow name="b2b-process-api-spec-main" doc:id="61ca2ba4-6c49-4bb9-8cd1-ad6bd561f615">
+    <http:request-config name="partnerManager" doc:name="HTTP Request configuration" doc:id="696f8b10-34f7-43b6-83f5-9bd52f5c9407" >
+		<http:request-connection protocol="HTTPS" host="b2b-inbound-http-d975-zrx5fd.y7366p.usa-e1.cloudhub.io" port="443"/>
+	</http:request-config>
+	<flow name="b2b-process-api-spec-main" doc:id="61ca2ba4-6c49-4bb9-8cd1-ad6bd561f615">
         <http:listener config-ref="HTTP_Listener_Configuration" path="${https.basePath}" doc:name="b2b-process-api-spec-main">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
@@ -135,4 +138,71 @@ output application/json
         <logger level="INFO" doc:name="LOG INFO : END" doc:id="00053657-e525-43b6-a7a2-8975ae96d6eb" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;END&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: vars.initialVariables.correlationId,&#xA; sourceSystem: &quot;APM - Anypoint Partner Manager&quot;,&#xA; targetSystem: &quot;Email&quot;,&#xA; message: &quot;B2B Alert Notification process completed successfully.&quot;&#xA;}]" />
         <error-handler ref="global-common-error-handler" />
     </flow>
+	<flow name="b2b-process-api-cxml-flow" doc:id="8831e8f3-8e30-44d8-a311-c1cbc2d80555" >
+		<http:listener doc:name="b2b-process-api-spec-main" doc:id="6431b1e9-0ad2-4127-ac9a-312415a3068d" config-ref="HTTP_Listener_Configuration" path="/coupainboundTransactions/cxml" >
+			<http:response statusCode="#[vars.httpStatus default 200]" >
+				<http:headers ><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]" >
+				<http:body ><![CDATA[#[payload]]]></http:body>
+				<http:headers ><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:error-response>
+		</http:listener>
+		<ee:transform doc:name="var : integration, initialPayload" doc:id="74f57a07-c2c5-4137-a88a-db65fbabe010" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="initialPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="POST" doc:name="Common HTTP Request" doc:id="b59575c2-5675-432b-8684-b3eacf6c61bc" config-ref="partnerManager" responseTimeout="#[Mule::p('b2b-p21-sys-api.timeout')]" path="/api/test/XML-cxml-orderrequest">
+			<http:headers><![CDATA[#[{"Content-Type": "application/xml"}]]]></http:headers>
+		</http:request>
+		<!-- [STUDIO:"Read CXML as XML"]<ee:transform doc:name="Read CXML as XML" doc:id="01b537c9-66bf-48a1-8361-592a47140147" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[output application/xml
+&#45;&#45;-
+read(payload, 'application/xml')&#93;&#93;></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="integration" ><![CDATA[%dw 2.0
+output application/json
+&#45;&#45;-
+{
+	"source" : "COUPA" ,
+	"target" : "P21",
+	"integration-type" : "Inbound " ++ " Coupa Purchase Order " default payload,
+	"correlationId": correlationId,
+	"timestamp": now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+	}
+}&#93;&#93;></ee:set-variable>
+			</ee:variables>
+		</ee:transform> [STUDIO] -->
+		<!-- [STUDIO:"cXML to XML Transformation"]<ee:transform doc:name="cXML to XML Transformation" doc:id="8e57817a-87e9-4011-8c8d-ec473030d173">
+					<ee:message>
+				<ee:set-payload resource="dwl/coupa-inbound-invoice-processing-subflow/p_cxmltoxml.dwl" />
+					</ee:message>
+				</ee:transform> [STUDIO] -->
+		<!-- [STUDIO:"Transform Message"]<ee:transform doc:name="Transform Message" doc:id="87b311d3-ac5b-4902-bfad-b2dffcb0c675">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="integration"><![CDATA[%dw 2.0
+output application/json
+&#45;&#45;-
+{
+	"source" : "COUPA" ,
+	"target" : "P21",
+	"integration-type" : "Inbound " ++ " Coupa Purchase Order " default payload,
+	"correlationId": correlationId,
+	"timestamp": now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+	}
+}&#93;&#93;></ee:set-variable>
+			</ee:variables>
+		</ee:transform> [STUDIO] -->
+		<error-handler ref="global-common-error-handler" />
+	</flow>
 </mule>

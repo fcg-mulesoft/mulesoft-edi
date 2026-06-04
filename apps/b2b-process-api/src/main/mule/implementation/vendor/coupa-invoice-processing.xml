@@ -40,6 +40,7 @@ output application/json
     top: 100,
     currentRunDateTime: vars.currentRunDateTime
 }]]]></vm:content>
+			
     </vm:publish>
 
 
@@ -70,18 +71,20 @@ output application/json
 		<logger level="INFO" message="Fetched #[sizeOf(vars.p21Response.value)] records, skip=#[vars.skip]" />
 
     <!-- Transform -->
-    <choice doc:name="Choice" doc:id="6fbae4fa-9cba-4787-908b-5648be52837f" >
+    <choice doc:name="Choice" doc:id="6fbae4fa-9cba-4787-908b-5648be52837f">
 			<when expression="#[sizeOf(vars.p21Response.value) &gt; 0]">
-				<ee:transform doc:name="To EDI Format" doc:id="51786b2c-059b-497d-bce4-e5dc38d7d31d">
+				<parallel-foreach doc:name="Parallel For Each" doc:id="a1689c95-1598-46a1-a227-04ec1cb8ff71" collection="#[vars.p21Response.value]">
+					<ee:transform doc:name="To EDI Format" doc:id="51786b2c-059b-497d-bce4-e5dc38d7d31d">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
 				<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationPostCoupaInvoice.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
-				<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="0d1e3063-a16b-4e91-92a0-ac7955da0dd0" name="common-http-request-subflow" />
+					<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="0d1e3063-a16b-4e91-92a0-ac7955da0dd0" name="common-http-request-subflow" />
+		</parallel-foreach>
 			</when>
-			<otherwise >
+			<otherwise>
 				<logger level="INFO" doc:name="No Records got updated" doc:id="a9e54a09-9f6a-4023-9108-f281cfb132ae" message="No Records got updated in P21 post Last Run. Last Watermark values is #[vars.vmPayload.watermark]" />
 			</otherwise>
 		</choice>
