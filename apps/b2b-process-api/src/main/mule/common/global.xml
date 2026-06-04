@@ -39,7 +39,7 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 		<azure-storage:sas-token-azure-connection accountName="${azure.accountname}" sasToken="${secure::azure.sastoken}"/>
 	</azure-storage:config>
 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="de023e58-4c44-4b28-b57a-f2cb0bcd465b" flowRef="b2b-process-api-spec-main" />
-	    <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.8:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	    <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.13:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" disableValidations="true"/>
     <http:listener-config name="HTTP_Listener_Configuration" doc:name="HTTP Listener config" doc:id="b3a610ec-8fc7-4e97-ba71-d56808c9f6cb">
         <http:listener-connection host="0.0.0.0" port="${https.private.port}" protocol="HTTPS" tlsContext="TLS_Context" />
     </http:listener-config>

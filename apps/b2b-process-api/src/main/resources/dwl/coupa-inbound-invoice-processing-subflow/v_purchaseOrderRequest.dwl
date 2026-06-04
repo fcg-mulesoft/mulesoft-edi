@@ -1,6 +1,6 @@
 %dw 2.0
 import trim from dw::core::Strings
-output application/xml
+output application/xml skipNullOn="everywhere"
 
 var itemIDSearch =
     (vars.partsPriceResponse.ArrayOfItemPrice.*ItemPrice.ItemId default [])
@@ -39,10 +39,14 @@ fun isMatched(line) =
         (id != "") and (itemIDSearch contains id)
     }
 
+fun isValidLine(line) = 
+    line != null and !isEmpty(line)
+
 var rawLines = vars.initialPayload.Order.Lines.*OrderLine default []
 var linesArr = if (rawLines is Array) rawLines else [rawLines]
+var validLinesArr = linesArr filter (line) -> isValidLine(line)
 
-var unmatchedLines = linesArr filter (line) -> not isMatched(line)
+var unmatchedLines = validLinesArr filter (line) -> not isMatched(line)
 
 var headerNoteText =
     ((unmatchedLines map (line) -> headerLineText(line)) joinBy " | ") ++
@@ -73,22 +77,26 @@ var headerNoteText =
       else
         vars.initialPayload.Order.Notes,
 
-    Lines: {
-      OrderLine:
-        linesArr map (line) ->
-          if (isMatched(line))
-            line
-          else
-            (line - "ItemId" - "Notes") ++ {
-              ItemId: defaultItemId,
-              Notes: {
-                OrderLineNote: {
-                  Topic: "EDI_LINE1",
-                  Note: lineNoteText(line),
-                  NotepadClassId: "ITEMS"
+    Lines: 
+      if (sizeOf(validLinesArr) > 0)
+        {
+          OrderLine:
+            validLinesArr map (line) ->
+              if (isMatched(line))
+                line mapObject ((value, key) -> if (isEmpty(value)) {} else {(key): value})
+              else
+                ((line - "ItemId" - "Notes") mapObject ((value, key) -> if (isEmpty(value)) {} else {(key): value})) ++ {
+                  ItemId: defaultItemId,
+                  Notes: {
+                    OrderLineNote: {
+                      Topic: "EDI_LINE1",
+                      Note: lineNoteText(line),
+                      NotepadClassId: "ITEMS"
+                    }
+                  }
                 }
-              }
-            }
-    }
+        }
+      else
+        null
   }
 }
