@@ -185,9 +185,14 @@ var shipToRows =
         ++ "<td style='padding:8px;border:1px solid #ddd;'>Ship To</td>"
         ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
 
+var duplicateRows =
+    (ve.duplicatePo default []) map (e) ->
+        "<tr style='background:#fee2e2;color:#b91c1c;'>"
+        ++ "<td style='padding:8px;border:1px solid #ddd;'>Duplicate</td>"
+        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
+ 
 var allRows =
-    itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows
-
+    itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows ++ duplicateRows
 var validationHtml =
     if (sizeOf(allRows) > 0)
         "<table style='width:100%;border-collapse:collapse;margin-top:10px;'>"
