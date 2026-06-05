@@ -24,6 +24,7 @@
             "receiverId",
             "acknowledgmentPurposeCode",
             "acknowledgmentType",
+            "acknowledgementdate",
             "purchaseOrderNumber",
             "purchaseOrderDate",
             "sellerOrderNumber",
@@ -83,7 +84,10 @@
               "type": "string",
               "pattern": "^[0-9]{8}$"
             },
-
+             "acknowledgementdate": {
+              "type": "string",
+              "pattern": "^[0-9]{8}$"
+            },
             "sellerOrderNumber": {
               "type": "string",
               "minLength": 1,
