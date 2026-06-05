@@ -68,4 +68,8 @@ scheduler:
 logger:
   debug:
     category: "com.mycompany.b2b.edi"
+    
+#Maxconcurrency
+maxConcurrency:
+ attempt: "5"
   
