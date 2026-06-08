@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
 	xmlns:azure-storage="http://www.mulesoft.org/schema/mule/azure-storage"
-	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
-	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:email="http://www.mulesoft.org/schema/mule/email"
-	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
-	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
@@ -13,7 +13,8 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
-http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema/mule/azure-storage/current/mule-azure-storage.xsd">
+http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema/mule/azure-storage/current/mule-azure-storage.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
 		<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="00ad5797-37c6-43f9-aa2b-0b7f69628685" doc:description="Common HTTP Request Configuration&#10;" basePath="#[vars.httpOperation.basePath]">
 		<http:request-connection host="#[vars.httpOperation.host]" port="#[vars.httpOperation.port]" protocol="HTTPS">
 			<tls:context >
@@ -38,11 +39,16 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
 		<azure-storage:sas-token-azure-connection accountName="${azure.accountname}" sasToken="${secure::azure.sastoken}"/>
 	</azure-storage:config>
 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="de023e58-4c44-4b28-b57a-f2cb0bcd465b" flowRef="b2b-process-api-spec-main" />
-	 <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.6:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <http:listener-config name="HTTP_Listener_Configuration" doc:name="HTTP Listener config" doc:id="80b975ac-8a2f-4ec1-8a50-678514e7690e">
+	    <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.13:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" disableValidations="true"/>
+    <http:listener-config name="HTTP_Listener_Configuration" doc:name="HTTP Listener config" doc:id="b3a610ec-8fc7-4e97-ba71-d56808c9f6cb">
         <http:listener-connection host="0.0.0.0" port="${https.private.port}" protocol="HTTPS" tlsContext="TLS_Context" />
     </http:listener-config>
     <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="847f670d-8d9f-4478-8c0b-92f5314af4db">
         <tls:key-store type="jks" path="${https.keystore.path}" alias="${https.keystore.alias}" keyPassword="${secure::https.keystore.keypass}" password="${secure::https.keystore.storepass}" />
     </tls:context>
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="79f94687-ac3d-4e66-bce3-bb9ef6eaaf08" >
+		<vm:queues >
+			<vm:queue queueName="p21.invoice.fetch" />
+		</vm:queues>
+	</vm:config>
 </mule>

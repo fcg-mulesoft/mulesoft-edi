@@ -51,7 +51,8 @@ viewNames:
   purchaseOrderOutbound: "fcg_edi_po_850_outbound_export_vw"
   purchaseOrderAckInbound: "fcg_po_hdr_line_udf_vw"
   purchaseOrderInvoiceInbound: "fcg_po_hdr_line_udf_vw"
-  
+  coupaInvoiceOutbound: "fcg_edi_xref_vw"
+  coupaInvoiceInbound: "fcg_kft_coupa_invoice_outbound_vw"
 #Service Types
 serviceNames:
   purchaseOrder: "PurchaseOrder"
@@ -59,3 +60,20 @@ serviceNames:
   purchaseOrderInvoice: "VendorInvoice"
   purchaseOrderShipment: "PurchaseOrderShipment"
   
+email:
+  host: "smtp.office365.com"
+  port: "587"
+  username: "mulesoftalerts@fluidflow.onmicrosoft.com"
+  connectionTimeout: "60"
+  readTimeout: "60"
+  writeTimeout: "60"
+  reconnection:
+    attempts: "3"
+    frequency: "2000"
+  supportGroups:
+    mulesoft: "Mulesoft_nonprod_support@flowcontrolgroup.com"
+  subject: "P21 Number Not present in Coupa Payload"
+  subject1: "PO Not Present"
+  
+
+    

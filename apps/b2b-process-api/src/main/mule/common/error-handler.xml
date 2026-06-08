@@ -98,7 +98,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="2a3b6006-e755-49e4-988c-672685733d40" idExpression="#[vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
 					</when>
 				</choice>
-				<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses='#[["harshavardhan.reddy@caeliusconsulting.com","anshul.negi@caeliusconsulting.com","priyanshu.dhawan@caeliusconsulting.com","gopi.makutam@caeliusconsulting.com","bighnesh.sahoo@caeliusconsulting.com"]]' config-ref="Email_SMTP">
+				<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[Mule::p('email.toRecipient') splitBy &quot;,&quot;]" config-ref="Email_SMTP">
 
 				<reconnect />
 				<email:body contentType="text/html">

@@ -40,4 +40,8 @@
 		name="post:\transactions:application\json:b2b-p21-sys-api-spec-config">
 		<flow-ref doc:name="Flow Reference to post-p21-transaction-processing-subflow" doc:id="67a6a553-8d52-484d-adcb-26fc66df83ac" name="post-p21-transaction-processing-subflow" />
 	</flow>
+	<flow
+		name="post:\transactions\custom:application\xml:b2b-p21-sys-api-spec-config">
+		<flow-ref doc:name="Flow Reference to post-p21-transaction-xml-processing-subflow" doc:id="9f6008ae-5d49-439d-b624-7dad5394a314" name="post-p21-transaction-xml-processing-subflow" />
+	</flow>
 </mule>

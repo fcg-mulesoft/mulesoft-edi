@@ -10,22 +10,26 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		doc:id="770cbece-0c38-467e-82ec-ed9d46c61331">
 		<logger level="INFO" doc:name="LOG INFO : START"
 			doc:id="208b755d-28d6-482c-96f6-e4f8c588ccfd"
-			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId default vars.integration.correlationId,&#10;	Message : "Initiating request to endpoint: " ++ vars.httpOperation.basePath ++ vars.httpOperation.path&#10; &#10;}]' />
-		<until-successful
-			maxRetries="#[vars.httpOperation.untilsuccessful.maxRetries]"
-			doc:name="Until Successful"
-			doc:id="cbe1174f-23ba-45ae-bec4-2b02fc685743"
-			millisBetweenRetries="#[vars.httpOperation.untilsuccessful.interval]">
-			<http:request method="#[vars.httpOperation.method]"
-				doc:name="Common HTTP Request"
-				doc:id="b976f5d7-308c-4391-9d3e-e65db725d6d5"
-				config-ref="HTTP_Request_configuration"
-				path="#[vars.httpOperation.path]" responseTimeout="#[Mule::p('b2b-p21-sys-api.timeout')]">
-				<http:body ><![CDATA[#[vars.httpOperation.body]]]></http:body>
+			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	//flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId default vars.integration.correlationId,&#10;	//Message : "Initiating request to endpoint: " ++ vars.httpOperation.basePath ++ vars.httpOperation.path&#10; &#10;}]' />
+		<choice doc:name="Choice" doc:id="89ef4d83-3f79-47eb-85d4-33609fd2826c" >
+			<when expression="#[vars.httpOperation.path == Mule::p('b2b-p21-sys-api.transaction.custom.path')]">
+				<until-successful maxRetries="#[vars.httpOperation.untilsuccessful.maxRetries]" doc:name="Until Successful" doc:id="8972017f-37af-4b6c-a836-57c0ad5d2b16" millisBetweenRetries="#[vars.httpOperation.untilsuccessful.interval]" >
+					<http:request method="#[vars.httpOperation.method]" doc:name="Common HTTP Request" doc:id="fd7ab8e5-334d-45a9-b9c6-7159a81def18" config-ref="HTTP_Request_configuration" path="#[vars.httpOperation.path]" responseTimeout="#[Mule::p('b2b-p21-sys-api.timeout')]" >
+						<http:headers ><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
+						<http:query-params ><![CDATA[#[vars.httpOperation.queryParams]]]></http:query-params>
+					</http:request>
+				</until-successful>
+			</when>
+			<otherwise >
+				<until-successful maxRetries="#[vars.httpOperation.untilsuccessful.maxRetries]" doc:name="Until Successful" doc:id="cbe1174f-23ba-45ae-bec4-2b02fc685743" millisBetweenRetries="#[vars.httpOperation.untilsuccessful.interval]">
+			<http:request method="#[vars.httpOperation.method]" doc:name="Common HTTP Request" doc:id="b976f5d7-308c-4391-9d3e-e65db725d6d5" config-ref="HTTP_Request_configuration" path="#[vars.httpOperation.path]" responseTimeout="#[Mule::p('b2b-p21-sys-api.timeout')]">
+				<http:body><![CDATA[#[vars.httpOperation.body]]]></http:body>
 				<http:headers><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
 				<http:query-params><![CDATA[#[vars.httpOperation.queryParams]]]></http:query-params>
 			</http:request>
 		</until-successful>
+			</otherwise>
+		</choice>
 		<logger level="INFO" doc:name="LOG INFO : END"
 			doc:id="fab713a1-b95a-477a-81df-e54430d91e55"
 			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId default vars.integration.correlationId,&#10;}]' />
