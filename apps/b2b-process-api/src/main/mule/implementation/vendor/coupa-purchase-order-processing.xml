@@ -20,10 +20,15 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="fe068a4b-652e-4c31-a9e9-4aac018cbed3" name="common-http-request-subflow" target="poSearchResponse"/>
 				<choice doc:name="isValid Purchase Order?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
-			<when expression="#[sizeOf(vars.poSearchResponse.value filter (!isEmpty($.po_no)) default []) &gt; 0]">
-				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="7ead687f-13fd-40c6-87a7-c586405347d4" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. PO Number in Coupa Request is already Available in P21 System." />
+			<when expression="#[sizeOf(vars.poSearchResponse.value) == 0]">
+						<logger level="INFO" doc:name="PO Search Response" doc:id="64f3d493-cefe-48ce-bff2-a8c18ecc6ce4" message="PO Search Response is #[vars.poSearchResponse]" />
+						<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="4a6405a4-8f2a-48d2-b977-faa97f576756" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. PO Number and EDI XRef Id are not Available in P21 System."/>
 			</when>
-			<otherwise>
+			<when expression="#[sizeOf(vars.poSearchResponse.value filter (!isEmpty($.po_no)) default []) &gt; 0]">
+						<logger level="INFO" doc:name="PO Search Response" doc:id="bd2c8524-1c29-46b4-9827-84c9fc11fd7e" message="PO Search Response is #[vars.poSearchResponse]"/>
+						<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="7ead687f-13fd-40c6-87a7-c586405347d4" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. PO Number in Coupa Request is already Available in P21 System." />
+					</when>
+					<otherwise>
 						<ee:transform doc:name="var : httpOperation - post retrieve p21PartsPrice" doc:id="c416483b-244d-45a4-939d-228971f3bea2">
 							<ee:message >
 								<ee:set-payload resource="dwl/coupa-inbound-invoice-processing-subflow/v_partsPriceRequest.dwl" />
