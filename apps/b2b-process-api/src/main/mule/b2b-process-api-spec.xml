@@ -180,4 +180,30 @@ output application/json
             </ee:message>
         </ee:transform>
     </flow>
+	<flow name="shipment-outbound-scheduled-flow" doc:id="a73526f3-22ef-4be8-bb6a-b13c75e82454" maxConcurrency="1" >
+		<scheduler doc:name="EVERY 3 HOURS" doc:id="d4e29f4a-0d3b-4a7f-9bc3-7997d68496ac" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" startDelay="1" timeUnit="HOURS" />
+			</scheduling-strategy>
+		</scheduler>
+		<ee:transform doc:name="var: initialVariables" doc:id="9f91056e-77d4-47aa-9a33-cee4ae839557" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="initialVariables" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"source": "P21",
+	"target": "APM",
+	"integration-type": "Outbound-856",
+	correlationId: correlationId default uuid(),
+	timestamp: now(),
+	status: "STARTED"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="0b7e3d52-0980-49ec-973f-4d25a0f7a4e4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+		<flow-ref doc:name="Flow Reference To outbound-shipment-processing-subflow" doc:id="3c5eba7e-e8e0-40e5-aac9-ffae5ec2e541" name="outbound-shipment-processing-subflow" />
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="349d2194-54f1-4bc9-83f6-0d655646605d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+	</flow>
 </mule>

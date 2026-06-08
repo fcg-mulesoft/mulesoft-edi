@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "856 ASN Validation Schema",
+  "type": "object",
+  "required": ["b2bMessage"],
+  "properties": {
+    "b2bMessage": {
+      "type": "object",
+      "required": ["header", "detail"],
+      "properties": {
+        "header": {
+          "type": "object",
+          "required": [
+            "purposeCode",
+            "shipDate",
+            "shipTime",
+            "shipNoticeNumber"
+          ],
+          "properties": {
+            "purposeCode": {
+              "type": "string",
+              "minLength": 1
+            },
+            "shipDate": {
+              "type": "string",
+            },
+            "shipTime": {
+              "type": "string",
+            },
+            "shipNoticeNumber": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "detail": {
+          "type": "object",
+          "required": ["shipmentInformation"],
+          "properties": {
+            "shipmentInformation": {
+              "type": "object",
+              "required": [
+                "partyInformation",
+                "orderInformation"
+              ],
+              "properties": {
+                "partyInformation": {
+                  "type": "array",
+                  "minItems": 2,
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "partyCode",
+                      "name"
+                    ],
+                    "properties": {
+                      "partyCode": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "codeQualifier": {
+                        "type": "string"
+                      },
+                      "identificationCode": {
+                        "type": "string"
+                      },
+                      "addressLine1": {
+                        "type": "string"
+                      },
+                      "city": {
+                        "type": "string"
+                      },
+                      "state": {
+                        "type": "string"
+                      },
+                      "zipCode": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "contains": {
+                    "type": "object",
+                    "properties": {
+                      "partyCode": {
+                        "const": "SF"
+                      }
+                    }
+                  }
+                },
+                "orderInformation": {
+                  "type": "object",
+                  "required": [
+                    "poNumber",
+                    "lineItems"
+                  ],
+                  "properties": {
+                    "poNumber": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "sourceOrderNumber": {
+                      "type": "string"
+                    },
+                    "poDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "lineItems": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "buyersPartNumber",
+                          "shippedQuantity"
+                        ],
+                        "properties": {
+                          "buyersPartNumber": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "vendorsItemNumber": {
+                            "type": ["string", "null"]
+                          },
+                          "upc": {
+                            "type": ["string", "null"]
+                          },
+                          "shippedQuantity": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

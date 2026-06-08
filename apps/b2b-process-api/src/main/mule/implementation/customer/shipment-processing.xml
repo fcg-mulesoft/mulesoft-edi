@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+	<sub-flow name="outbound-shipment-processing-subflow" doc:id="66590203-c624-4382-b79e-e2be3458ab0d" >
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="61588b7c-23d0-4e8a-8ddb-6619bd130755" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;START&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
+		<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage" target="lastRunTimestamp" >
+			<os:default-value ><![CDATA[#[now() - |PT24H|]]]></os:default-value>
+		</os:retrieve>
+		<ee:transform doc:name="var : httpOperation - get invoice Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+var objectStorePayload = payload
+var modifiedTime =
+    if ( isEmpty(objectStorePayload) ) ((now() - |PT168H|) as String {
+	format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+})
+    else
+        ((objectStorePayload as DateTime) as String {
+	format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+})
+---
+{
+	"method": Mule::p('b2b-p21-sys-api.view.method'),
+	"host": Mule::p('b2b-p21-sys-api.host'),
+	"port": Mule::p('b2b-p21-sys-api.port'),
+	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
+	"path": Mule::p('b2b-p21-sys-api.view.path'),
+	"headers": {
+		"x-correlation-id": vars.initialVariables.correlationId
+	},
+	"queryParams": {
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderShipment'),
+		"purpose": Mule::p('b2b-p21-sys-api.purpose.total'),
+		"lastModified": modifiedTime
+	},
+	"uriParams": {
+	},
+	"body": {
+	},
+	"untilsuccessful": {
+		"maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d0c11a10-2799-4c1f-8d19-fc2f7d0b7c60" name="common-http-request-subflow" target="ackData" />
+		<ee:transform doc:name="View to CDM transformation" doc:id="bf579432-3fdb-4099-8eff-239110c0e1bf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+ 
+var groupedPayload = payload groupBy $.pick_ticket_no
+ 
+---
+groupedPayload pluck ((records, pickTicketNo) -> {
+    b2bMessage:{
+        header: {
+            purposeCode: records[0].BSN01_Purpose,
+            shipDate:
+                (records[0].BSN03_Date[0 to 3] ++ "-" ++
+                records[0].BSN03_Date[4 to 5] ++ "-" ++
+                records[0].BSN03_Date[6 to 7]),
+ 
+            shipTime:
+                if ((records[0].BSN04_Time default "") contains ":")
+                    (records[0].BSN04_Time ++ ":00")
+                else
+                    "00:00:00",
+            shipNoticeNumber: records[0].BSN02_ShipNoticeNo,
+            receiverId: "",
+            senderId: ""
+        },
+        detail: {
+            shipmentInformation: {
+                carrierInformation: {
+                    routingQualifier: records[0].TD501_RoutingQual,
+                    IdQualifier: records[0].TD502_IDQual,
+                    carrierId: records[0].TD503_CarrierID,
+                    transportationMethodCode: records[0].TD504_TransMethod
+                },
+                referenceQualifier: records[0].REF01_Qual,
+                referenceId: records[0].REF02_TrackingNo,
+                partyInformation: [
+                    {
+                        partyCode: records[0].N101_SF_Qual,
+                        name: records[0].N102_SF_Name,
+                        codeQualifier: records[0].N103_SF_IDQual,
+                        identificationCode: records[0].N104_SF_ID,
+                        addressLine1: records[0].N301_SF_Addr,
+                        city: records[0].N401_SF_City,
+                        state: records[0].N402_SF_State,
+                        zipCode: records[0].N403_SF_Zip
+                    },
+                    {
+                        partyCode: records[0].N101_ST_Qual,
+                        name: records[0].N102_ST_Name,
+                        codeQualifier: records[0].N103_ST_IDQual,
+                        identificationCode: records[0].N104_ST_ID,
+                        addressLine1: records[0].N301_ST_Addr,
+                        city: records[0].N401_ST_City,
+                        state: records[0].N402_ST_State,
+                        zipCode: records[0].N403_ST_Zip
+                    },
+                    {
+                        partyCode: records[0].N101_BY_Qual,
+                        name: records[0].N102_BY_Name,
+                        codeQualifier: records[0].N103_BY_IDQual,
+                        identificationCode: records[0].N104_BY_ID,
+                        addressLine1: records[0].N301_BY_Addr,
+                        city: records[0].N401_BY_City,
+                        state: records[0].N402_BY_State,
+                        zipCode: records[0].N403_BY_Zip
+                    },
+                    {
+                        partyCode: records[0].N101_VN_Qual,
+                        name: records[0].N102_VN_Name,
+                        codeQualifier: records[0].N103_VN_IDQual,
+                        identificationCode: records[0].N104_VN_ID,
+                        addressLine1: records[0].N301_VN_Addr,
+                        city: records[0].N401_VN_City,
+                        state: records[0].N402_VN_State,
+                        zipCode: records[0].N403_VN_Zip
+                    }
+ 
+                ],
+                orderInformation: {
+                    poNumber: records[0].PRF01_CustPO,
+                    sourceOrderNumber: records[0].order_no,
+                    poDate:
+                        (records[0].BSN03_Date[0 to 3] ++ "-" ++
+                        records[0].BSN03_Date[4 to 5] ++ "-" ++
+                        records[0].BSN03_Date[6 to 7]),
+                                    lineItems:
+                    records map ((item) -> {
+                        buyersPartNumber: item.LIN03_BuyerPart,
+                        vendorsItemNumber: item.LIN05_VendPart,
+                        upc: item.LIN07_UPC,
+                        shippedQuantity: item.SN102_QtyShipped as Number,
+                    })
+                }
+            }
+        }
+    }
+})
+ ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="f90faba7-8aa8-4f69-b9f5-e16df7fb55fc" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}" />
+		<parallel-foreach doc:name="Parallel For Each : Iteration over Shipments" doc:id="be8fdd12-f1ab-43e2-bc2b-7c0103d25558" collection="#[payload]" >
+			<try doc:name="Try" doc:id="61de19cc-4860-48e4-aa61-2044c0bdb1ae" >
+				<json:validate-schema doc:name="Validate Incoming Payload" doc:id="aeb774d9-32b9-4cba-82e3-3854a1f026cf" schema="schema/ASN_OUTBOUND_JSON_SCHEMA.json" />
+				<ee:transform doc:name="var: httpOperation- post APM" doc:id="cd8a5061-5c30-425a-9921-24045559686c" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+---
+{
+	"method": Mule::p('apm.request.method'),
+	"host": Mule::p('apm.request.host'),
+	"port": Mule::p('apm.request.port'),
+	"basePath": Mule::p('apm.request.basePath'),
+	"path": Mule::p('apm.request.path'),
+	"headers": {
+	},
+	"queryParams": {
+		
+	},
+	"uriParams": {
+	},
+	"body": payload,
+	"untilsuccessful": {
+		"maxRetries": Mule::p('apm.request.untilsuccessful.maxRetries'),
+		"interval": Mule::p('apm.request.untilsuccessful.interval')
+	}
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="DEBUG" doc:name="Log DEBUG: APM Request" doc:id="0ab6d23a-2966-4745-a165-ff3bfdab1bb7" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow start&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]" category="${logger.debug.category}" />
+				<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="2696b0d6-87ba-47e0-875b-2641a834b291" name="common-http-request-subflow" target="transmissionId" targetValue="#[attributes.headers.'x-apm-trx-id']" />
+				<logger level="DEBUG" doc:name="LOG DEBUG: APM Response" doc:id="e1c856fe-1ec5-4b9a-85a9-038734006c27" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow ended&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	transmissionId: vars.transmissionId&#10;}]" category="${logger.debug.category}" />
+				<ee:transform doc:name="Transaction api payload  transformation" doc:id="e7f8cb21-0138-4c98-bad8-e903eb9c09f0" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "SUCCESS",
+	shipNoticeNumber: payload.b2bMessage.header.purchaseOrderNumber,
+	partnerId: payload.b2bMessage.header.receiverId,
+	transmissionId: vars.transmissionId
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2469c8f6-1db8-4271-95ef-353a585fa66d" >
+						<ee:transform doc:name="var : httpStatus" doc:id="7135f036-ee45-4969-bccb-6e166e7d3e66" >
+							<ee:message />
+							<ee:variables >
+								<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/json
+---
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:BAD_REQUEST") (400) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_FOUND") (404) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:METHOD_NOT_ALLOWED") (405) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_ACCEPTABLE") (406) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:UNSUPPORTED_MEDIA_TYPE") (415) else (500)]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<ee:transform doc:name="Preparing error payload for transaction api" doc:id="811e7e62-29ac-45d9-9fe2-1546867d58b3" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "FAILED",
+	partnerId: payload.b2bMessage.header.receiverId,
+	poNumber: payload.b2bMessage.header.purchaseOrderNumber default "UNKNOWN",
+	transmissionId: payload.b2bMessage.header.sellerOrderNumber default null,
+	error: error.description,
+	statusCode: vars.httpStatus,
+	errorType: error.errorType.parentErrorType.identifier,
+	statusMessage: (error.errorType.namespace ++ ":" ++ error.errorType.identifier),
+	description:
+		if ((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")
+			error.description
+		else
+			error.detailedDescription
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<logger level="INFO" doc:name="LOG INFO : Error" doc:id="d117de9c-995d-4e0f-8e21-7e1b5978fea5" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Errored PO",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poSummary: payload&#10;}]' />
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</parallel-foreach>
+		<ee:transform doc:name="Transform Message" doc:id="cba7e075-ef09-4a7a-8787-17d186ea9902" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="errorPos" ><![CDATA[%dw 2.0
+output application/json
+---
+entriesOf(
+  payload
+    filter ($.payload.status == "FAILED")
+    groupBy ($.payload.partnerId)
+)
+map (entry) -> {
+  partnerId: entry.key,
+  errors: entry.value map (item) -> {
+    poNo: item.payload.poNumber,
+    transmissionIdApm: item.payload.transmissionId default "APM request failed for this PO",
+    "Error Details": if(!isEmpty((
+      item.payload.error 
+        scan /\$\.B2BMessage\.Header\.partyInformation\[1\]\.(\w+): null found, string expected/
+    ) map ($[1] ++ " is null"))) ((
+      item.payload.error 
+        scan /\$\.B2BMessage\.Header\.partyInformation\[1\]\.(\w+): null found, string expected/
+    ) map ($[1] ++ " is null")) else [item.payload.error] 
+  },
+  "statusMessage": flatten(entry.value.payload."statusMessage"),
+  "description": flatten(entry.value.payload.description),
+  "status": flatten(entry.value.payload.statusCode),
+  "errorType": flatten(entry.value.payload.errorType)
+}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage" >
+			<os:value ><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
+		</os:store>
+		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="a11e454f-0915-4f9b-9475-7db5ffbccb8e" collection="#[vars.errorPos]" >
+			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="8751591f-6282-4b98-a7fb-a71f800e81b4" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output text/plain
+
+fun safe(v, d="N/A") =
+    if (v == null or (v is String and trim(v) == "")) d else v
+fun present(v)          = v != null and (v as String) != ""
+fun resolvePartner(pId) =
+    if (p('partner.outbound.' ++ pId) != null)
+        p('partner.outbound.' ++ pId)
+    else
+        pId
+
+var partner      = if (payload is String) read(payload, "application/json") else payload
+
+var partnerId    = resolvePartner(safe(partner.partnerId as String, "UNKNOWN"))
+var partnerErrors = partner.errors default []
+
+var poNumbers =
+    (partnerErrors map ((e) -> e.poNo as String)) filter present($)
+
+var poSegment =
+    if (sizeOf(poNumbers) > 0) ("PO(s) " ++ (poNumbers joinBy ", ")) else "N/A"
+
+fun extractHttpCode(desc) =
+    do {
+        var d     = (desc default "") as String
+        var match = d find /[( ](\d{3})[) .]/
+        ---
+        if (!isEmpty(match) and !isEmpty(match[0]))
+            (d[(match[0][0] + 1) to (match[0][0] + 3)] as Number default 0)
+        else 0
+    }
+
+fun resolveErrorType(apmType, httpCode) =
+    if      (httpCode == 401)                   "UNAUTHORIZED"
+    else if (httpCode == 403)                   "FORBIDDEN"
+    else if (httpCode == 404)                   "NOT_FOUND"
+    else if (httpCode == 400)                   "BAD_REQUEST"
+    else if (httpCode >= 500)                   "SERVER_ERROR"
+    else if (upper(apmType) == "CONNECTIVITY")  "CONNECTIVITY"
+    else if (upper(apmType) == "TIMEOUT")       "TIMEOUT"
+    else if (upper(apmType) == "VALIDATION")    "VALIDATION"
+    else if (upper(apmType) != "")              upper(apmType)
+    else                                        "UNKNOWN"
+
+fun buildErrorConfig(resolvedType, descStr) =
+    if      (resolvedType == "CONNECTIVITY") {
+        title:       "APM Connection Failure",
+        bannerColor: "#dc2626",
+        errorCode:   "APM_CONNECTION_ERROR",
+        category:    "CONNECTIVITY",
+        message:     "850 transmission failed with error type [CONNECTIVITY] while sending to APM. " ++ descStr,
+        resolution:  "The 850 transmission failed because Mule could not connect to the APM endpoint."
+                     ++ "\n  1. Verify the APM endpoint URL and port in the Mule connector configuration."
+                     ++ "\n  2. Check DNS resolution and firewall rules between Mule and APM."
+                     ++ "\n  3. Confirm the APM service is running and accepting inbound connections."
+                     ++ "\n  4. Review VPN, proxy, or network peering configuration."
+                     ++ "\n  5. Once connectivity is restored, resubmit: " ++ poSegment
+                     ++ "\n\n  Do NOT resubmit until the connection issue is fully resolved."
+    }
+    else if (resolvedType == "NOT_FOUND")    {
+        title:       "APM Endpoint Not Found (404)",
+        bannerColor: "#f59e0b",
+        errorCode:   "APM_ENDPOINT_NOT_FOUND",
+        category:    "CONFIGURATION",
+        message:     "850 transmission failed with error type [NOT_FOUND] — the APM endpoint returned HTTP 404. " ++ descStr,
+        resolution:  "The 850 transmission failed because the APM endpoint URL returned 404."
+                     ++ "\n  1. Verify the APM endpoint URL configured in Mule matches the deployed APM route exactly."
+                     ++ "\n  2. Confirm with the APM team that the route is deployed and active in the correct environment."
+                     ++ "\n  3. Check if the APM application was redeployed or the route was renamed/moved."
+                     ++ "\n  4. Update the Mule endpoint URL property and redeploy if misconfigured."
+                     ++ "\n  5. Once the correct URL is confirmed, resubmit: " ++ poSegment
+                     ++ "\n\n  Do NOT resubmit until the APM route is confirmed reachable."
+    }
+    else if (resolvedType == "TIMEOUT")      {
+        title:       "APM Request Timeout",
+        bannerColor: "#f97316",
+        errorCode:   "APM_TIMEOUT_ERROR",
+        category:    "TIMEOUT",
+        message:     "850 transmission failed with error type [TIMEOUT] — the APM endpoint did not respond within the allowed time. " ++ descStr,
+        resolution:  "The 850 transmission timed out waiting for APM."
+                     ++ "\n  1. Check APM service health and response times via the APM monitoring dashboard."
+                     ++ "\n  2. Increase the HTTP request timeout in the Mule connector if APM is under load."
+                     ++ "\n  3. Confirm no payload or transformation bottleneck is causing delays on the APM side."
+                     ++ "\n  4. Coordinate with the APM team to investigate slow processing for: " ++ poSegment
+                     ++ "\n  5. Once stable, resubmit the affected transactions."
+                     ++ "\n\n  Do NOT resubmit until the APM team confirms the service is stable."
+    }
+    else if (resolvedType == "UNAUTHORIZED") {
+        title:       "APM Authentication Failure (401)",
+        bannerColor: "#7c3aed",
+        errorCode:   "APM_UNAUTHORIZED",
+        category:    "SECURITY",
+        message:     "850 transmission failed with error type [UNAUTHORIZED] — APM rejected the request due to missing or invalid credentials (HTTP 401). " ++ descStr,
+        resolution:  "The 850 transmission failed because APM returned 401 Unauthorized."
+                     ++ "\n  1. Verify the API key, client ID/secret, or bearer token configured in Mule is current."
+                     ++ "\n  2. Check if APM credentials have expired or been rotated recently."
+                     ++ "\n  3. Confirm the correct authentication scheme is being used (Basic, OAuth2, API Key, etc.)."
+                     ++ "\n  4. Update credentials in the Mule secure properties vault and redeploy."
+                     ++ "\n  5. Once credentials are corrected, resubmit: " ++ poSegment
+                     ++ "\n\n  Do NOT resubmit until valid credentials are in place."
+    }
+    else if (resolvedType == "FORBIDDEN")    {
+        title:       "APM Access Denied (403)",
+        bannerColor: "#7c3aed",
+        errorCode:   "APM_FORBIDDEN",
+        category:    "SECURITY",
+        message:     "850 transmission failed with error type [FORBIDDEN] — APM denied access (HTTP 403). " ++ descStr,
+        resolution:  "The 850 transmission failed because APM returned 403 Forbidden."
+                     ++ "\n  1. Confirm the Mule service account has the correct role/scope in APM."
+                     ++ "\n  2. Check if an IP whitelist or policy is blocking the Mule runtime IP."
+                     ++ "\n  3. Review the APM API policy (rate limiting, client allow-list, contract enforcement)."
+                     ++ "\n  4. Engage the APM team to grant permissions or whitelist the Mule IP."
+                     ++ "\n  5. Once access is granted, resubmit: " ++ poSegment
+                     ++ "\n\n  Do NOT resubmit until the permission issue is resolved."
+    }
+    else if (resolvedType == "SERVER_ERROR") {
+        title:       "APM Internal Server Error (5xx)",
+        bannerColor: "#dc2626",
+        errorCode:   "APM_SERVER_ERROR",
+        category:    "SERVER_ERROR",
+        message:     "850 transmission failed with error type [SERVER_ERROR] — APM returned a server-side error while processing the 850 Purchase Order. " ++ descStr,
+        resolution:  "The 850 transmission failed due to an internal error on the APM side."
+                     ++ "\n  1. Check the APM application logs for stack traces around the time of failure."
+                     ++ "\n  2. Confirm APM service health (memory, CPU, DB connections) in its monitoring dashboard."
+                     ++ "\n  3. Determine if the failure is transient (overload) or persistent (bug/misconfiguration)."
+                     ++ "\n  4. Escalate to the APM team with the transmissionId and timestamp."
+                     ++ "\n  5. Once APM confirms stability, resubmit: " ++ poSegment
+                     ++ "\n\n  Do NOT resubmit until APM confirms the root cause is fixed."
+    }
+    else if (resolvedType == "BAD_REQUEST")  {
+        title:       "APM Bad Request (400)",
+        bannerColor: "#f59e0b",
+        errorCode:   "APM_BAD_REQUEST",
+        category:    "PAYLOAD_ERROR",
+        message:     "850 transmission failed with error type [BAD_REQUEST] — APM rejected the 850 payload with HTTP 400. " ++ descStr,
+        resolution:  "The 850 transmission failed because APM could not process the request payload."
+                     ++ "\n  1. Review the 850 payload — check for missing required fields or incorrect data types."
+                     ++ "\n  2. Validate the payload against the APM API schema or contract."
+                     ++ "\n  3. Check that all required HTTP headers (Content-Type, Accept, etc.) are correctly set."
+                     ++ "\n  4. Coordinate with the APM team to identify which field triggered the rejection."
+                     ++ "\n  5. Fix the payload mapping and resubmit: " ++ poSegment
+                     ++ "\n\n  Do NOT resubmit the same payload — fix the data issue first."
+    }
+    else if (resolvedType == "VALIDATION")   {
+        title:       "JSON Schema at Process API Failure",
+        bannerColor: "#f59e0b",
+        errorCode:   "APM_VALIDATION_ERROR",
+        category:    "VALIDATION",
+        message:     "850 transmission failed with error type [VALIDATION] — JSON Schema at Process API Failure. " ++ descStr,
+        resolution:  "The 850 transmission failed because one or more fields in the payload did not pass APM validation."
+                     ++ "\n  1. Review the validation error details returned by APM in the error description above."
+                     ++ "\n  2. Identify the specific field(s) that failed validation (e.g., missing mandatory elements, incorrect format, invalid code values)."
+                     ++ "\n  3. Validate the 850 payload against the APM API schema and EDI 850 X12 contract requirements."
+                     ++ "\n  4. Check all date formats, numeric ranges, code set values, and mandatory segment presence."
+                     ++ "\n  5. Coordinate with the APM team to obtain the full validation error report for: " ++ poSegment
+                     ++ "\n  6. Correct the failing field(s) in the mapping transformation and resubmit."
+                     ++ "\n\n  Do NOT resubmit the same payload — the data issue must be resolved first."
+    }
+    else                                     {
+        title:       "APM Transmission Error",
+        bannerColor: "#6b7280",
+        errorCode:   "APM_UNKNOWN_ERROR",
+        category:    "UNKNOWN",
+        message:     "850 transmission failed with error type [" ++ resolvedType ++ "] while sending the 850 Purchase Order to APM. " ++ descStr,
+        resolution:  "The 850 transmission failed with an unclassified error type [" ++ resolvedType ++ "] from APM."
+                     ++ "\n  1. Review the full Mule error log for root cause and stack trace."
+                     ++ "\n  2. Check the APM logs for a corresponding failure at the same timestamp."
+                     ++ "\n  3. Escalate to the integration team with the correlationId and transmissionId."
+                     ++ "\n  4. Once root cause is identified, resubmit: " ++ poSegment
+                     ++ "\n\n  Do NOT resubmit until the root cause is understood."
+    }
+
+var descStr      = ((partner.description  default [])[0] default "") as String
+var apmType      = ((partner.errorType    default [])[0] default "") as String
+var httpCode     = extractHttpCode(descStr)
+var resolvedType = resolveErrorType(apmType, httpCode)
+var errorConfig  = buildErrorConfig(resolvedType, "")
+
+var transmissionId =
+    (partnerErrors map ((e) -> safe(e.transmissionIdApm as String, "N/A"))) joinBy " | "
+
+var partnerRows =
+    do {
+        var poCount  = sizeOf(partnerErrors)
+        var firstPo  = partnerErrors[0] default {}
+        var firstRow =
+            "<tr style='background:#fee2e2;color:#b91c1c;'>"
+            ++ "<td style='padding:8px;border:1px solid #ddd;vertical-align:top;font-weight:600;' rowspan='" ++ poCount ++ "'>" ++ partnerId ++ "</td>"
+            ++ "<td style='padding:8px;border:1px solid #ddd;vertical-align:top;font-weight:600;' rowspan='" ++ poCount ++ "'>" ++ resolvedType ++ "</td>"
+            ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(firstPo.poNo as String, "N/A") ++ "</td>"
+            ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ ((firstPo."Error Details" default []) joinBy "<br/>") ++ "</td>"
+            ++ "</tr>"
+        var remainingRows =
+            (partnerErrors[1 to -1] default []) map ((poEntry) ->
+                "<tr style='background:#fee2e2;color:#b91c1c;'>"
+                ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(poEntry.poNo as String, "N/A") ++ "</td>"
+                ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ ((poEntry."Error Details" default []) joinBy "<br/>") ++ "</td>"
+                ++ "</tr>"
+            )
+        ---
+        [firstRow] ++ remainingRows
+    }
+
+var validationHtml =
+    if (sizeOf(partnerRows) > 0)
+        "<table style='width:100%;border-collapse:collapse;margin-top:10px;'>"
+        ++ "<tr style='background:#fecaca;'>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;'>Partner ID</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;'>Error Type</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;'>PO Number</th>"
+        ++ "<th style='padding:8px;border:1px solid #ddd;'>Error Details</th>"
+        ++ "</tr>"
+        ++ (partnerRows joinBy "")
+        ++ "</table>"
+    else
+        "Error occurred but no detailed information available."
+
+var data = {
+    flowDirection:    "OUTBOUND",
+    documentType:     "850",
+    appName:          p('api.name') default "Mule Application",
+    transactionType:  "850",
+    environment:      upper(p('mule.env') default "DEV"),
+    flowName:         safe(vars.flowName, "850 Outbound Validation"),
+    route:            "P21 → Mule → APM",
+    partnerName:      partnerId ++ " — " ++ sizeOf(partnerErrors) ++ " PO(s) failed [" ++ resolvedType ++ "]",
+    errorTitle:       errorConfig.title,
+    bannerColor:      errorConfig.bannerColor,
+    errorType:        resolvedType,
+    errorCategory:    errorConfig.category,
+    status:           "FAILED",
+    errorCode:        errorConfig.errorCode,
+    message:          errorConfig.message,
+    errorResolution:  errorConfig.resolution,
+    errorDescription: validationHtml,
+    transmissionId:   transmissionId,
+    keyLabel:         "Correlation ID",
+    vendorName:       partnerId,
+    companyName:      (vars.purchaseOrderData.value.company_no[0] default "N/A"),
+    key:              correlationId,
+    businessKey:      poSegment,
+    timestamp:        now() as String {format: "yyyy-MM-dd HH:mm:ss"}
+}
+
+var template =
+    readUrl("classpath://templates/error-template.html", "text/plain")
+---
+template replace /\$\{(\w+)\}/ with ((m) ->
+    (data[m[1]] as String) default ""
+)]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/json
+ 
+fun present(v)          = v != null and (v as String) != ""
+fun safe(v, d="N/A")    = if (v == null or (v is String and trim(v) == "")) d else v
+fun resolvePartner(pId) = if (p('partner.outbound.' ++ pId) != null) p('partner.outbound.' ++ pId) else pId
+ 
+var partner      = if (payload is String) read(payload, "application/json") else payload
+ 
+var partnerId    = resolvePartner(safe(partner.partnerId as String, "UNKNOWN"))
+var poNumbers    = (partner.errors default []) map ((e) -> e.poNo as String) filter present($)
+ 
+var vendorSegment = if (present(partnerId)) partnerId else null
+var poSegment     = if (sizeOf(poNumbers) > 0) "PO " ++ (poNumbers joinBy ", ") else null
+ 
+var env       = p('mule.env')  default null
+var apiName   = p('api.name')  default null
+var intType   = vars.integration."integration-type"
+                    default vars.initialVariables."integration-type"
+                    default null
+ 
+var segments = [
+    if (present(env))       upper(env)    else null,
+    "FCG ERROR ALERT",
+    if (present(intType))   intType       else null,
+    poSegment
+] filter present($)
+---
+segments joinBy " | "]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="433ffffb-5428-47df-afc2-df5c76fc3ad8" name="send-email-subflow" />
+		</foreach>
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="d8435c8d-1ad1-46ca-8520-c9687a81ee05" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;END&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
+	</sub-flow>
+</mule>
