@@ -184,6 +184,8 @@ var shipToRows =
         "<tr style='background:#fee2e2;color:#b91c1c;'>"
         ++ "<td style='padding:8px;border:1px solid #ddd;'>Ship To</td>"
         ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
+        
+
 
 var allRows =
     itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows

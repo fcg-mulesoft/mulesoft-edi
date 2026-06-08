@@ -9,12 +9,11 @@ import toBase64 from dw::core::Binaries
 	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
 	"path": Mule::p('b2b-p21-sys-api.view.path'),
 	"headers": {
-		"x-correlation-id": vars.integration.correlationId
+		"x-correlation-id": correlationId
 	},
 	"queryParams": {
-		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrderInvoice'),
-		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
-		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0]
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.emailNotification'),
+		"purpose": Mule::p('b2b-p21-sys-api.purpose.total')
 	},
 	"uriParams": {
 	},

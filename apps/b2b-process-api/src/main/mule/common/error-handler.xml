@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:email="http://www.mulesoft.org/schema/mule/email"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
-http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<error-handler name="global-common-error-handler" doc:id="38f24dd9-21a0-4ad3-aa7b-aae4b15fa57f" >
 		<on-error-propagate enableNotifications="true" logException="true" doc:name="APIKIT Errors" doc:id="a08904c3-cea9-4c03-9c78-13cc50a3f991" when='#[error.errorType.namespace == "APIKIT"]'>
 			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="fc23563f-5d75-4cb6-91ad-fb85b90db62e" message="Start: Global Error Handler: APIKIT ERROR"/>
@@ -24,12 +25,18 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 					<ee:set-variable resource="dwl/global-common-error-handler/v_systemInformation.dwl" variableName="systemInformation" />
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="12e07846-cc14-4b6c-a536-b056209e3d36" >
+			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="12e07846-cc14-4b6c-a536-b056209e3d36" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
 				<ee:variables >
 					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
+					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String))
+    default p('partner.outbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String))
+    default null]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ad0d75c3-34ff-4d21-bd60-1d62a1add1dc" name="send-email-subflow" />
@@ -46,12 +53,25 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 					<ee:set-variable resource="dwl/global-common-error-handler/v_validation_errorResponse.dwl" variableName="errorResponse" />
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="6c27e672-1a05-49a1-a263-b2a312a8c8e7" >
+			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName, errorDetails" doc:id="6c27e672-1a05-49a1-a263-b2a312a8c8e7" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
 				<ee:variables >
 					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
+					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String))
+    default p('partner.outbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String))
+    default null]]></ee:set-variable>
+					<ee:set-variable variableName="errorDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errorNs": "CUSTOM",
+	"errorId": "VALIDATION"
+}]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="dd485f70-15d0-4237-afdf-bfd5683f636a" name="send-email-subflow" />
@@ -76,12 +96,18 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 				
 </ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="d86351f2-cb7d-4cc3-8cac-dd57c08f3567" >
+			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="d86351f2-cb7d-4cc3-8cac-dd57c08f3567" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
 				<ee:variables >
 					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
+					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String))
+    default p('partner.outbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String))
+    default null]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ab4ad35a-a573-43a7-a4fe-8d3794087d72" name="send-email-subflow" />
@@ -91,6 +117,84 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	</error-handler>
 	<sub-flow name="send-email-subflow" doc:id="421993f9-c123-453a-8a37-135d2a1821c1" >
 		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="f7577dfb-a02b-4ad8-9ca6-6eb0108c6d8c" message="Start: Email Alert" />
+		<flow-ref doc:name="Flow Reference To get-email-view-subflow" doc:id="155f2e2a-25c4-42df-a92c-3db3443da929" name="get-email-view-subflow" target="emailView"/>
+		<ee:transform doc:name="var : emailList" doc:id="47645ed1-dfd2-4c59-a311-dcce50992962">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable variableName="emailList"><![CDATA[%dw 2.0
+
+output application/java
+ 
+fun notBlank(v) = v != null and (v as String) != ""
+
+fun toList(v)   = if (notBlank(v)) (v as String) splitBy "," map trim($) else []
+ 
+var errNs = vars.errorDetails.errorNs default ""
+
+var errId = vars.errorDetails.errorId default ""
+ 
+var isTechOnly =
+
+    (errNs ++ ":" ++ errId) == "MULE:RETRY_EXHAUSTED" or
+
+    (errNs ++ ":" ++ errId) == "HTTP:RETRY_EXHAUSTED"  or
+
+    errId                   == "RETRY_EXHAUSTED"        or
+
+    (errNs ++ ":" ++ errId) == "CUSTOM:P21_FAILED"      or
+
+    (errNs == "" and errId == "")
+ 
+var viewRecords =
+
+    if (notBlank(vars.vendorName))
+
+        (vars.emailView.value default []) filter ($.trading_partner_name == vars.vendorName)
+
+    else
+
+        (vars.emailView.value default [])
+ 
+var matchedRecord =
+
+    (viewRecords filter notBlank($.fcg_tech_contact_email))[0]
+
+    default viewRecords[0]
+
+    default {}
+ 
+var techEmails    = toList(matchedRecord.fcg_tech_contact_email)
+
+var bizEmails     = toList(matchedRecord.fcg_biz_contact_email)
+
+var ccEmails      = toList(matchedRecord.alert_cc)
+
+var bccEmails     = toList(matchedRecord.alert_bcc)
+ 
+var toAddresses =
+
+    if (isTechOnly)
+
+        techEmails
+
+    else
+
+        (techEmails ++ bizEmails) distinctBy $
+ 
+---
+
+{
+
+    to:  toAddresses filter notBlank($),
+
+    cc:  ccEmails    filter notBlank($),
+
+    bcc: bccEmails   filter notBlank($)
+
+}
+ ]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
 		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
 			<try doc:name="Try" doc:id="bd7c772f-cff0-440d-8e15-46f6126b90ce">
 						<choice doc:name="If transmissionId Exists?" doc:id="f04ebe2c-417b-44f2-9be1-860b1a8e5ddd" >
@@ -98,7 +202,8 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="2a3b6006-e755-49e4-988c-672685733d40" idExpression="#[vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
 					</when>
 				</choice>
-				<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[Mule::p('email.toRecipient') splitBy &quot;,&quot;]" config-ref="Email_SMTP">
+
+				<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[vars.emailList.&quot;to&quot; ++ (Mule::p('email.devTeam') splitBy (&quot;,&quot;))]" config-ref="Email_SMTP">
 
 				<reconnect />
 				<email:body contentType="text/html">

@@ -54,6 +54,14 @@ var routingConfig = {
 				"\$filter": (businesskey map ("po_no eq " ++ $)) joinBy " or "
 			}
 		}
+	},
+	emailNotification: {
+		total:{
+			view: Mule::p('viewNames.emailNotification'),
+			queryParams: {
+			}
+		}
+
 	}
 }
 var selectedConfig =

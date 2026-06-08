@@ -18,6 +18,8 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 			<ee:message >
 				<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_cdmMapping.dwl" />
 			</ee:message>
+			<ee:variables >
+			</ee:variables>
 		</ee:transform>
 				<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="e0d56ebc-9b4f-44a8-b148-3c5fa85a8d53" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}"/>
 		<parallel-foreach doc:name="Parallel For Each : Iteration over POs" doc:id="7986e00b-9d90-458d-bd84-f219e3092d6d" collection="#[payload]" maxConcurrency="${maxConcurrency.attempt}">
@@ -77,11 +79,22 @@ payload]]></ee:set-variable>
 				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_transactionRequestPayload.dwl" variableName="transactionRequestPayload" />
 			</ee:variables>
 		</ee:transform>
-		<ee:transform doc:name="var: httpOperation-post Transaction api" doc:id="2befd336-0a59-43f8-9148-d9d8d5594758">
+		<ee:transform doc:name="var: httpOperation-post Transaction api, vendorName" doc:id="2befd336-0a59-43f8-9148-d9d8d5594758">
 				<ee:message>
 				</ee:message>
 			<ee:variables >
 				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_httpOperationPostTransaction.dwl" variableName="httpOperation" />
+				<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+Mule::p('partner.outbound.' ++ ((
+    vars.transactionRequestPayload.Transactions
+        flatMap $.DataElements
+        flatMap $.Rows
+        flatMap $.Edits
+        filter (($.Name default "") == "vendor_id")
+        map $.Value
+)[0] default ""))]]></ee:set-variable>
 			</ee:variables>
 			</ee:transform>
 		<try doc:name="Try" doc:id="cc03ad5f-3328-4572-ba14-2e60914b9af5" >
@@ -98,23 +111,37 @@ payload]]></ee:set-variable>
 				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="3f7d5e70-5db7-4e4b-b948-a4c804d65cc7" >
 					<choice doc:name="Choice for Error Type " doc:id="5b44c818-9a6d-462d-a0e9-783daa564b89" >
 						<when expression='#[output json --- error.errorType.identifier == "RETRY_EXHAUSTED"]'>
-							<ee:transform doc:name="Preparing Email Template for P21 connectivity issues, var : subject" doc:id="40e59ebb-8f85-49e5-9f85-93f685fa0523">
+							<ee:transform doc:name="Preparing Email Template for P21 connectivity issues, var : subject, errroDetails" doc:id="40e59ebb-8f85-49e5-9f85-93f685fa0523">
 						<ee:message>
 									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_connectivityError.dwl" />
 						</ee:message>
 								<ee:variables >
 									<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_connectivityErrorSubject.dwl" variableName="subject" />
+									<ee:set-variable variableName="errorDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errorNs": error.errorType.namespace,
+	"errorId": error.errorType.identifier
+}]]></ee:set-variable>
 								</ee:variables>
 					</ee:transform>
 							<logger level="INFO" doc:name="Log INFO : Error" doc:id="d8a5d389-2324-4176-815d-8799be95f9ac" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Connectivity Error in P21",&#10;	error: error.errorType.identifier,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]'/>
 							<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="3a905e98-5c05-4b0c-9655-fb32fc138a29" name="send-email-subflow" />
 						</when>
 						<otherwise >
-							<ee:transform doc:name="Prepare Error response for p21 flag updation issues, var : subject" doc:id="ff949245-ccb8-49be-94c6-25a6142e1e4a" >
+							<ee:transform doc:name="Prepare Error response for p21 flag updation issues, var : subject, errorDetails" doc:id="ff949245-ccb8-49be-94c6-25a6142e1e4a" >
 								<ee:message >
 									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_flagUpdationError.dwl" />
 								</ee:message>
 								<ee:variables >
+									<ee:set-variable variableName="errorDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errorNs": "CUSTOM",
+	"errorId": "P21_FAILED"
+}]]></ee:set-variable>
 								</ee:variables>
 							</ee:transform>
 							<ee:transform doc:name="Prepare Template Email, var : subject" doc:id="863fb8fc-6022-4053-9c88-7261f377aef4">
@@ -133,12 +160,19 @@ payload]]></ee:set-variable>
 			</error-handler>
 		</try>
 		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="f71b33b6-24c0-4dba-863e-4d0e9a803a1b" collection="#[vars.erroredPOs]">
-			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="2375996c-8946-4ca9-991c-58263985c68a" >
+			<ee:transform doc:name="Preparing Email Template, var : subject, errorDetails" doc:id="2375996c-8946-4ca9-991c-58263985c68a" >
 				<ee:message >
 					<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_validationError.dwl" />
 				</ee:message>
 				<ee:variables >
 					<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_validationErrorSubject.dwl" variableName="subject" />
+					<ee:set-variable variableName="errorDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errorNs": "CUSTOM",
+	"errorId": "VALIDATION"
+}]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="f2c8b03a-b7db-436e-82b5-8aeb49ded849" name="send-email-subflow"/>

@@ -215,12 +215,16 @@ pluck ((vendorRecords, vendorName) -> {
 					</ee:message>
 				</ee:transform>
 				<parallel-foreach doc:name="For Each Partner" doc:id="3f9aee78-130a-4447-aca7-5111fd96f90f" >
-					<ee:transform doc:name="Email Payload, var : subject" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
+					<ee:transform doc:name="Email Payload, var : subject, vendorName" doc:id="cc9d3a9a-bed1-42d8-8c5a-5209596790e3">
 			<ee:message>
 						<ee:set-payload resource="dwl/apm-error-report-subflow/p_emailPayload.dwl" />
 			</ee:message>
 					<ee:variables>
 						<ee:set-variable resource="dwl/apm-error-report-subflow/v_subject.dwl" variableName="subject" />
+							<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.vendor]]></ee:set-variable>
 					</ee:variables>
 		</ee:transform>
 					<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="b791b438-4cbf-4136-9bc3-f153dc6f5a7f" name="send-email-subflow" />

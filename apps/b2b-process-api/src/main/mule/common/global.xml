@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
 	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
 	xmlns:azure-storage="http://www.mulesoft.org/schema/mule/azure-storage"
-	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:os="http://www.mulesoft.org/schema/mule/os"
-	xmlns:email="http://www.mulesoft.org/schema/mule/email"
-	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
 http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
@@ -51,4 +54,6 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 			<vm:queue queueName="p21.invoice.fetch" />
 		</vm:queues>
 	</vm:config>
+    <ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="e6f3d3e3-e57f-4000-b801-cc8bc2076f85" keyGenerationExpression="emailView" objectStore="Object_store_emailView" doc:description="Caching Strategy for Email View"/>
+	<os:object-store name="Object_store_emailView" doc:name="Object store" doc:id="88e2624b-d0e2-4e38-83c5-6d59dca9bf81" entryTtl="7" entryTtlUnit="DAYS" expirationInterval="6" expirationIntervalUnit="DAYS" doc:description="Object Store for Email View"/>
 </mule>

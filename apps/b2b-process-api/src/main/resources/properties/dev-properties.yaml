@@ -10,6 +10,7 @@ b2b-p21-sys-api:
   basePath: "/api/"
   port: "8092"
   transactionType:
+    emailNotification: "emailNotification"
     purchaseOrder: "purchaseOrder"
     purchaseOrderAck: "purchaseOrderAck"
     purchaseOrderInvoice: "purchaseOrderInvoice"
@@ -85,6 +86,10 @@ azure:
 #Fcg sender Id
 fcg:
   edi_id: "117414135T"
+  
+#Email Ids
+email: 
+  devTeam: "harshavardhan.reddy@caeliusconsulting.com,anshul.negi@caeliusconsulting.com,priyanshu.dhawan@caeliusconsulting.com,gopi.makutam@caeliusconsulting.com,bighnesh.sahoo@caeliusconsulting.com"
 
 email:
   toRecipient: "harshavardhan.reddy@caeliusconsulting.com,anshul.negi@caeliusconsulting.com,priyanshu.dhawan@caeliusconsulting.com,gopi.makutam@caeliusconsulting.com,bighnesh.sahoo@caeliusconsulting.com,Mulesoft_nonprod_support@flowcontrolgroup.com"

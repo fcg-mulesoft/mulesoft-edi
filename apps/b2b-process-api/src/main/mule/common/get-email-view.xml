@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<sub-flow name="get-email-view-subflow" doc:id="b9142632-960b-4006-a213-c11bf93e102e" >
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="c29f27f3-fd8a-4e6e-bed1-b9361fcc81e1" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10;  message: "Get Email View Sub Flow Started"&#10;}]' />
+		<ee:cache doc:name="Cache emailView" doc:id="dfdae736-ed09-48f2-9210-7a534c305756" cachingStrategy-ref="Caching_Strategy">
+			<ee:transform doc:name="var : httpOperation - get email view" doc:id="d46ca87d-0d94-441c-bb32-8cbeacec3d21">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable resource="dwl/inbound-invoice-processing-subflow/v_httpOperationGetPurchaseOrder.dwl" variableName="httpOperation" />
+			</ee:variables>
+		</ee:transform>
+			<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="3214a7af-3b56-4180-b673-323e1d7bd44f" name="common-http-request-subflow" />
+		</ee:cache>
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="5b1bed2c-9a39-4100-9914-0cdd64d1ff7b" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10;  message: "Get Email View Sub Flow Ended"&#10;}]' />
+	</sub-flow>
+</mule>
