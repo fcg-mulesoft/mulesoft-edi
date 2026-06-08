@@ -4,7 +4,7 @@
 
 	<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 	<artifactId>b2b-process-api-app</artifactId>
-	<version>1.0.18</version>
+	<version>1.0.19</version>
 	<packaging>mule-application</packaging>
 	<parent>
 		<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
@@ -72,8 +72,9 @@
 						<ignoreFiles>
 							<ignoreFile>implementation/notification/apm-error-report.xml</ignoreFile>
 							<ignoreFile>implementation/vendor/coupa-invoice-processing.xml</ignoreFile>
+							<ignoreFile>implementation/vendor/purchase-order-processing.xml</ignoreFile>
 							<ignoreFile>common/error-handler.xml</ignoreFile>
-							<ignoreFile>	implementation/vendor/coupa-purchase-order-processing.xml
+							<ignoreFile>implementation/vendor/coupa-purchase-order-processing.xml
 						</ignoreFile>
 							<ignoreFile>implementation/vendor/coupa-purchase-order-processing.xml
 						</ignoreFile>

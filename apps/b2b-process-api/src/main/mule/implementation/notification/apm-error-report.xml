@@ -23,7 +23,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To common-request-subflow" doc:id="2edb6680-95af-4c03-8d4d-755810d5f83f" name="common-http-request-subflow" target="totalPages" targetValue="#[attributes.headers.'x-totalpages']"/>
-		<choice doc:name="totalPages &gt; 0" doc:id="f491c1b6-d830-4704-80a2-3d0cf8a26ca2" >
+		<choice doc:name="totalPages &gt; 0 ?" doc:id="f491c1b6-d830-4704-80a2-3d0cf8a26ca2" >
 			<when expression="#[vars.totalPages &gt; 0]">
 				<foreach doc:name="For Each" doc:id="10660191-6bc5-4991-9690-b427be069bb9" collection="#[1 to vars.totalPages]">
 			<ee:transform doc:name="var : httpOperation" doc:id="d293b40e-5db8-4d07-97f4-b70ef406d580">
