@@ -27,7 +27,8 @@ output application/json
 	"correlationId": correlationId,
 	"timestamp": now() as String {
 		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
-	}
+	},
+	"transmissionId" : payload[0].b2bMessage.header.transmissionId default ""
 }]]></ee:set-variable>
                 <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
 output application/json
