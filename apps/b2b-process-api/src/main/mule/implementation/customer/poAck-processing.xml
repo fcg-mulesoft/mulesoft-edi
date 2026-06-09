@@ -10,148 +10,13 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 		<ee:transform doc:name="var : httpOperation - get Ack Data" doc:id="de81ff63-a1cc-49e3-987e-eedc384445de" >
 			<ee:message />
 			<ee:variables >
-				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
-output application/json
-import toBase64 from dw::core::Binaries
----
-{
-	"method": Mule::p('b2b-p21-sys-api.view.method'),
-	"host": Mule::p('b2b-p21-sys-api.host'),
-	"port": Mule::p('b2b-p21-sys-api.port'),
-	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
-	"path": Mule::p('b2b-p21-sys-api.view.path'),
-	"headers": {
-		"x-correlation-id": vars.initialVariables.correlationId
-	},
-	"queryParams": {
-		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderAck'),
-		"purpose": Mule::p('b2b-p21-sys-api.purpose.total'),
-	},
-	"uriParams": {
-	},
-	"body": {
-	},
-	"untilsuccessful": {
-		"maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
-		"interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
-	}
-}]]></ee:set-variable>
+				<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_httpOperationGetAckData.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="924795c2-b69a-42a8-9fc8-15248a4fbe64" name="common-http-request-subflow" target="ackData" />
 		<ee:transform doc:name="View to CDM transformation" doc:id="29cb1dbb-24da-4cde-8623-83e17b29ae85" >
 			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
-
-var groupedOrders = vars.ackData.value groupBy $.BAK03_CustPO
-
----
-groupedOrders pluck ((orderItems, orderNo) -> {
-    b2bMessage: {
-        header: {
-            senderId: "TRIPHASE",
-            receiverId: orderItems[0].N104_VN_ID as String,
-            acknowledgmentPurposeCode: orderItems[0].BAK01_Purpose,
-            acknowledgmentType: orderItems[0].BAK02_AckType,
-            purchaseOrderNumber: orderItems[0].BAK03_CustPO,
-            purchaseOrderDate: orderItems[0].BAK04_Date,
-            acknowledgementdate: orderItems[0].BAK09_po_ack_date,
-            sellerOrderNumber: orderItems[0].BAK06_ReferenceNo,
-            references: [
-                {
-                    qualifier: orderItems[0].REF01_InternalID_Qual,
-                    referenceNumber: orderItems[0].REF02_InternalID
-                }
-            ] filter ($.qualifier != null),
-
-            dates: [
-                {
-                    qualifier: orderItems[0].DTM01_EstimatedShip_Qual,
-                    date: orderItems[0].DTM02_Date
-                }
-            ] filter ($.date != null),
-
-            partyInformation: [
-                {
-                    qualifier: orderItems[0].N101_VN_Qual,
-                    name: orderItems[0].N102_VN_Name,
-                    idQualifier: orderItems[0].N103_VN_IDQual,
-                    idCode: orderItems[0].N104_VN_ID as String,
-                    address1: orderItems[0].N301_VN_Addr,
-                    city: orderItems[0].N401_VN_City,
-                    state: orderItems[0].N402_VN_State,
-                    postalCode: orderItems[0].N403_VN_Zip
-                },
-                {
-                    qualifier: orderItems[0].N101_SF_Qual,
-                    name: orderItems[0].N102_SF_Name,
-                    idQualifier: orderItems[0].N103_SF_IDQual,
-                    idCode: orderItems[0].N104_SF_ID as String,
-                    address1: orderItems[0].N301_SF_Addr,
-                    city: orderItems[0].N401_SF_City,
-                    state: orderItems[0].N402_SF_State,
-                    postalCode: orderItems[0].N403_SF_Zip
-                },
-                {
-                    qualifier: orderItems[0].N101_BY_Qual,
-                    name: orderItems[0].N102_BY_Name,
-                    idQualifier: orderItems[0].N103_BY_IDQual,
-                    idCode: orderItems[0].N104_BY_ID as String,
-                    address1: orderItems[0].N301_BY_Addr,
-                    city: orderItems[0].N401_BY_City,
-                    state: orderItems[0].N402_BY_State,
-                    postalCode: orderItems[0].N403_BY_Zip
-                },
-                {
-                    qualifier: orderItems[0].N101_ST_Qual,
-                    name: orderItems[0].N102_ST_Name,
-                    idQualifier: orderItems[0].N103_ST_IDQual,
-                    idCode: orderItems[0].N104_ST_ID as String,
-                    address1: orderItems[0].N301_ST_Addr,
-                    city: orderItems[0].N401_ST_City,
-                    state: orderItems[0].N402_ST_State,
-                    postalCode: orderItems[0].N403_ST_Zip
-                }
-            ]
-        },
-
-        detail: {
-            lineItems: orderItems map (item) -> {
-                lineNo: item.PO1_01_LineID,
-                qty: item.PO1_02_Qty,
-                uom: item.PO1_03_UOM,
-                unitPrice: item.PO1_04_Price,
-                priceQualifier: item.PO1_05_PriceQual,
-                buyerPartQualifier: item.PO1_06_BuyerPartQual,
-                buyerPartNo: item.PO1_07_BuyerPart,
-                vendorPartQualifier: item.PO1_08_VendorPartQual,
-                vendorPartNo: item.PO1_09_VendorPart,
-                productDescriptions: [
-                    {
-                        descriptionType: item.PID01_Type,
-                        description: trim(item.PID05_Description default "")
-                    }
-                ] filter ($.description != ""),
-                acknowledgments: [
-                    {
-                        statusCode: item.ACK01_Status,
-                        quantity: item.ACK02_Qty,
-                        uom: item.ACK03_UOM,
-                        dateQualifier: item.ACK04_DateQual,
-                        date: item.ACK05_Date
-                    }
-                ] filter ($.statusCode != null)
-            }
-        },
-
-        summary: {
-            totalLineItems: sizeOf(orderItems),
-            totalAcknowledgedQuantity: sum(orderItems.*ACK02_Qty default [])
-        }
-    }
-})
-]]></ee:set-payload>
+				<ee:set-payload resource="dwl/outbound-poAck-processing-subflow/p_cdmMapping.dwl" />
 			</ee:message>
 		</ee:transform>
 		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="dd2a3676-5471-4371-89ce-821bd360d8e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}" />
@@ -162,45 +27,15 @@ groupedOrders pluck ((orderItems, orderNo) -> {
 				<ee:message>
 				</ee:message>
 				<ee:variables>
-					<ee:set-variable variableName="httpOperation"><![CDATA[%dw 2.0
-output application/json
-import toBase64 from dw::core::Binaries
----
-{
-	"method": Mule::p('apm.request.method'),
-	"host": Mule::p('apm.request.host'),
-	"port": Mule::p('apm.request.port'),
-	"basePath": Mule::p('apm.request.basePath'),
-	"path": Mule::p('apm.request.path'),
-	"headers": {
-	},
-	"queryParams": {
-		
-	},
-	"uriParams": {
-	},
-	"body": payload,
-	"untilsuccessful": {
-		"maxRetries": Mule::p('apm.request.untilsuccessful.maxRetries'),
-		"interval": Mule::p('apm.request.untilsuccessful.interval')
-	}
-}]]></ee:set-variable>
+						<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_httpOperationPostAPM.dwl" variableName="httpOperation" />
 				</ee:variables>
 			</ee:transform>
 				<logger level="DEBUG" doc:name="Log DEBUG: APM Request" doc:id="18cffda4-7a1c-4b08-8016-ccd251a4330e" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow start&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]" category="${logger.debug.category}" />
-				<!-- [STUDIO:"Flow Reference To commom-http-request-subflow"]<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="acbd8490-85ef-4ac4-a32a-dbfa06612a04" name="common-http-request-subflow" target="transmissionId" targetValue="#[attributes.headers.'x-apm-trx-id'&#93;" /> [STUDIO] -->
+				<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="acbd8490-85ef-4ac4-a32a-dbfa06612a04" name="common-http-request-subflow" target="transmissionId" targetValue="#[attributes.headers.'x-apm-trx-id']" />
 				<logger level="DEBUG" doc:name="LOG DEBUG: APM Response" doc:id="5de34d2b-0454-4b0c-8f01-f79ac4b90f7e" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow ended&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	transmissionId: vars.transmissionId&#10;}]" category="${logger.debug.category}" />
 				<ee:transform doc:name="Transaction api payload  transformation" doc:id="98aac730-ba0e-47ca-bdc2-a24bee804a39">
 				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-	status: "SUCCESS",
-	poNumber: payload.b2bMessage.header.sellerOrderNumber,
-	partnerId: payload.b2bMessage.header.receiverId,
-	transmissionId: vars.transmissionId
-}]]></ee:set-payload>
+						<ee:set-payload resource="dwl/outbound-poAck-processing-subflow/p_accumulatedSuccessResponse.dwl" />
 				</ee:message>
 			</ee:transform>
 				<error-handler >
@@ -220,23 +55,7 @@ if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:U
 						</ee:transform>
 						<ee:transform doc:name="Preparing error payload for transaction api" doc:id="155f39e3-e1f8-454d-adc3-ffb7efe6bbec" >
 							<ee:message >
-								<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	status: "FAILED",
-	partnerId: payload.b2bMessage.header.receiverId,
-	poNumber: payload.b2bMessage.header.sellerOrderNumber default "UNKNOWN",
-	error: error.description,
-	statusCode: vars.httpStatus,
-	errorType: error.errorType.parentErrorType.identifier,
-	statusMessage: (error.errorType.namespace ++ ":" ++ error.errorType.identifier),
-	description:
-		if ((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")
-			error.description
-		else
-			error.detailedDescription
-}]]></ee:set-payload>
+								<ee:set-payload resource="dwl/outbound-poAck-processing-subflow/p_accumulatedFailedResponse.dwl" />
 							</ee:message>
 						</ee:transform>
 						<logger level="INFO" doc:name="LOG INFO : Error" doc:id="81e2ea04-822d-4887-a3b3-1c526cb37588" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Errored PO",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poSummary: payload&#10;}]' />
@@ -249,127 +68,20 @@ output application/json
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="transactionRequestPayload" ><![CDATA[%dw 2.0
-output application/json
-
----
-{
-  Name: "Order",
-  Transactions: payload map (item) -> {
-    Status: "New",
-    DataElements: [
-      {
-        Name: "TABPAGE_1.order",
-        Type: "Form",
-        Keys: [
-          "order_no"
-        ],
-        Rows: [
-          {
-            Edits: [
-              {
-                Name: "order_no",
-                Value: item.payload.poNumber
-              },
-              {
-                Name: "ufc_oe_hdr_ud_edi_so_status",
-                Value: 
-                  if ((item.payload.status default "") == "SUCCESS")
-                    "Acknowledge"
-                  else
-                    "Acknowledged Faile"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-}
-]]></ee:set-variable>
-				<ee:set-variable variableName="parllelForEachResponse" ><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-variable>
-				<ee:set-variable variableName="erroredPOs" ><![CDATA[%dw 2.0
-output application/json
----
-entriesOf(
-  payload
-    filter ($.payload.status == "FAILED")
-    groupBy ($.payload.partnerId)
-)
-map (entry) -> {
-  partnerId: entry.key,
-
-  errors: entry.value map (item) -> {
-    poNo: item.payload.poNumber,
-    
-    transmissionIdApm:
-      item.payload.transmissionId
-        default "APM request failed for this PO",
-
-    "Error Details":
-      if (
-        !isEmpty(
-          (
-            item.payload.error
-              scan /\$\.b2bMessage\.header\.partyInformation\[\d+\]\.(\w+): null found, string expected/
-          ) map ($[1] ++ " is null")
-        )
-      )
-      (
-        (
-          item.payload.error
-            scan /\$\.b2bMessage\.header\.partyInformation\[\d+\]\.(\w+): null found, string expected/
-        ) map ($[1] ++ " is null")
-      )
-      else
-        [item.payload.error]
-  },
-
-  statusMessage:
-    flatten(entry.value map ($.payload.statusMessage)),
-
-  description:
-    flatten(entry.value map ($.payload.description)),
-
-  status:
-    flatten(entry.value map ($.payload.statusCode)),
-
-  errorType:
-    flatten(entry.value map ($.payload.errorType))
-}]]></ee:set-variable>
+				<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_erroredPOs.dwl" variableName="erroredPOs" />
+				<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_parllelForEachResponse.dwl" variableName="parllelForEachResponse" />
+				<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_transactionRequestPayload.dwl" variableName="transactionRequestPayload" />
 			</ee:variables>
 		</ee:transform>
-		<ee:transform doc:name="var: httpOperation-post Transaction api" doc:id="a9fe6ca4-482e-4ff9-94d3-4d625b9dc3da" >
+		<ee:transform doc:name="var: httpOperation-post Transaction api, vendorName" doc:id="a9fe6ca4-482e-4ff9-94d3-4d625b9dc3da" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+				<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
 output application/json
-import toBase64 from dw::core::Binaries
 ---
-{
-	"method": Mule::p('b2b-p21-sys-api.transaction.method'),
-	"host": Mule::p('b2b-p21-sys-api.host'),
-	"port": Mule::p('b2b-p21-sys-api.port'),
-	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
-	"path": Mule::p('b2b-p21-sys-api.transaction.path'),
-	"headers": {
-		"x-correlation-id": vars.initialVariables.correlationId
-	},
-	"queryParams": {
-		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
-	},
-	"uriParams": {
-	},
-	"body": vars.transactionRequestPayload,
-	"untilsuccessful": {
-		"maxRetries": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.maxRetries'),
-		"interval": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.interval')
-	}
-}]]></ee:set-variable>
+Mule::p("partner.outbound." ++ payload[0].payload.partnerId)]]></ee:set-variable>
+				<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_httpOperationFlagUpdate.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
 		<try doc:name="Try" doc:id="b5cf7477-8061-4f87-a9cb-ce5c6aed0df9" >
@@ -388,10 +100,10 @@ import toBase64 from dw::core::Binaries
 						<when expression='#[output json --- error.errorType.identifier == "RETRY_EXHAUSTED"]' >
 							<ee:transform doc:name="Preparing Email Template for P21 connectivity issues, var : subject" doc:id="48d91936-8dfa-4b74-84ca-2b84337b8e0f" >
 								<ee:message >
-									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_connectivityError.dwl" />
+									<ee:set-payload resource="dwl/outbound-poAck-processing-subflow/p_connectivityError.dwl" />
 								</ee:message>
 								<ee:variables >
-									<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_connectivityErrorSubject.dwl" variableName="subject" />
+									<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_connectivityErrorSubject.dwl" variableName="subject" />
 								</ee:variables>
 							</ee:transform>
 							<logger level="INFO" doc:name="Log INFO : Error" doc:id="e59582aa-43e0-48d8-914d-738433542e0e" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Connectivity Error in P21",&#10;	error: error.errorType.identifier,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]' />
@@ -400,16 +112,16 @@ import toBase64 from dw::core::Binaries
 						<otherwise >
 							<ee:transform doc:name="Prepare Error response for p21 flag updation issues, var : subject" doc:id="2d3f2532-3ae6-44e7-9310-035bf68f1b6e" >
 								<ee:message >
-									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_flagUpdationError.dwl" />
+									<ee:set-payload resource="dwl/outbound-poAck-processing-subflow/p_flagUpdationError.dwl" />
 								</ee:message>
 								<ee:variables />
 							</ee:transform>
 							<ee:transform doc:name="Prepare Template Email, var : subject" doc:id="1ff02cdf-e3ac-4779-aa59-bcb6a38e2ae9" >
 								<ee:message >
-									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_flagUpdationErrorPrepareEmailTemplate.dwl" />
+									<ee:set-payload resource="dwl/outbound-poAck-processing-subflow/p_flagUpdationErrorTemplate.dwl" />
 								</ee:message>
 								<ee:variables >
-									<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_flagUpdationErrorSubject.dwl" variableName="subject" />
+									<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_flagUpdationErrorSubject.dwl" variableName="subject" />
 								</ee:variables>
 							</ee:transform>
 							<logger level="INFO" doc:name="Log INFO : Error" doc:id="bf953ca0-2645-4f3e-b44a-f5cddace4ffa" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Flag Updation Error in P21",&#10;	error: error.errorType.identifier,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]' />
@@ -422,10 +134,10 @@ import toBase64 from dw::core::Binaries
 		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="ad333071-ad43-4fb1-95e7-90c2bbe9aac7" collection="#[vars.erroredPOs]">
 			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="d1ce1bc7-f535-4fa4-afb7-0928ae701184">
 				<ee:message>
-					<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_validationError.dwl" />
+					<ee:set-payload resource="dwl/outbound-poAck-processing-subflow/p_validationError.dwl" />
 				</ee:message>
 				<ee:variables>
-					<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_validationErrorSubject.dwl" variableName="subject" />
+					<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_validationErrorSubject.dwl" variableName="subject" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="1a71241c-8444-4d2a-8396-bfd66005cc4e" name="send-email-subflow" />

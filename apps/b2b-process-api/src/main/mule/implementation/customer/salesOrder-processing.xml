@@ -55,12 +55,16 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="5a90d143-a74e-40b4-ab5d-db30a3238ccb" name="common-http-request-subflow"/>
 		<choice doc:name="PO details Mismatch" doc:id="3de6e3a6-8ebb-4e16-9a6a-04e39729f3cd" >
 			<when expression='#[vars.isValid.validationSummary.overallStatus == "FAILED"]'>
-				<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="1e2ca3c5-c4a2-4618-bd29-dfd5112a9966">
+				<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="1e2ca3c5-c4a2-4618-bd29-dfd5112a9966">
 					<ee:message>
 						<ee:set-payload resource="dwl/inbound-salesOrder-processing-subflow/p_mismatchEmailBody.dwl" />
 					</ee:message>
 					<ee:variables >
 						<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_subjectMismatchEmail.dwl" variableName="subject" />
+						<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+Mule::p("partner.inbound." ++ vars.initialPayload[0].b2bMessage.header.senderId)]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="180d4597-2c63-41f6-b4e0-0a9b61bc7b35" name="send-email-subflow"/>

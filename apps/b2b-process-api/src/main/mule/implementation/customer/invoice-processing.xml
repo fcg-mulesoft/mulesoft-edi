@@ -294,7 +294,7 @@ map (entry) -> {
 			<os:value ><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
 		</os:store>
 		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="419b7e8b-9b4d-49b5-8b84-3aba967bc927" collection="#[vars.errorPos]">
-			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="5773ae1f-6d59-4f7f-919e-d1d2f1a0b4c0" >
+			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="5773ae1f-6d59-4f7f-919e-d1d2f1a0b4c0" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
 import * from dw::core::Strings
@@ -580,6 +580,10 @@ var segments = [
 ] filter present($)
 ---
 segments joinBy " | "]]></ee:set-variable>
+					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+Mule::p("partner.outbound." ++ payload[0].payload.partnerId)]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="cc1c3bd0-ffe2-41a9-894a-9a251a50e3e1" name="send-email-subflow" />

@@ -26,7 +26,7 @@ output application/json
                   if ((item.payload.status default "") == "SUCCESS")
                     "Acknowledge"
                   else
-                    "Acknowledged Faile"
+                    "Acknowledged Failed"
               }
             ]
           }

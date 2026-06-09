@@ -8,12 +8,12 @@ fun safe(v, d="N/A") =
 fun present(v) = v != null and (v as String) != ""
 
 fun resolvePartner(pId) =
-    if ( p('partner.outbound.' ++ pId) != null ) p('partner.outbound.' ++ pId)
+    if ( p('partner.inbound.' ++ pId) != null ) p('partner.inbound.' ++ pId)
     else
         pId
 
 var partner      = if ( payload is String ) read(payload, "application/json") else payload
-var partnerId    = resolvePartner(safe(partner.partnerId default "UNKNOWN"))
+var partnerId    = resolvePartner(safe(vars.initialPayload[0].b2bMessage.header.senderId default "UNKNOWN"))
 var partnerErrors = partner.errors default []
 var poData = vars.initialPayload[0]
 var poNumbers = poData.b2bMessage.header.poNumber

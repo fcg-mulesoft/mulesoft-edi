@@ -4,26 +4,21 @@ output application/json
  
 fun present(v)          = v != null and (v as String) != ""
 
-fun resolveVendor(vid)  = p('partner.outbound.' ++ vid) default vid
  
-var poData = vars.purchaseOrderData.value default []
+var poData = vars.ackData.value default []
  
 
 var poNumbers =
 
-    (poData map (row) -> row.po_no as String default null)
+    (poData map (row) -> row.order_no as String default null)
 
     filter present($)
 
     distinctBy $
  
-
 var vendorIds =
-
-    (poData map (row) -> resolveVendor(row.vendor_id as String default ""))
-
+    (poData map (row) -> (row."trading_partner_name" as String default ""))
     filter present($)
-
     distinctBy $
  
 var env     = p('mule.env') default null
@@ -44,10 +39,10 @@ var segments = [
     if (present(env))       upper(env)  else null,  
 	"FCG ERROR ALERT",
     if (present(intType))   intType     else null,
-    poSegment
+    poSegment,
+    vendorSegment
 
 ] filter present($)
 
 ---
 segments joinBy " | "
- 

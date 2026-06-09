@@ -24,7 +24,8 @@ var segments = [
     if (present(env))       upper(env)    else null,
     "FCG ERROR ALERT",
     if (present(intType))   intType       else null,
-    poSegment
+    poSegment,
+    vendorSegment
 ] filter present($)
 ---
 segments joinBy " | "
