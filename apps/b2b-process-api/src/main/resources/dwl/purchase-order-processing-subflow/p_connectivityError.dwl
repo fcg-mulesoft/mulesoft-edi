@@ -1,3 +1,5 @@
+
+
 %dw 2.0
 import * from dw::core::Strings
 output text/plain
@@ -14,21 +16,21 @@ var rawSupNs = rawSup.errorType.namespace  default ""
 var rawErrNs = error.errorType.namespace   default "UNKNOWN"
 var rawErrId = error.errorType.identifier  default "ERROR"
 
-var poData = vars.ackData.value default []
+var poData = vars.purchaseOrderData.value default []
 
 var poNumbers =
-    (poData map (row) -> row."order_no" as String default null)
+    (poData map (row) -> row.po_no as String default null)
     filter present($)
     distinctBy $
 
 var vendorIds =
-    (poData map (row) -> resolveVendor(row."trading_partner_name" as String default ""))
+    (poData map (row) -> resolveVendor(row.vendor_id as String default ""))
     filter present($)
     distinctBy $
 
 var msgPoNumber  = if (sizeOf(poNumbers) > 0) poNumbers joinBy ", " else "N/A"
 var msgVendorId  = if (sizeOf(vendorIds) > 0) vendorIds joinBy ", " else "N/A"
-var msgCompanyNo = (poData[0].company_no) default "N/A"
+var msgCompanyNo = safe((poData[0].company_no) as String, "N/A")
 
 var sourceSystem = safe(integration.source, "APM")
 var targetSystem = safe(integration.target, "P21")
@@ -127,7 +129,7 @@ var subjectSegments = [
 ] filter present($)
 
 var data = {
-    flowDirection:    "OUTBOUND",
+    flowDirection:    "INBOUND",
     documentType:     safe(integration."integration-type", "API"),
     appName:          p('api.name') default "Mule Application",
     transactionType:  safe(integration."integration-type", "API"),

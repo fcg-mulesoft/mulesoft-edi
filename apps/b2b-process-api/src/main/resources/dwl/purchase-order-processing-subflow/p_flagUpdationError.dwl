@@ -11,5 +11,6 @@ var msgs = payload.TransactionSetResult.Messages.*string
 txns map (txn, index) -> {
     messageIndex: index + 1,
     message: msgs[index] default null,
-    po_no: getValue(txn.DataElements.DataElement.Rows.Row.Edits.*Edit, "order_no")
+    po_no: getValue(txn.DataElements.DataElement.Rows.Row.Edits.*Edit, "po_no"),
+    vendor_id: getValue(txn.DataElements.DataElement.Rows.Row.Edits.*Edit, "vendor_id")
 }

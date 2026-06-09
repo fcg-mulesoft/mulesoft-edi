@@ -4,21 +4,12 @@ output text/plain
 
 fun safe(v, d="N/A") =
     if (v == null or (v is String and trim(v) == "")) d else v
-fun present(v)         = v != null and (v as String) != ""
 
 fun resolvePartner(pId) =
     if (p('partner.outbound.' ++ pId) != null)
         p('partner.outbound.' ++ pId)
     else
         pId
-var poData = vars.ackData.value default []
-
-
-var vendorIds = 
-    (poData map (row) -> (row."trading_partner_name" as String default ""))
-    filter present($)
-    distinctBy $
-var msgVendorId  = if (sizeOf(vendorIds) > 0) vendorIds joinBy ", " else "N/A"
 
 var transactions = payload
 
@@ -30,6 +21,8 @@ var transactionRows =
     transactions map (t, idx) ->
         do {
             var poNo   = safe(t.po_no as String, "N/A")
+            var vendorRaw = safe(t.vendor_id as String, "UNKNOWN")
+            var vendor = resolvePartner(vendorRaw)
             var msg    = safe(t.message as String, "No message")
             var status = "Failed"
             var rowBg  = "background:#fee2e2;color:#b91c1c;"
@@ -37,7 +30,7 @@ var transactionRows =
             "<tr style='" ++ rowBg ++ "'>"
             ++ "<td style='padding:8px;border:1px solid #ddd;text-align:center;'>" ++ (idx + 1) ++ "</td>"
             ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ poNo ++ "</td>"
-            ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ msgVendorId ++ "</td>"
+            ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ vendor ++ "</td>"
             ++ "<td style='padding:8px;border:1px solid #ddd;font-weight:600;'>" ++ status ++ "</td>"
             ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ msg ++ "</td>"
             ++ "</tr>"
@@ -71,25 +64,29 @@ var errorDescriptionHtml = summaryBar ++ transactionTable
 var poNumbers =
     (transactions map (t) -> safe(t.po_no as String, "N/A")) distinctBy $ joinBy ", "
 
+var vendorIds =
+    (transactions map (t) -> resolvePartner(safe(t.vendor_id as String, "N/A")))
+    distinctBy $
+    joinBy ", "
 
 var data = {
     flowDirection:   "OUTBOUND",
-    documentType:    "855",
+    documentType:    "850",
     appName:         p('api.name') default "Mule Application",
-    transactionType: "Outbound-855",
+    transactionType: "Outbound-850",
     environment:     upper(p('mule.env') default "DEV"),
-    flowName:        safe(vars.flowName, "855 Outbound P21 Handler"),
+    flowName:        safe(vars.flowName, "850 Outbound P21 Handler"),
     route:           "P21 → Mule → APM",
     businessKey: "PO " ++ poNumbers,
-    vendorName:     "Vendor ID(s): " ++ msgVendorId,
-    errorTitle:      "855 P21 Transaction Error",
+    vendorName:     "Vendor ID(s): " ++ vendorIds,
+    errorTitle:      "850 P21 Transaction Error",
     bannerColor:     "#ef4444",
     errorType:       "CUSTOM:P21_FAILED",
     errorCategory:   "P21_ERROR",
     status:          "FAILED",
     errorCode:       "P21_FAILED",
     message:         "P21 returned " ++ failedCount ++ " failed transaction(s) out of "
-                     ++ sizeOf(transactions) ++ " submitted for 855 Purchase Order processing. "
+                     ++ sizeOf(transactions) ++ " submitted for 850 Purchase Order processing. "
                      ++ "Please review the transaction details below.",
     errorResolution: "P21 transaction processing failed for one or more Purchase Orders."
         ++ "\n  1. Review each failed row in the table — note the PO Number and error message."
@@ -99,7 +96,7 @@ var data = {
         ++ "\n  5. Correct the issue in P21 and resubmit the affected transactions."
         ++ "\n\n  Do NOT resubmit without confirming whether the transaction was partially saved in P21.",
     errorDescription: errorDescriptionHtml,
-    companyName: (vars.ackData.value.company_no[0] default "N/A"),
+    companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
     transmissionId:  correlationId default uuid(),
     keyLabel:        "Correlation ID",
     key:             correlationId default uuid(),
@@ -112,4 +109,3 @@ var template =
 template replace /\$\{(\w+)\}/ with ((m) ->
     (data[m[1]] as String) default ""
 )
-
