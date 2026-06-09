@@ -45,6 +45,7 @@ partner:
   inbound:
     "1631404318T": "FESTO"
   outbound:
+    "960163954IDX": "VANTAGE"
     "234093": "FESTO"
     
 #Scheduler Configuration
