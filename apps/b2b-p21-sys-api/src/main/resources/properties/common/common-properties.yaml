@@ -51,6 +51,7 @@ viewNames:
   purchaseOrderOutbound: "fcg_edi_po_850_outbound_export_vw"
   purchaseOrderAckInbound: "fcg_po_hdr_line_udf_vw"
   purchaseOrderInvoiceInbound: "fcg_po_hdr_line_udf_vw"
+  purchaseOrderShipmentValidation: "PURCHASE_ORDER_SHIPMENT_VALIDATION_VIEW"
   
 #Service Types
 serviceNames:

@@ -3,9 +3,7 @@
   "type": "object",
   "required": ["b2bMessage"],
   "additionalProperties": false,
-
   "properties": {
-
     "b2bMessage": {
       "type": "object",
       "required": [
@@ -14,9 +12,7 @@
         "summary"
       ],
       "additionalProperties": false,
-
       "properties": {
-
         "header": {
           "type": "object",
           "required": [
@@ -31,21 +27,17 @@
             "partyInformation"
           ],
           "additionalProperties": false,
-
           "properties": {
-
             "senderId": {
               "type": "string",
               "minLength": 1,
               "maxLength": 80
             },
-
             "receiverId": {
               "type": "string",
               "minLength": 1,
               "maxLength": 80
             },
-
             "acknowledgmentPurposeCode": {
               "type": "string",
               "enum": [
@@ -57,7 +49,6 @@
                 "19"
               ]
             },
-
             "acknowledgmentType": {
               "type": "string",
               "enum": [
@@ -73,18 +64,16 @@
                 "ZZ"
               ]
             },
-
             "purchaseOrderNumber": {
               "type": "string",
               "minLength": 1,
               "maxLength": 22
             },
-
             "purchaseOrderDate": {
               "type": "string",
               "pattern": "^[0-9]{8}$"
             },
-             "acknowledgementdate": {
+            "acknowledgementdate": {
               "type": "string",
               "pattern": "^[0-9]{8}$"
             },
@@ -93,10 +82,8 @@
               "minLength": 1,
               "maxLength": 80
             },
-
             "references": {
               "type": "array",
-
               "items": {
                 "type": "object",
                 "required": [
@@ -104,15 +91,12 @@
                   "referenceNumber"
                 ],
                 "additionalProperties": false,
-
                 "properties": {
-
                   "qualifier": {
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 3
                   },
-
                   "referenceNumber": {
                     "type": "string",
                     "minLength": 1,
@@ -121,10 +105,8 @@
                 }
               }
             },
-
             "dates": {
               "type": "array",
-
               "items": {
                 "type": "object",
                 "required": [
@@ -132,15 +114,12 @@
                   "date"
                 ],
                 "additionalProperties": false,
-
                 "properties": {
-
                   "qualifier": {
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 3
                   },
-
                   "date": {
                     "type": "string",
                     "pattern": "^[0-9]{8}$"
@@ -148,11 +127,9 @@
                 }
               }
             },
-
             "partyInformation": {
               "type": "array",
               "minItems": 1,
-
               "items": {
                 "type": "object",
                 "required": [
@@ -160,56 +137,52 @@
                   "name"
                 ],
                 "additionalProperties": false,
-
                 "properties": {
-
                   "qualifier": {
                     "type": "string",
-                    "pattern": "^[A-Z0-9]{2}$"
+                    "enum": [
+                      "VN",
+                      "SF",
+                      "ST",
+                      "BY",
+                      "BT"
+                    ]
                   },
-
                   "name": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 60
                   },
-
                   "idQualifier": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 2
+                    "enum": [
+                      "92"
+                    ]
                   },
-
                   "idCode": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 80
                   },
-
                   "address1": {
                     "type": "string",
                     "maxLength": 55
                   },
-
                   "city": {
                     "type": "string",
                     "maxLength": 30
                   },
-
                   "state": {
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 2
                   },
-
                   "postalCode": {
                     "type": "string",
                     "maxLength": 15
                   }
                 },
-
                 "allOf": [
-
                   {
                     "if": {
                       "required": [
@@ -222,7 +195,6 @@
                       ]
                     }
                   },
-
                   {
                     "if": {
                       "required": [
@@ -235,7 +207,6 @@
                       ]
                     }
                   },
-
                   {
                     "if": {
                       "required": [
@@ -248,7 +219,6 @@
                       ]
                     }
                   },
-
                   {
                     "if": {
                       "required": [
@@ -267,20 +237,16 @@
             }
           }
         },
-
         "detail": {
           "type": "object",
           "required": [
             "lineItems"
           ],
           "additionalProperties": false,
-
           "properties": {
-
             "lineItems": {
               "type": "array",
               "minItems": 1,
-
               "items": {
                 "type": "object",
                 "required": [
@@ -291,54 +257,44 @@
                   "acknowledgments"
                 ],
                 "additionalProperties": false,
-
                 "properties": {
-
                   "lineNo": {
                     "type": "integer",
                     "minimum": 1
                   },
-
                   "qty": {
                     "type": "number",
                     "minimum": 0
                   },
-
                   "uom": {
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 2
                   },
-
                   "unitPrice": {
                     "type": "number",
                     "minimum": 0
                   },
-
                   "priceQualifier": {
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 2
                   },
-
                   "buyerPartQualifier": {
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 2
                   },
-
                   "buyerPartNo": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 80
                   },
-
                   "vendorPartQualifier": {
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 2
                   },
-
                   "vendorPartNo": {
                     "type": [
                       "string",
@@ -346,11 +302,8 @@
                     ],
                     "maxLength": 80
                   },
-
                   "productDescriptions": {
                     "type": "array",
-                    "minItems": 1,
-
                     "items": {
                       "type": "object",
                       "required": [
@@ -358,18 +311,13 @@
                         "description"
                       ],
                       "additionalProperties": false,
-
                       "properties": {
-
                         "descriptionType": {
                           "type": "string",
                           "enum": [
-                            "F",
-                            "S",
-                            "X"
+                            "F"
                           ]
                         },
-
                         "description": {
                           "type": "string",
                           "minLength": 1,
@@ -378,11 +326,9 @@
                       }
                     }
                   },
-
                   "acknowledgments": {
                     "type": "array",
                     "minItems": 1,
-
                     "items": {
                       "type": "object",
                       "required": [
@@ -391,58 +337,35 @@
                         "uom"
                       ],
                       "additionalProperties": false,
-
                       "properties": {
-
                         "statusCode": {
                           "type": "string",
                           "enum": [
                             "IA",
-                            "IB",
                             "IC",
-                            "ID",
-                            "IE",
-                            "IH",
-                            "IP",
-                            "IQ",
-                            "IR",
-                            "IS",
-                            "IT",
-                            "IV",
-                            "R1",
-                            "R2",
-                            "R3",
-                            "R4",
-                            "R5",
-                            "RJ"
+                            "IR"
                           ]
                         },
-
                         "quantity": {
                           "type": "number",
                           "minimum": 0
                         },
-
                         "uom": {
                           "type": "string",
                           "minLength": 2,
                           "maxLength": 2
                         },
-
                         "dateQualifier": {
                           "type": "string",
                           "minLength": 3,
                           "maxLength": 3
                         },
-
                         "date": {
                           "type": "string",
                           "pattern": "^[0-9]{8}$"
                         }
                       },
-
                       "allOf": [
-
                         {
                           "if": {
                             "required": [
@@ -455,7 +378,6 @@
                             ]
                           }
                         },
-
                         {
                           "if": {
                             "required": [
@@ -472,9 +394,7 @@
                     }
                   }
                 },
-
                 "allOf": [
-
                   {
                     "if": {
                       "required": [
@@ -487,7 +407,6 @@
                       ]
                     }
                   },
-
                   {
                     "if": {
                       "required": [
@@ -500,7 +419,6 @@
                       ]
                     }
                   },
-
                   {
                     "if": {
                       "required": [
@@ -513,7 +431,6 @@
                       ]
                     }
                   },
-
                   {
                     "if": {
                       "required": [
@@ -531,21 +448,17 @@
             }
           }
         },
-
         "summary": {
           "type": "object",
           "required": [
             "totalLineItems"
           ],
           "additionalProperties": false,
-
           "properties": {
-
             "totalLineItems": {
               "type": "integer",
               "minimum": 1
             },
-
             "totalAcknowledgedQuantity": {
               "type": "number",
               "minimum": 0

@@ -33,13 +33,13 @@ var routingConfig = {
 	},
 	purchaseOrderShipment: {
 		validation: {
-			view: "PURCHASE_ORDER_SHIPMENT_VALIDATION_VIEW",
+			view: Mule::p('viewNames.purchaseOrderShipmentValidation'),
 			queryParams: {
 				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
 			}
 		},
 		total: {
-			view: "PURCHASE_ORDER_SHIPMENT_TOTAL_VIEW",
+			view: Mule::p('viewNames.purchaseOrderShipmentTotal'),
 			queryParams: {
 				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
 			}
@@ -59,14 +59,14 @@ var routingConfig = {
 	},
 	salesOrderAck: {
 		total: {
-			view: "fcg_edi_poack_855_outbound_vw",
+			view: Mule::p('viewNames.purchaseorderAckOutbound'),
 			queryParams: {
 			}
 		}
 	},
 	salesOrderInvoice: {
 		total: {
-			view: "fcg_edi_invoice_810_outbound_vw",
+			view: Mule::p('viewNames.purchaseorderInvoiceOutbound'),
 			queryParams: {
 				"\$filter" : "date_last_modified ge  " ++ date_last_modified
 			}
@@ -74,7 +74,7 @@ var routingConfig = {
 	},
 	salesOrderShipment: {
 		total: {
-			view: "fcg_edi_asn_856_outbound_vw",
+			view: ,
 			queryParams: {
 				"\$filter" : "date_last_modified ge  " ++ date_last_modified
 			}

@@ -1,34 +1,41 @@
 %dw 2.0
 output application/json
-
+ 
 var groupedOrders = vars.ackData.value groupBy $.BAK03_CustPO
-
+ 
 ---
 groupedOrders pluck ((orderItems, orderNo) -> {
     b2bMessage: {
         header: {
-            senderId: "TRIPHASE",
-            receiverId: orderItems[0].N104_VN_ID as String,
+            senderId: Mule::p('vantage.ack.senderId'),
+            receiverId: orderItems[0]."TP_edi_isa05_id" as String,
             acknowledgmentPurposeCode: orderItems[0].BAK01_Purpose,
             acknowledgmentType: orderItems[0].BAK02_AckType,
             purchaseOrderNumber: orderItems[0].BAK03_CustPO,
             purchaseOrderDate: orderItems[0].BAK04_Date,
             acknowledgementdate: orderItems[0].BAK09_po_ack_date,
             sellerOrderNumber: orderItems[0].BAK06_ReferenceNo,
+ 
             references: [
                 {
                     qualifier: orderItems[0].REF01_InternalID_Qual,
                     referenceNumber: orderItems[0].REF02_InternalID
                 }
-            ] filter ($.qualifier != null),
-
+            ] filter (
+                !isEmpty($.qualifier default "") and
+                !isEmpty($.referenceNumber default "")
+            ),
+ 
             dates: [
                 {
                     qualifier: orderItems[0].DTM01_EstimatedShip_Qual,
                     date: orderItems[0].DTM02_Date
                 }
-            ] filter ($.date != null),
-
+            ] filter (
+                !isEmpty($.qualifier default "") and
+                !isEmpty($.date default "")
+            ),
+ 
             partyInformation: [
                 {
                     qualifier: orderItems[0].N101_VN_Qual,
@@ -72,36 +79,46 @@ groupedOrders pluck ((orderItems, orderNo) -> {
                 }
             ]
         },
-
+ 
         detail: {
-            lineItems: orderItems map (item) -> {
-                lineNo: item.PO1_01_LineID,
-                qty: item.PO1_02_Qty,
-                uom: item.PO1_03_UOM,
-                unitPrice: item.PO1_04_Price,
-                priceQualifier: item.PO1_05_PriceQual,
-                buyerPartQualifier: item.PO1_06_BuyerPartQual,
-                buyerPartNo: item.PO1_07_BuyerPart,
-                vendorPartQualifier: item.PO1_08_VendorPartQual,
-                vendorPartNo: item.PO1_09_VendorPart,
-                productDescriptions: [
+            lineItems: orderItems map (item) -> (
+                {
+                    lineNo: item.PO1_01_LineID,
+                    qty: item.PO1_02_Qty,
+                    uom: item.PO1_03_UOM,
+                    unitPrice: item.PO1_04_Price,
+                    priceQualifier: item.PO1_05_PriceQual,
+                    buyerPartQualifier: item.PO1_06_BuyerPartQual,
+                    buyerPartNo: item.PO1_07_BuyerPart,
+                    vendorPartQualifier: item.PO1_08_VendorPartQual,
+                    vendorPartNo: item.PO1_09_VendorPart,
+ 
+                    acknowledgments: [
+                        {
+                            statusCode: item.ACK01_Status,
+                            quantity: item.ACK02_Qty,
+                            uom: item.ACK03_UOM,
+                            dateQualifier: item.ACK04_DateQual,
+                            date: item.ACK05_Date
+                        }
+                    ]
+                }
+                ++
+                (
+                    if (!isEmpty(trim(item.PID05_Description default "")))
                     {
-                        descriptionType: item.PID01_Type,
-                        description: trim(item.PID05_Description default "")
+                        productDescriptions: [
+                            {
+                                descriptionType: item.PID01_Type,
+                                description: trim(item.PID05_Description)
+                            }
+                        ]
                     }
-                ] filter ($.description != ""),
-                acknowledgments: [
-                    {
-                        statusCode: item.ACK01_Status,
-                        quantity: item.ACK02_Qty,
-                        uom: item.ACK03_UOM,
-                        dateQualifier: item.ACK04_DateQual,
-                        date: item.ACK05_Date
-                    }
-                ] filter ($.statusCode != null)
-            }
+                    else {}
+                )
+            )
         },
-
+ 
         summary: {
             totalLineItems: sizeOf(orderItems),
             totalAcknowledgedQuantity: sum(orderItems.*ACK02_Qty default [])

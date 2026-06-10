@@ -52,23 +52,21 @@ var modifiedTime =
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d0c11a10-2799-4c1f-8d19-fc2f7d0b7c60" name="common-http-request-subflow" target="ackData" />
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d0c11a10-2799-4c1f-8d19-fc2f7d0b7c60" name="common-http-request-subflow" target="shipmentData" />
 		<ee:transform doc:name="View to CDM transformation" doc:id="bf579432-3fdb-4099-8eff-239110c0e1bf" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
  
-var groupedPayload = payload groupBy $.pick_ticket_no
+var groupedPayload = payload.value groupBy $.pick_ticket_no
  
 ---
-groupedPayload pluck ((records, pickTicketNo) -> {
+groupedPayload pluck
+((records, pickTicketNo) -> {
     b2bMessage:{
         header: {
             purposeCode: records[0].BSN01_Purpose,
-            shipDate:
-                (records[0].BSN03_Date[0 to 3] ++ "-" ++
-                records[0].BSN03_Date[4 to 5] ++ "-" ++
-                records[0].BSN03_Date[6 to 7]),
+            shipDate: records[0].BSN03_Date,
  
             shipTime:
                 if ((records[0].BSN04_Time default "") contains ":")
@@ -135,12 +133,7 @@ groupedPayload pluck ((records, pickTicketNo) -> {
                 orderInformation: {
                     poNumber: records[0].PRF01_CustPO,
                     sourceOrderNumber: records[0].order_no,
-                    poDate:
-                        (records[0].BSN03_Date[0 to 3] ++ "-" ++
-                        records[0].BSN03_Date[4 to 5] ++ "-" ++
-                        records[0].BSN03_Date[6 to 7]),
-                                    lineItems:
-                    records map ((item) -> {
+                    lineItems: records map ((item) -> {
                         buyersPartNumber: item.LIN03_BuyerPart,
                         vendorsItemNumber: item.LIN05_VendPart,
                         upc: item.LIN07_UPC,
@@ -151,6 +144,7 @@ groupedPayload pluck ((records, pickTicketNo) -> {
         }
     }
 })
+ 
  ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
