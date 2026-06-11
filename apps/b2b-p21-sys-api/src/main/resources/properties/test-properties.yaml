@@ -8,3 +8,9 @@ p21:
       transaction: "/uiserver0/api/v2"
     path:
       transaction: "/transaction"
+      
+#Oauth configuration
+oauth:
+  request:
+    url: "https://p21-dev12api.flowcontrolgroup.com:3443/api/security/token/?username=mulesoftint&password=1XxnyPs%40QH%5E1"
+    method: "POST"

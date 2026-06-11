@@ -72,8 +72,9 @@
 						<ignoreFiles>
 							<ignoreFile>implementation/notification/apm-error-report.xml</ignoreFile>
 							<ignoreFile>implementation/vendor/coupa-invoice-processing.xml</ignoreFile>
+							<ignoreFile>implementation/vendor/purchase-order-processing.xml</ignoreFile>
 							<ignoreFile>common/error-handler.xml</ignoreFile>
-							<ignoreFile>	implementation/vendor/coupa-purchase-order-processing.xml
+							<ignoreFile>implementation/vendor/coupa-purchase-order-processing.xml
 						</ignoreFile>
 							<ignoreFile>implementation/vendor/coupa-purchase-order-processing.xml
 						</ignoreFile>
