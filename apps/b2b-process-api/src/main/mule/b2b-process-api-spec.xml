@@ -156,7 +156,7 @@ output application/json
 {
 	"source": "P21",
 	"target": "APM",
-	"integration-type": "Outbound-855",
+	"integration-type": "Outbound-810",
 	correlationId: correlationId default uuid(),
 	timestamp: now(),
 	status: "STARTED"
