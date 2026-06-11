@@ -69,7 +69,13 @@ logger:
   debug:
     category: "com.mycompany.b2b.edi"
     
+edi:
+  default:
+    item:
+      id: "NON-STOCK"
+    company:
+      id: "KFT"
+
 #Maxconcurrency
 maxConcurrency:
- attempt: "5"
-  
+ attempt: "5"      
