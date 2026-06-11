@@ -75,4 +75,7 @@ edi:
       id: "NON-STOCK"
     company:
       id: "KFT"
-  
+
+#Maxconcurrency
+maxConcurrency:
+ attempt: "5"      
