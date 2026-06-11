@@ -49,7 +49,7 @@ grouped pluck ((lines, invNo) -> {
         (lines distinctBy ((l) -> l.line_no))
         orderBy ((l) -> l.line_no)
         map (l,index) -> {
-            line_no: l.line_no,
+            line_no: l.line_seq_no,
             item_id: l.item_id,
             item_desc: l.item_desc,
             qty_shipped: l.qty_shipped,

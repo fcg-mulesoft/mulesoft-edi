@@ -12,9 +12,9 @@ import toBase64 from dw::core::Binaries
 		"x-correlation-id": vars.integration.correlationId
 	},
 	"queryParams": {
-		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrderInvoice'),
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrder'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.outbound'),
-		"businesskey": (vars.initialPayload.Order.edixRefId default "") ++ ":" ++ Mule::p('edi.default.company.id')
+		"businesskey": (vars.initialPayload.Order.PoNo default "") ++ ":" ++ Mule::p('edi.default.company.id') ++ ":" ++ (vars.poSearchResponse.value[0].customer_id default "") 
 	},
 	"uriParams": {
 	},

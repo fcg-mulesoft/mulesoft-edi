@@ -11,7 +11,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="02261f0a-ec38-4558-9583-a3fa3b85e1e0" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Missing PO Number or EDI X Ref Id in request" />
 			</when>
 			<otherwise >
-				<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="49ed92c2-63a4-40d1-8ce7-b87e17f9431a">
+				<ee:transform doc:name="var : httpOperation - get edixref" doc:id="49ed92c2-63a4-40d1-8ce7-b87e17f9431a">
 					<ee:message>
 					</ee:message>
 					<ee:variables >
@@ -22,40 +22,51 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<choice doc:name="isValid Purchase Order?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
 			<when expression="#[sizeOf(vars.poSearchResponse.value) == 0]">
 						<logger level="INFO" doc:name="PO Search Response" doc:id="64f3d493-cefe-48ce-bff2-a8c18ecc6ce4" message="PO Search Response is #[vars.poSearchResponse]" />
-						<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="4a6405a4-8f2a-48d2-b977-faa97f576756" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. PO Number and EDI XRef Id are not Available in P21 System."/>
+						<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="4a6405a4-8f2a-48d2-b977-faa97f576756" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Company Id and EDI XRef Id combination is not Available in P21 System."/>
 			</when>
-			<when expression="#[sizeOf(vars.poSearchResponse.value filter (!isEmpty($.po_no)) default []) &gt; 0]">
-						<logger level="INFO" doc:name="PO Search Response" doc:id="bd2c8524-1c29-46b4-9827-84c9fc11fd7e" message="PO Search Response is #[vars.poSearchResponse]"/>
-						<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="7ead687f-13fd-40c6-87a7-c586405347d4" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. PO Number in Coupa Request is already Available in P21 System." />
-					</when>
 					<otherwise>
-						<ee:transform doc:name="var : httpOperation - post retrieve p21PartsPrice" doc:id="c416483b-244d-45a4-939d-228971f3bea2">
-							<ee:message >
-								<ee:set-payload resource="dwl/coupa-inbound-invoice-processing-subflow/v_partsPriceRequest.dwl" />
+						<ee:transform doc:name="var : httpOperation - get Purchase Order" doc:id="9f2e35c1-02b6-4033-a612-5b82728c825a">
+							<ee:message>
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationGetPOFromP21.dwl" variableName="httpOperation" />
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="19147dac-0801-40c4-be6e-5f3fbee3092a" name="common-http-request-subflow" target="p21POResponse" />
+						<choice doc:name="Choice" doc:id="71b843a5-9974-40cc-a546-35ceaded7eda">
+							<when expression="#[sizeOf(vars.p21POResponse.value filter ($.po_no == vars.initialPayload.Order.PoNo)) &gt; 0]">
+								<logger level="INFO" doc:name="PO Search Response" doc:id="bd2c8524-1c29-46b4-9827-84c9fc11fd7e" message="PO Search Response is #[vars.p21POResponse]" />
+								<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="7ead687f-13fd-40c6-87a7-c586405347d4" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. PO Number in Coupa Request is already Available in P21 System." />
+							</when>
+							<otherwise >
+								<ee:transform doc:name="var : httpOperation - retrieve p21PartsPrice" doc:id="c416483b-244d-45a4-939d-228971f3bea2">
+							<ee:message>
 							</ee:message>
 							<ee:variables>
 								<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationPostPartsPrice.dwl" variableName="httpOperation" />
 							</ee:variables>
 						</ee:transform>
-						<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d971c28d-c576-4f75-85f1-a029a835d134" name="common-http-request-subflow" target="partsPriceResponse"/>
-						<logger level="INFO" doc:name="LOG INFO : Valid PO Number" doc:id="5f5af8b4-e52c-4e60-850d-cde8a78887e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "PO Number validation successful, Moving forward to create the Purchase Order in p21",&#10;}]' />
-						<ee:transform doc:name="var : httpOperation - post purchase order" doc:id="8d832f08-d5bd-4035-bb98-a4041efdda0c">
-			<ee:message >
+								<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d971c28d-c576-4f75-85f1-a029a835d134" name="common-http-request-subflow" target="partsPriceResponse" />
+								<logger level="INFO" doc:name="LOG INFO : Valid PO Number" doc:id="5f5af8b4-e52c-4e60-850d-cde8a78887e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "PO Number validation successful, Moving forward to create the Purchase Order in p21",&#10;}]' />
+								<ee:transform doc:name="var : httpOperation - post purchase order" doc:id="8d832f08-d5bd-4035-bb98-a4041efdda0c">
+			<ee:message>
 								<ee:set-payload resource="dwl/coupa-inbound-invoice-processing-subflow/v_purchaseOrderRequest.dwl" />
 							</ee:message>
 			<ee:variables>
 				<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationPostPurchaseOrder.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
-						<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" />
-						<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b">
-			<when expression='#[isEmpty(payload.Order.OrderNo)]'>
+								<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" />
+								<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b">
+			<when expression="#[isEmpty(payload.Order.OrderNo)]">
 				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="cf33fd6d-514a-40df-8113-45bedd343499" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"]' />
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="LOG INFO : CoupaPurrchaseOrderCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Coupa Purchase Order Creation Successful. Order Number is " ++ (payload.Order.OrderNo default "NA")&#10;}]' />
 			</otherwise>
 		</choice>
+							</otherwise>
+						</choice>
 						<logger level="INFO" doc:name="LOG INFO : END" doc:id="7a218d2e-888d-442d-8952-b5cdd14450e9" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
 			</otherwise>
 		</choice>

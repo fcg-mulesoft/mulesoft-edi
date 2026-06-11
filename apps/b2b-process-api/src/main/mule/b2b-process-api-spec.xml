@@ -82,7 +82,7 @@ output application/json
         <flow-ref doc:name="Flow Reference To P21 Adhoc Invoice Sub Flow" doc:id="fa69f29b-30b0-40c7-8456-96b2211a7b4b" name="p21-adhoc-invoice-post" />
     </flow>
     <flow name="post:\p21\watermark:application\json:b2b-process-api-spec-config" doc:id="04591fc2-b49a-437b-8a28-b9792f417792">
-        <flow-ref doc:name="Flow Reference To P21 Coupa Invoice WM Sync Sub Flow" doc:id="30e5642f-be37-4ed8-8709-c3a7d988d140" name="p21-invoice-watermark-sync" />
+        <flow-ref doc:name="Flow Reference To P21 Coupa Invoice WM Sync Sub Flow" doc:id="30e5642f-be37-4ed8-8709-c3a7d988d140" name="p21-coupa-invoice-processing-scheduler-flow" />
     </flow>
     <flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292">

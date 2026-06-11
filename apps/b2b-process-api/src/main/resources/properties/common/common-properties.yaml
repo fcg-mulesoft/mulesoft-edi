@@ -61,4 +61,11 @@ scheduler:
 logger:
   debug:
     category: "com.mycompany.b2b.edi"
+    
+edi:
+  default:
+    item:
+      id: "NON-STOCK"
+    company:
+      id: "KFT"
   
