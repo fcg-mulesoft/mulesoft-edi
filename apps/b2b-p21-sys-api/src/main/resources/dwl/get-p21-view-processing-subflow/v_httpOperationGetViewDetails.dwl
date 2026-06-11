@@ -7,6 +7,32 @@ var date_last_modified= attributes.queryParams.lastModified default ""
 var businesskey =
 
     (attributes.queryParams.businesskey default "") splitBy "," map (trim($)) filter ($ != "") distinctBy $
+
+
+var validationMode = attributes.queryParams.validationMode default "xref"
+var customerId = attributes.queryParams.customerId default ""
+var companyId = attributes.queryParams.companyId default "TPA"
+
+var salesOrderValidationConfig =
+    if ( validationMode == "xref" ) {
+	view: "fcg_edi_xref_vw",
+	filter: "edi_x_ref_id eq '" ++ ediRefId ++
+                "' and company_id eq '" ++ companyId ++ "'"
+}
+    else if ( validationMode == "po" ) {
+	view: "fcg_edi_order_vw",
+	filter: "(" ++
+                ((businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ") and company_id eq '" ++ companyId ++ "'" ++ " and customer_id eq " ++ customerId
+}
+    else if ( validationMode == "customerPart" ) {
+	view: "p21_view_customer_part_number",
+	filter: "customer_id eq " ++ customerId ++ " and (" ++ ((businesskey map ("their_item_id eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+}
+    else
+        {
+	view: "",
+	filter: ""
+}
 var routingConfig = {
 	purchaseOrder: {
 		total: {
@@ -46,14 +72,10 @@ var routingConfig = {
 		}
 	},
 	salesOrder: {
-		total: {
-			view: "fcg_edi_xref_vw",
+		validation: {
+			view: salesOrderValidationConfig.view,
 			queryParams: {
-				"\$filter": "edi_x_ref_id eq '" ++ ediRefId ++
-
-                    "' and ((" ++
-
-                    ((businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ") or po_no eq null or po_no eq ' ')"
+				"\$filter": salesOrderValidationConfig.filter
 			}
 		}
 	},
@@ -68,16 +90,18 @@ var routingConfig = {
 		total: {
 			view: Mule::p('viewNames.purchaseorderInvoiceOutbound'),
 			queryParams: {
+
 				"\$filter" : "date_last_modified ge  " ++ date_last_modified,
 				"\$Top" : "1"
+
 			}
 		}
 	},
 	salesOrderShipment: {
 		total: {
-			view: ,
+			view: "fcg_edi_asn_856_outbound_vw",
 			queryParams: {
-				"\$filter" : "date_last_modified ge  " ++ date_last_modified
+				"\$filter": "date_last_modified ge  " ++ date_last_modified
 			}
 		}
 	}
