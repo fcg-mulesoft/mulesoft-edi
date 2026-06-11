@@ -68,7 +68,8 @@ var routingConfig = {
 		total: {
 			view: Mule::p('viewNames.purchaseorderInvoiceOutbound'),
 			queryParams: {
-				"\$filter" : "date_last_modified ge  " ++ date_last_modified
+				"\$filter" : "date_last_modified ge  " ++ date_last_modified,
+				"\$Top" : "1"
 			}
 		}
 	},
