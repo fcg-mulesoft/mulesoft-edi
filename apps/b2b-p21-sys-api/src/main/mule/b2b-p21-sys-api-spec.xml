@@ -9,7 +9,7 @@
 	<flow name="b2b-p21-sys-api-spec-main">
 		<http:listener
 			config-ref="b2b-p21-sys-api-spec-httpListenerConfig"
-			path="${http.path.listener}">
+			path="${http.path.listener}" doc:name="b2b-p21-sys-api-spec-main">
 			<http:response
 				statusCode="#[vars.httpStatus default 200]">
 				<http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
