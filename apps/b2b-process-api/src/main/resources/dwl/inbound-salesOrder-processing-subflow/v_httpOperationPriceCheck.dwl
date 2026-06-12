@@ -2,7 +2,7 @@
 output application/json
 import toBase64 from dw::core::Binaries
 var inputPayload = vars.initialPayload[0]
-var viewData = vars.salesOrderLookUpData[0]
+var customerItemId = vars.customerItemId
 ---
 {
 	"method": Mule::p('b2b-p21-sys-api.transaction.method'),
@@ -19,9 +19,9 @@ var viewData = vars.salesOrderLookUpData[0]
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
 		"processingMode": "direct",
 		"checkType": "catalogPrice",
-		"companyId": viewData.company_id,
-		"customerId": viewData.customer_id,
-		"salesLocId": viewData.preferred_location_id
+		"customerId": vars.xref.customer_id[0],
+		"companyId": vars.xref.company_id[0],
+		"salesLocId": vars.xref.preferred_location_id[0]
 	},
 	"uriParams": {
 	},
@@ -36,13 +36,18 @@ var viewData = vars.salesOrderLookUpData[0]
 			Status: "New",
 			DataElements: [{
 				ArrayOfItemPriceInfo: {
-					ItemPriceInfo: inputPayload.b2bMessage.detail.itemDetails map (item) -> {
-						ItemId: item.buyersPartNumber,
-						SourceLocId: viewData.preferred_location_id as String,
-						CustomerPartNo: item.buyersPartNumber,
-						UnitQuantity: item.quantityOrdered,
-						UnitSize: 1,
-						UOM: item.unitOfMeasurementCode
+					ItemPriceInfo: inputPayload.b2bMessage.detail.itemDetails map (item) -> do {
+						var itemLookup =
+                (customerItemId filter ((x) -> x.their_item_id == item.buyersPartNumber))[0]
+						---
+						{
+							ItemId: itemLookup.our_item_id default "",
+							SourceLocId:  vars.xref.preferred_location_id[0],
+							CustomerPartNo: item.buyersPartNumber,
+							UnitQuantity: item.quantityOrdered,
+							UnitSize: 1,
+							UOM: item.unitOfMeasurementCode
+						}
 					}
 				}
 			}]

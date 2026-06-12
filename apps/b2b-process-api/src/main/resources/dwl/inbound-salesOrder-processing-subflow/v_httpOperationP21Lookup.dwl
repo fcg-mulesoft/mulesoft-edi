@@ -6,7 +6,7 @@ import toBase64 from dw::core::Binaries
 	"method": Mule::p('b2b-p21-sys-api.view.method'),
 //	"host": Mule::p('b2b-p21-sys-api.host'),
 //	"port": Mule::p('b2b-p21-sys-api.port'),
-	"host":"localhost",
+	"host": "localhost",
 	"port": "8092",
 	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
 	"path": Mule::p('b2b-p21-sys-api.view.path'),
@@ -15,10 +15,11 @@ import toBase64 from dw::core::Binaries
 	},
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
-		"purpose": Mule::p('b2b-p21-sys-api.purpose.total'),
+		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
 		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0] default null,
-		"ediRefId" : (payload[0].b2bMessage.header.partyInformation
-    filter ($.qualifier == "BY"))[0].identificationCode default ""
+		"validationMode": "po",
+		"customerId": vars.xref.customer_id[0],
+		"companyId": vars.xref.company_id[0],
 	},
 	"uriParams": {
 	},
