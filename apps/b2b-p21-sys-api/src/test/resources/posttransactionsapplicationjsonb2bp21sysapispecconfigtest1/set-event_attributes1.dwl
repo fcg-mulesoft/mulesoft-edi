@@ -17,7 +17,8 @@
 	"method": "POST",
 	"scheme": "https",
 	"queryParams": {
-		"transactionType": "purchaseOrder"
+		"transactionType": "purchaseOrder",
+		"processingMode": "direct"
 	},
 	"requestUri": "/api/transactions?transactionType=purchaseOrder",
 	"queryString": "transactionType=purchaseOrder",
