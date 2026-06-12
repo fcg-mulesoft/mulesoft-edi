@@ -4,6 +4,7 @@ var grouped = vars.p21Response.value groupBy ((item) -> item.invoice_no)
 ---
 grouped pluck ((lines, invNo) -> {
     invoice_no: invNo,
+    po_no: lines[0].po_no,
     invoice_date: lines[0].invoice_date,
     from_domain: lines[0].from_domain,
     from_identity: lines[0].from_identity,
@@ -34,6 +35,7 @@ grouped pluck ((lines, invNo) -> {
     ship_from_addr: lines[0].ship_from_addr,
     ship_from_city: lines[0].ship_from_city,
     ship_from_state: lines[0].ship_from_state,
+    ship_from_location_id: lines[0].ship_from_location_id,
 	remit_street: lines[0].Remit_Street,
     remit_name: lines[0].Remit_Name,
     remit_id: lines[0].Remit_ID,
@@ -63,6 +65,7 @@ grouped pluck ((lines, invNo) -> {
             ship_from_name: l.ship_from_name,
             ship_from_addr: l.ship_from_addr,
             ship_from_city: l.ship_from_city,
-            ship_from_state: l.ship_from_state
+            ship_from_state: l.ship_from_state,
+            ship_from_location_id: lines[0].ship_from_location_id
         }
 })
