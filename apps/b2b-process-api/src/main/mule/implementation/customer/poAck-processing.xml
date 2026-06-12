@@ -80,7 +80,10 @@ if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:U
 				<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
 output application/json
 ---
-Mule::p("partner.outbound." ++ payload[0].payload.partnerId)]]></ee:set-variable>
+if (!isEmpty(payload.payload.partnerId))
+(payload.payload.partnerId map  Mule::p("partner.outbound." ++ $)) distinctBy $
+else null
+]]></ee:set-variable>
 				<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_httpOperationFlagUpdate.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>

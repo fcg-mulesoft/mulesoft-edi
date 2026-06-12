@@ -81,14 +81,14 @@ var routingConfig = {
 	},
 	salesOrderAck: {
 		total: {
-			view: Mule::p('viewNames.purchaseorderAckOutbound'),
+			view: Mule::p('viewNames.purchaseOrderAckOutbound'),
 			queryParams: {
 			}
 		}
 	},
 	salesOrderInvoice: {
 		total: {
-			view: Mule::p('viewNames.purchaseorderInvoiceOutbound'),
+			view: Mule::p('viewNames.purchaseOrderInvoiceOutbound'),
 			queryParams: {
 
 				"\$filter" : "date_last_modified ge  " ++ date_last_modified,
@@ -99,7 +99,7 @@ var routingConfig = {
 	},
 	salesOrderShipment: {
 		total: {
-			view: "fcg_edi_asn_856_outbound_vw",
+			view: Mule::p('viewNames.purchaseOrderShipmentOutbound'),
 			queryParams: {
 				"\$filter": "date_last_modified ge  " ++ date_last_modified
 			}

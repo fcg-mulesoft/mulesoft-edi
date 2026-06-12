@@ -52,6 +52,10 @@ viewNames:
   purchaseOrderAckInbound: "fcg_po_hdr_line_udf_vw"
   purchaseOrderInvoiceInbound: "fcg_po_hdr_line_udf_vw"
   purchaseOrderShipmentValidation: "PURCHASE_ORDER_SHIPMENT_VALIDATION_VIEW"
+  purchaseOrderShipmentTotal: "PURCHASE_ORDER_SHIPMENT_TOTAL_VIEW"
+  purchaseOrderAckOutbound: "fcg_edi_poack_855_outbound_vw"
+  purchaseOrderInvoiceOutbound: "fcg_edi_invoice_810_outbound_vw"
+  purchaseOrderShipmentOutbound: "fcg_edi_asn_856_outbound_vw"
   
 #Service Types
 serviceNames:
