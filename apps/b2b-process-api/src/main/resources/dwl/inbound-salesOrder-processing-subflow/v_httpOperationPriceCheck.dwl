@@ -2,7 +2,7 @@
 output application/json
 import toBase64 from dw::core::Binaries
 var inputPayload = vars.initialPayload[0]
-var customerItemId = vars.customerItemId
+var customerItemId = vars.customerItemValidationResponse
 ---
 {
 	"method": Mule::p('b2b-p21-sys-api.transaction.method'),
@@ -19,9 +19,9 @@ var customerItemId = vars.customerItemId
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
 		"processingMode": "direct",
 		"checkType": "catalogPrice",
-		"customerId": vars.xref.customer_id[0],
-		"companyId": vars.xref.company_id[0],
-		"salesLocId": vars.xref.preferred_location_id[0]
+		"customerId": vars.ediXrefResponse.customer_id[0],
+		"companyId": vars.ediXrefResponse.company_id[0],
+		"salesLocId": vars.ediXrefResponse.preferred_location_id[0]
 	},
 	"uriParams": {
 	},
@@ -42,7 +42,7 @@ var customerItemId = vars.customerItemId
 						---
 						{
 							ItemId: itemLookup.our_item_id default "",
-							SourceLocId:  vars.xref.preferred_location_id[0],
+							SourceLocId:  vars.ediXrefResponse.preferred_location_id[0],
 							CustomerPartNo: item.buyersPartNumber,
 							UnitQuantity: item.quantityOrdered,
 							UnitSize: 1,

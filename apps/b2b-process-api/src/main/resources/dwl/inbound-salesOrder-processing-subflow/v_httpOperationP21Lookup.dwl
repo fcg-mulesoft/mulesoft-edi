@@ -18,8 +18,8 @@ import toBase64 from dw::core::Binaries
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
 		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0] default null,
 		"validationMode": "po",
-		"customerId": vars.xref.customer_id[0],
-		"companyId": vars.xref.company_id[0],
+		"customerId": vars.ediXrefResponse.customer_id[0],
+		"companyId": vars.ediXrefResponse.company_id[0],
 	},
 	"uriParams": {
 	},

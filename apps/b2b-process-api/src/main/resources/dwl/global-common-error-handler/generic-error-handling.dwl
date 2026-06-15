@@ -190,9 +190,15 @@ var duplicateRows =
         "<tr style='background:#fee2e2;color:#b91c1c;'>"
         ++ "<td style='padding:8px;border:1px solid #ddd;'>Duplicate</td>"
         ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
- 
+
+var ediXrefId =
+    (ve.ediXrefId default []) map (e) ->
+        "<tr style='background:#fee2e2;color:#b91c1c;'>"
+        ++ "<td style='padding:8px;border:1px solid #ddd;'>Invalid EDI Refrence ID</td>"
+        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
+		
 var allRows =
-    itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows ++ duplicateRows
+    itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows ++ duplicateRows ++ ediXrefId
 var validationHtml =
     if (sizeOf(allRows) > 0)
         "<table style='width:100%;border-collapse:collapse;margin-top:10px;'>"

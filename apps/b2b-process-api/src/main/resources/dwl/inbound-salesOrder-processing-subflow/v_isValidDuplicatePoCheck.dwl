@@ -1,7 +1,7 @@
 %dw 2.0
 output application/json
 
-var response = vars.duplicatePo
+var response = vars.duplicatePoResponse
 var hasDuplicate = !isEmpty(response)
 
 ---
