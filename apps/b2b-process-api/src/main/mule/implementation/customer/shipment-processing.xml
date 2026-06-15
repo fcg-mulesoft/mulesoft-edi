@@ -11,7 +11,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 		<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage" target="lastRunTimestamp" >
 			<os:default-value ><![CDATA[#[now() - |PT24H|]]]></os:default-value>
 		</os:retrieve>
-		<ee:transform doc:name="var : httpOperation - get invoice Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2" >
+		<ee:transform doc:name="var : httpOperation - get shipment Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2" >
 			<ee:message />
 			<ee:variables >
 				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
@@ -356,8 +356,8 @@ fun buildErrorConfig(resolvedType, descStr) =
         bannerColor: "#dc2626",
         errorCode:   "APM_CONNECTION_ERROR",
         category:    "CONNECTIVITY",
-        message:     "850 transmission failed with error type [CONNECTIVITY] while sending to APM. " ++ descStr,
-        resolution:  "The 850 transmission failed because Mule could not connect to the APM endpoint."
+        message:     "856 transmission failed with error type [CONNECTIVITY] while sending to APM. " ++ descStr,
+        resolution:  "The 856 transmission failed because Mule could not connect to the APM endpoint."
                      ++ "\n  1. Verify the APM endpoint URL and port in the Mule connector configuration."
                      ++ "\n  2. Check DNS resolution and firewall rules between Mule and APM."
                      ++ "\n  3. Confirm the APM service is running and accepting inbound connections."
@@ -370,8 +370,8 @@ fun buildErrorConfig(resolvedType, descStr) =
         bannerColor: "#f59e0b",
         errorCode:   "APM_ENDPOINT_NOT_FOUND",
         category:    "CONFIGURATION",
-        message:     "850 transmission failed with error type [NOT_FOUND] — the APM endpoint returned HTTP 404. " ++ descStr,
-        resolution:  "The 850 transmission failed because the APM endpoint URL returned 404."
+        message:     "856 transmission failed with error type [NOT_FOUND] — the APM endpoint returned HTTP 404. " ++ descStr,
+        resolution:  "The 856 transmission failed because the APM endpoint URL returned 404."
                      ++ "\n  1. Verify the APM endpoint URL configured in Mule matches the deployed APM route exactly."
                      ++ "\n  2. Confirm with the APM team that the route is deployed and active in the correct environment."
                      ++ "\n  3. Check if the APM application was redeployed or the route was renamed/moved."
@@ -384,8 +384,8 @@ fun buildErrorConfig(resolvedType, descStr) =
         bannerColor: "#f97316",
         errorCode:   "APM_TIMEOUT_ERROR",
         category:    "TIMEOUT",
-        message:     "850 transmission failed with error type [TIMEOUT] — the APM endpoint did not respond within the allowed time. " ++ descStr,
-        resolution:  "The 850 transmission timed out waiting for APM."
+        message:     "856 transmission failed with error type [TIMEOUT] — the APM endpoint did not respond within the allowed time. " ++ descStr,
+        resolution:  "The 856 transmission timed out waiting for APM."
                      ++ "\n  1. Check APM service health and response times via the APM monitoring dashboard."
                      ++ "\n  2. Increase the HTTP request timeout in the Mule connector if APM is under load."
                      ++ "\n  3. Confirm no payload or transformation bottleneck is causing delays on the APM side."
@@ -398,8 +398,8 @@ fun buildErrorConfig(resolvedType, descStr) =
         bannerColor: "#7c3aed",
         errorCode:   "APM_UNAUTHORIZED",
         category:    "SECURITY",
-        message:     "850 transmission failed with error type [UNAUTHORIZED] — APM rejected the request due to missing or invalid credentials (HTTP 401). " ++ descStr,
-        resolution:  "The 850 transmission failed because APM returned 401 Unauthorized."
+        message:     "856 transmission failed with error type [UNAUTHORIZED] — APM rejected the request due to missing or invalid credentials (HTTP 401). " ++ descStr,
+        resolution:  "The 856 transmission failed because APM returned 401 Unauthorized."
                      ++ "\n  1. Verify the API key, client ID/secret, or bearer token configured in Mule is current."
                      ++ "\n  2. Check if APM credentials have expired or been rotated recently."
                      ++ "\n  3. Confirm the correct authentication scheme is being used (Basic, OAuth2, API Key, etc.)."
@@ -412,8 +412,8 @@ fun buildErrorConfig(resolvedType, descStr) =
         bannerColor: "#7c3aed",
         errorCode:   "APM_FORBIDDEN",
         category:    "SECURITY",
-        message:     "850 transmission failed with error type [FORBIDDEN] — APM denied access (HTTP 403). " ++ descStr,
-        resolution:  "The 850 transmission failed because APM returned 403 Forbidden."
+        message:     "856 transmission failed with error type [FORBIDDEN] — APM denied access (HTTP 403). " ++ descStr,
+        resolution:  "The 856 transmission failed because APM returned 403 Forbidden."
                      ++ "\n  1. Confirm the Mule service account has the correct role/scope in APM."
                      ++ "\n  2. Check if an IP whitelist or policy is blocking the Mule runtime IP."
                      ++ "\n  3. Review the APM API policy (rate limiting, client allow-list, contract enforcement)."
@@ -426,8 +426,8 @@ fun buildErrorConfig(resolvedType, descStr) =
         bannerColor: "#dc2626",
         errorCode:   "APM_SERVER_ERROR",
         category:    "SERVER_ERROR",
-        message:     "850 transmission failed with error type [SERVER_ERROR] — APM returned a server-side error while processing the 850 Purchase Order. " ++ descStr,
-        resolution:  "The 850 transmission failed due to an internal error on the APM side."
+        message:     "856 transmission failed with error type [SERVER_ERROR] — APM returned a server-side error while processing the 856 Purchase Order. " ++ descStr,
+        resolution:  "The 856 transmission failed due to an internal error on the APM side."
                      ++ "\n  1. Check the APM application logs for stack traces around the time of failure."
                      ++ "\n  2. Confirm APM service health (memory, CPU, DB connections) in its monitoring dashboard."
                      ++ "\n  3. Determine if the failure is transient (overload) or persistent (bug/misconfiguration)."
@@ -440,9 +440,9 @@ fun buildErrorConfig(resolvedType, descStr) =
         bannerColor: "#f59e0b",
         errorCode:   "APM_BAD_REQUEST",
         category:    "PAYLOAD_ERROR",
-        message:     "850 transmission failed with error type [BAD_REQUEST] — APM rejected the 850 payload with HTTP 400. " ++ descStr,
-        resolution:  "The 850 transmission failed because APM could not process the request payload."
-                     ++ "\n  1. Review the 850 payload — check for missing required fields or incorrect data types."
+        message:     "856 transmission failed with error type [BAD_REQUEST] — APM rejected the 856 payload with HTTP 400. " ++ descStr,
+        resolution:  "The 856 transmission failed because APM could not process the request payload."
+                     ++ "\n  1. Review the 856 payload — check for missing required fields or incorrect data types."
                      ++ "\n  2. Validate the payload against the APM API schema or contract."
                      ++ "\n  3. Check that all required HTTP headers (Content-Type, Accept, etc.) are correctly set."
                      ++ "\n  4. Coordinate with the APM team to identify which field triggered the rejection."
@@ -454,11 +454,11 @@ fun buildErrorConfig(resolvedType, descStr) =
         bannerColor: "#f59e0b",
         errorCode:   "APM_VALIDATION_ERROR",
         category:    "VALIDATION",
-        message:     "850 transmission failed with error type [VALIDATION] — JSON Schema at Process API Failure. " ++ descStr,
-        resolution:  "The 850 transmission failed because one or more fields in the payload did not pass APM validation."
+        message:     "856 transmission failed with error type [VALIDATION] — JSON Schema at Process API Failure. " ++ descStr,
+        resolution:  "The 856 transmission failed because one or more fields in the payload did not pass APM validation."
                      ++ "\n  1. Review the validation error details returned by APM in the error description above."
                      ++ "\n  2. Identify the specific field(s) that failed validation (e.g., missing mandatory elements, incorrect format, invalid code values)."
-                     ++ "\n  3. Validate the 850 payload against the APM API schema and EDI 850 X12 contract requirements."
+                     ++ "\n  3. Validate the 856 payload against the APM API schema and EDI 856 X12 contract requirements."
                      ++ "\n  4. Check all date formats, numeric ranges, code set values, and mandatory segment presence."
                      ++ "\n  5. Coordinate with the APM team to obtain the full validation error report for: " ++ poSegment
                      ++ "\n  6. Correct the failing field(s) in the mapping transformation and resubmit."
@@ -469,8 +469,8 @@ fun buildErrorConfig(resolvedType, descStr) =
         bannerColor: "#6b7280",
         errorCode:   "APM_UNKNOWN_ERROR",
         category:    "UNKNOWN",
-        message:     "850 transmission failed with error type [" ++ resolvedType ++ "] while sending the 850 Purchase Order to APM. " ++ descStr,
-        resolution:  "The 850 transmission failed with an unclassified error type [" ++ resolvedType ++ "] from APM."
+        message:     "856 transmission failed with error type [" ++ resolvedType ++ "] while sending the 856 Purchase Order to APM. " ++ descStr,
+        resolution:  "The 856 transmission failed with an unclassified error type [" ++ resolvedType ++ "] from APM."
                      ++ "\n  1. Review the full Mule error log for root cause and stack trace."
                      ++ "\n  2. Check the APM logs for a corresponding failure at the same timestamp."
                      ++ "\n  3. Escalate to the integration team with the correlationId and transmissionId."
@@ -525,11 +525,11 @@ var validationHtml =
 
 var data = {
     flowDirection:    "OUTBOUND",
-    documentType:     "850",
+    documentType:     "856",
     appName:          p('api.name') default "Mule Application",
-    transactionType:  "850",
+    transactionType:  "856",
     environment:      upper(p('mule.env') default "DEV"),
-    flowName:         safe(vars.flowName, "850 Outbound Validation"),
+    flowName:         safe(vars.flowName, "856 Outbound Validation"),
     route:            "P21 → Mule → APM",
     partnerName:      partnerId ++ " — " ++ sizeOf(partnerErrors) ++ " PO(s) failed [" ++ resolvedType ++ "]",
     errorTitle:       errorConfig.title,
@@ -544,7 +544,7 @@ var data = {
     transmissionId:   transmissionId,
     keyLabel:         "Correlation ID",
     vendorName:       partnerId,
-    companyName:      (vars.purchaseOrderData.value.company_no[0] default "N/A"),
+    companyName:      (vars.shipmentData.value.company_id[0] default "N/A"),
     key:              correlationId,
     businessKey:      poSegment,
     timestamp:        now() as String {format: "yyyy-MM-dd HH:mm:ss"}
