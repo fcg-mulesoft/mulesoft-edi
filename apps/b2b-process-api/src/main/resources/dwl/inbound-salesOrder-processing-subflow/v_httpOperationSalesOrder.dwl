@@ -62,13 +62,13 @@ var headerMessage =
                             ContactId: salesOrderLookUpData.edi_default_contact_id default "",
                             Taker: salesOrderLookUpData.edi_default_taker default "MULESOFTINT",
                             Quote: "N",
-                            Approved: "false",
+                            Approved: false,
                             Notes: {
                                 OrderNote: {
                                     Topic: if (hasHeaderErrors) "HEADER LEVEL VALIDATION" else "PO VALIDATION SUCCESS",
                                     Note: headerMessage,
                                     NotepadClassId: "ITEMS",
-                                    Mandatory: if (hasHeaderErrors) "true" else "false"
+                                    Mandatory: if (hasHeaderErrors) true else false
                                 }
                             },
                             Lines: {

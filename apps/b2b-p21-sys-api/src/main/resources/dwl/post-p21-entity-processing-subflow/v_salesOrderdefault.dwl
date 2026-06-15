@@ -4,7 +4,10 @@ output application/xml
 var order = payload.Transactions[0].DataElements[0].Order
 
 ---
-Order: {
+Order @(
+    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+    "xmlns:xsd": "http://www.w3.org/2001/XMLSchema"
+): {
     CustomerId: order.CustomerId,
     CompanyId: order.CompanyId,
     LocationId: order.LocationId,
@@ -16,28 +19,24 @@ Order: {
     Approved: order.Approved,
 
     Notes: {
-        (order.Notes.OrderNote map (n) ->
-            OrderNote: {
-                Topic: n.Topic,
-                Note: n.Note,
-                NotepadClassId: n.NotepadClassId,
-                Mandatory: n.Mandatory
-            }
-        )
+        OrderNote: {
+            Topic: order.Notes.OrderNote.Topic,
+            Note: order.Notes.OrderNote.Note,
+            NotepadClassId: order.Notes.OrderNote.NotepadClassId,
+            Mandatory: order.Notes.OrderNote.Mandatory
+        }
     },
 
     Lines: {
         (order.Lines.OrderLine map (line) ->
             OrderLine: {
                 Notes: {
-                    (line.Notes.OrderLineNote map (note) ->
-                        OrderLineNote: {
-                            Topic: note.Topic,
-                            Note: note.Note,
-                            NotepadClassId: note.NotepadClassId,
-                            Mandatory: note.Mandatory
-                        }
-                    )
+                    OrderLineNote: {
+                        Topic: line.Notes.OrderLineNote.Topic,
+                        Note: line.Notes.OrderLineNote.Note,
+                        NotepadClassId: line.Notes.OrderLineNote.NotepadClassId,
+                        Mandatory: line.Notes.OrderLineNote.Mandatory
+                    }
                 },
 
                 LineNo: line.LineNo,
