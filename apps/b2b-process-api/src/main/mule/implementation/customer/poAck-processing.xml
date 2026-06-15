@@ -31,7 +31,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 				</ee:variables>
 			</ee:transform>
 				<logger level="DEBUG" doc:name="Log DEBUG: APM Request" doc:id="18cffda4-7a1c-4b08-8016-ccd251a4330e" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow start&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]" category="${logger.debug.category}" />
-				<!-- [STUDIO:"Flow Reference To commom-http-request-subflow"]<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="acbd8490-85ef-4ac4-a32a-dbfa06612a04" name="common-http-request-subflow" target="transmissionId" targetValue="#[attributes.headers.'x-apm-trx-id'&#93;" /> [STUDIO] -->
+				<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="acbd8490-85ef-4ac4-a32a-dbfa06612a04" name="common-http-request-subflow" target="transmissionId" targetValue="#[attributes.headers.'x-apm-trx-id']" />
 				<logger level="DEBUG" doc:name="LOG DEBUG: APM Response" doc:id="5de34d2b-0454-4b0c-8f01-f79ac4b90f7e" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow ended&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	transmissionId: vars.transmissionId&#10;}]" category="${logger.debug.category}" />
 				<ee:transform doc:name="Transaction api payload  transformation" doc:id="98aac730-ba0e-47ca-bdc2-a24bee804a39">
 				<ee:message>

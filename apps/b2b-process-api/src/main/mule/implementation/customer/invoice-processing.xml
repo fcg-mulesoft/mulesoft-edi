@@ -188,7 +188,7 @@ import toBase64 from dw::core::Binaries
 	"host": Mule::p('apm.request.host'),
 	"port": Mule::p('apm.request.port'),
 	"basePath": Mule::p('apm.request.basePath'),
-	"path": Mule::p('apm.request.path'),
+	"path": Mule::p('apm.request.invoice'),
 	"headers": {
 	},
 	"queryParams": {
@@ -215,7 +215,7 @@ output application/json
 {
 	status: "SUCCESS",
 	invoiceNumber: payload.b2bMessage.header.invoiceNumber,
-	partnerId: payload.b2bMessage.header.receiverId,
+	partnerId: payload.b2bMessage.header.senderId,
 	transmissionId: vars.transmissionId
 }]]></ee:set-payload>
 					</ee:message>
@@ -513,7 +513,7 @@ var partnerRows =
         var firstInvoice = partnerErrors[0] default {}
         var firstRow =
             "<tr style='background:#fee2e2;color:#b91c1c;'>"
-            ++ "<td style='padding:8px;border:1px solid #ddd;vertical-align:top;font-weight:600;' rowspan='" ++ invoiceCount ++ "'>" ++ partnerId ++ "</td>"
+            ++ "<td style='padding:8px;border:1px solid #ddd;vertical-align:top;font-weight:600;' rowspan='" ++ invoiceCount ++ "'>" ++ partner.partnerId ++ "</td>"
             ++ "<td style='padding:8px;border:1px solid #ddd;vertical-align:top;font-weight:600;' rowspan='" ++ invoiceCount ++ "'>" ++ resolvedType ++ "</td>"
             ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ safe(firstInvoice.invoiceNumber as String, "N/A") ++ "</td>"
             ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ ((firstInvoice."Error Details" default []) joinBy "<br/>") ++ "</td>"
