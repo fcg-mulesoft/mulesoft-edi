@@ -58,35 +58,55 @@ var modifiedTime =
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
  
-var groupedPayload = payload.value groupBy $.pick_ticket_no
+var groupedPayload = vars.shipmentData.value groupBy $.pick_ticket_no
  
 ---
-groupedPayload pluck
-((records, pickTicketNo) -> {
-    b2bMessage:{
+groupedPayload pluck ((records, pickTicketNo) -> {
+    b2bMessage: {
         header: {
             purposeCode: records[0].BSN01_Purpose,
             shipDate: records[0].BSN03_Date,
- 
             shipTime:
-                if ((records[0].BSN04_Time default "") contains ":")
-                    (records[0].BSN04_Time ++ ":00")
-                else
-                    "00:00:00",
+                do {
+                    var time = records[0].BSN04_Time default "00:00"
+                    ---
+                    (time as LocalTime {format: "H:m"}) as String {format: "HHmm"}
+                },
+ 
             shipNoticeNumber: records[0].BSN02_ShipNoticeNo,
-            receiverId: "",
-            senderId: ""
+            receiverId: records[0].TP_edi_isa05_id,
+            senderId: "",
+ 
+            shippedDateQualifier: records[0].DTM01_ShippedDateQual,
+            shippedDate: records[0].DTM02_ShippedDate,
+ 
+            estimatedDeliveryDateQualifier: records[0].DTM01_EstDeliveryDateQual,
+            estimatedDeliveryDate: records[0].DTM02_EstDeliveryDate
         },
+ 
         detail: {
             shipmentInformation: {
+ 
                 carrierInformation: {
                     routingQualifier: records[0].TD501_RoutingQual,
                     IdQualifier: records[0].TD502_IDQual,
                     carrierId: records[0].TD503_CarrierID,
                     transportationMethodCode: records[0].TD504_TransMethod
                 },
-                referenceQualifier: records[0].REF01_Qual,
-                referenceId: records[0].REF02_TrackingNo,
+ 
+                measurementRef: records[0].MEA01_MeasurementRef,
+                weightQualifier: records[0].MEA02_WeightQualifier,
+                weight: records[0].MEA03_Weight,
+                unitOfMeasure: records[0].MEA04_UnitOfMeasure,
+ 
+                trackingQual: records[0].REF01_TrackingQual,
+                trackingNo: records[0].REF02_TrackingNo,
+ 
+                bolQual: records[0].REF01_BOLQual,
+                billOfLadingNumber: records[0].REF02_BillOfLadingNo,
+ 
+                shipmentTerms: records[0].FOB01_ShipmentTerms,
+ 
                 partyInformation: [
                     {
                         partyCode: records[0].N101_SF_Qual,
@@ -128,24 +148,30 @@ groupedPayload pluck
                         state: records[0].N402_VN_State,
                         zipCode: records[0].N403_VN_Zip
                     }
- 
                 ],
+ 
                 orderInformation: {
                     poNumber: records[0].PRF01_CustPO,
                     sourceOrderNumber: records[0].order_no,
+ 
                     lineItems: records map ((item) -> {
                         buyersPartNumber: item.LIN03_BuyerPart,
                         vendorsItemNumber: item.LIN05_VendPart,
                         upc: item.LIN07_UPC,
                         shippedQuantity: item.SN102_QtyShipped as Number,
+ 
+                        uom: item.SN103_UOM,
+                        descriptionType: item.PID01_ItemDescType,
+                        productDescription: item.PID05_ProductDescription,
+ 
+                        packListNo: item.REF02_PackListNo,
+                        barCodedSerialNo: item.REF02_BarCodedSerialNo
                     })
                 }
             }
         }
     }
-})
- 
- ]]></ee:set-payload>
+})]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="f90faba7-8aa8-4f69-b9f5-e16df7fb55fc" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}" />
@@ -238,10 +264,10 @@ output application/json
 				</error-handler>
 			</try>
 		</parallel-foreach>
-		<ee:transform doc:name="Transform Message" doc:id="cba7e075-ef09-4a7a-8787-17d186ea9902" >
+		<ee:transform doc:name="var: errorShipments" doc:id="cba7e075-ef09-4a7a-8787-17d186ea9902" >
 			<ee:message />
 			<ee:variables >
-				<ee:set-variable variableName="errorPos" ><![CDATA[%dw 2.0
+				<ee:set-variable variableName="errorShipments" ><![CDATA[%dw 2.0
 output application/json
 ---
 entriesOf(
@@ -273,7 +299,7 @@ map (entry) -> {
 		<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage" >
 			<os:value ><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
 		</os:store>
-		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="a11e454f-0915-4f9b-9475-7db5ffbccb8e" collection="#[vars.errorPos]" >
+		<foreach doc:name="For Each: Iteration Over Errored Shipments" doc:id="a11e454f-0915-4f9b-9475-7db5ffbccb8e" collection="#[vars.errorShipments]" >
 			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="8751591f-6282-4b98-a7fb-a71f800e81b4" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
