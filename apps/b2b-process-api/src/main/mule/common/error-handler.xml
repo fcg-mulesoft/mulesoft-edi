@@ -133,18 +133,8 @@ var errNs = vars.errorDetails.errorNs default ""
 
 var errId = vars.errorDetails.errorId default ""
  
-var isTechOnly =
 
-    (errNs ++ ":" ++ errId) == "MULE:RETRY_EXHAUSTED" or
 
-    (errNs ++ ":" ++ errId) == "HTTP:RETRY_EXHAUSTED"  or
-
-    errId                   == "RETRY_EXHAUSTED"        or
-
-    (errNs ++ ":" ++ errId) == "CUSTOM:P21_FAILED"      or
-
-    (errNs == "" and errId == "")
- 
 var viewRecords =
 
     if (notBlank(vars.vendorName))
@@ -163,35 +153,13 @@ var matchedRecord =
 
     default {}
  
-var techEmails    = toList(matchedRecord.fcg_tech_contact_email)
-
-var bizEmails     = toList(matchedRecord.fcg_biz_contact_email)
-
-var ccEmails      = toList(matchedRecord.alert_cc)
-
-var bccEmails     = toList(matchedRecord.alert_bcc)
- 
-var toAddresses =
-
-    if (isTechOnly)
-
-        techEmails
-
-    else
-
-        (techEmails ++ bizEmails) distinctBy $
  
 ---
-
 {
-
-    to:  toAddresses filter notBlank($),
-
-    cc:  ccEmails    filter notBlank($),
-
-    bcc: bccEmails   filter notBlank($)
-
+   to: (matchedRecord."fcg_biz_contact_email" ++ matchedRecord."fcg_tech_contact_email" ++ matchedRecord."trading_partner_contact_email")  filter notBlank($)
 }
+
+ 
  ]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
