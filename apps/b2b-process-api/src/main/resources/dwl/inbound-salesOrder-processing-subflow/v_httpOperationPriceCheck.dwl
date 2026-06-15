@@ -6,10 +6,8 @@ var customerItemId = vars.customerItemValidationResponse
 ---
 {
 	"method": Mule::p('b2b-p21-sys-api.transaction.method'),
-//	"host": Mule::p('b2b-p21-sys-api.host'),
-//	"port": Mule::p('b2b-p21-sys-api.port'),
-	"host": "localhost",
-	"port": "8092",
+	"host": Mule::p('b2b-p21-sys-api.host'),
+	"port": Mule::p('b2b-p21-sys-api.port'),
 	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
 	"path": Mule::p('b2b-p21-sys-api.transaction.path'),
 	"headers": {
