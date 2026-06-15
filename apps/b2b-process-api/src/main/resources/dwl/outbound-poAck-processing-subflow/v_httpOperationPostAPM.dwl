@@ -7,7 +7,7 @@ import toBase64 from dw::core::Binaries
 	"host": Mule::p('apm.request.host'),
 	"port": Mule::p('apm.request.port'),
 	"basePath": Mule::p('apm.request.basePath'),
-	"path": Mule::p('apm.request.path'),
+	"path": Mule::p('apm.request.poAck'),
 	"headers": {
 	},
 	"queryParams": {
