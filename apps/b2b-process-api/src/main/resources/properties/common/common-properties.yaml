@@ -45,9 +45,11 @@ partner:
   inbound:
     "1631404318T": "FESTO"
     "960163954IDX": "VANTAGE"
+    "default": "N/A"
   outbound:
     "960163954IDX": "VANTAGE"
     "234093": "FESTO"
+    "default": "N/A"
     
 #Scheduler Configuration
 scheduler:
