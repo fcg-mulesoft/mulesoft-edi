@@ -238,7 +238,7 @@ var data = {
     transmissionId:   transmissionId,
     keyLabel:         "Correlation ID",
     vendorName:       partnerId,
-    companyName:      (vars.purchaseOrderData.value.company_no[0] default "N/A"),
+    companyName:      (vars.ackData.value.company_id[0] default "N/A"),
     key:              correlationId,
     businessKey:      poSegment,
     timestamp:        now() as String {format: "yyyy-MM-dd HH:mm:ss"}

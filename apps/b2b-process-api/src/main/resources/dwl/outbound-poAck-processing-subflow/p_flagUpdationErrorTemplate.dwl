@@ -99,7 +99,7 @@ var data = {
         ++ "\n  5. Correct the issue in P21 and resubmit the affected transactions."
         ++ "\n\n  Do NOT resubmit without confirming whether the transaction was partially saved in P21.",
     errorDescription: errorDescriptionHtml,
-    companyName: (vars.ackData.value.company_no[0] default "N/A"),
+    companyName: ((vars.ackData.value.company_id distinctBy $) joinBy ",") default "N/A",
     transmissionId:  correlationId default uuid(),
     keyLabel:        "Correlation ID",
     key:             correlationId default uuid(),

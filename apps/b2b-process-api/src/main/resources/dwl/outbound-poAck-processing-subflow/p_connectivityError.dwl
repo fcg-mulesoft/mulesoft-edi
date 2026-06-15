@@ -28,7 +28,7 @@ var vendorIds =
 
 var msgPoNumber  = if (sizeOf(poNumbers) > 0) poNumbers joinBy ", " else "N/A"
 var msgVendorId  = if (sizeOf(vendorIds) > 0) vendorIds joinBy ", " else "N/A"
-var msgCompanyNo = (poData[0].company_no) default "N/A"
+var msgCompanyNo = ((poData.company_id) distinctBy $) joinBy "," default "N/A"
 
 var sourceSystem = safe(integration.source, "APM")
 var targetSystem = safe(integration.target, "P21")

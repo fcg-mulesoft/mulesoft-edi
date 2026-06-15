@@ -24,7 +24,7 @@ output application/json
                 Name: "ufc_oe_hdr_ud_edi_so_status",
                 Value: 
                   if ((item.payload.status default "") == "SUCCESS")
-                    "Acknowledge"
+                    "Acknowledged"
                   else
                     "Acknowledged Failed"
               }
