@@ -1,6 +1,5 @@
 %dw 2.0
 output application/xml
-
 var order = payload.Transactions[0].DataElements[0].Order
 
 ---

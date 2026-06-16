@@ -142,7 +142,7 @@ var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as Str
 var msgVendorId =
     if (p('partner.inbound.' ++ senderKey) != null) p('partner.inbound.' ++ senderKey)
     else if (p('partner.outbound.' ++ senderKey) != null) p('partner.outbound.' ++ senderKey)
-    else " "
+    else "N/A"
 
 var itemRows =
     flatten(

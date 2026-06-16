@@ -24,3 +24,7 @@ email:
     password: ""
     sender: ""
     receivers: ""
+    
+#Fcg sender Id
+fcg:
+  edi_id: "117414135T"

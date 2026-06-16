@@ -34,14 +34,35 @@ var salesOrderValidationConfig =
 	filter: ""
 }
 var routingConfig = {
-	purchaseOrder: {
-		total: {
-			view: Mule::p('viewNames.purchaseOrderOutbound'),
-			queryParams: {
-			}
-		}
-	},
-	purchaseOrderAck: {
+purchaseOrder: {
+        validation: {
+            view: Mule::p('viewNames.coupaPurchaseOrderPartsValidtion'),
+            queryParams: {
+                "\$filter": (businesskey flatMap ((item) ->
+                    (item splitBy "|" filter ($ != "")) map ("their_item_id eq '" ++ $ ++ "'")
+                )) joinBy " or "
+            }
+        },
+        outbound: {
+            view: Mule::p('viewNames.coupaOrderOutbound'),
+            queryParams: {
+                "\$filter": (businesskey map ((item) -> do {
+                    var parts = item splitBy ":"
+                    var poNo = parts[0] default ""
+                    var companyId = parts[1] default ""
+                    var customerId = parts[2] default ""
+                    ---
+                    "po_no eq '" ++ poNo ++ "' and company_id eq '" ++ companyId ++ "' and customer_id eq " ++ customerId
+                })) joinBy " or "
+            }
+        },
+        total: {
+            view: Mule::p('viewNames.purchaseOrderOutbound'),
+            queryParams: {
+            }
+        }
+    },
+   purchaseOrderAck: {
 		validation: {
 			view: Mule::p('viewNames.purchaseOrderAckInbound'),
 			queryParams: {
@@ -49,22 +70,38 @@ var routingConfig = {
 			}
 		}
 	},
-	purchaseOrderInvoice: {
-		validation: {
+    purchaseOrderInvoice: {
+        validation: {
 			view: Mule::p('viewNames.purchaseOrderInvoiceInbound'),
 			queryParams: {
 				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
 			}
 		}
-	},
-	purchaseOrderShipment: {
-		validation: {
+        outbound: {
+            view: Mule::p('viewNames.coupaInvoiceOutbound'),
+            queryParams: {
+                "\$filter": (businesskey map ((item) -> do {
+                    var parts = item splitBy ":"
+                    var ediXRefId = parts[0] default ""
+                    var companyId = parts[1] default ""
+                    ---
+                    "edi_x_ref_id eq '" ++ ediXRefId ++ "' and company_id eq '" ++ companyId ++ "'"
+                })) joinBy " or "
+            }
+        },
+        total: {
+            view: Mule::p('viewNames.coupaInvoiceInbound'),
+            queryParams: attributes.queryParams
+        }
+    },
+    purchaseOrderShipment: {
+        validation: {
 			view: Mule::p('viewNames.purchaseOrderShipmentValidation'),
 			queryParams: {
 				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
 			}
 		},
-		total: {
+        total: {
 			view: Mule::p('viewNames.purchaseOrderShipmentTotal'),
 			queryParams: {
 				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
@@ -90,7 +127,6 @@ var routingConfig = {
 		total: {
 			view: Mule::p('viewNames.purchaseOrderInvoiceOutbound'),
 			queryParams: {
-
 				"\$filter" : "date_last_modified ge  " ++ date_last_modified
 			}
 		}
@@ -103,7 +139,6 @@ var routingConfig = {
 			}
 		}
 	}
-}
 var selectedConfig =
 
     (routingConfig[transactionType] default {
@@ -127,4 +162,3 @@ var selectedConfig =
 	body: {
 	}
 }
- 

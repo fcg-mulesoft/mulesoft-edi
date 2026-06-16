@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xsi:schemaLocation="
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
 		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
-		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
 	<munit:config name="b2b-p21-sys-api-spec-suite.xml" />
 	<munit:test name="b2b-p21-sys-api-spec-main-test" doc:id="3376f3d8-82b3-495a-b692-86cd4438875d" >
 		<munit:behavior >
@@ -114,7 +115,7 @@ assert_expression_payload::main({payload: payload, attributes: attributes, vars:
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Mock Flow Reference to post-p21-transaction-processing-subflow" doc:id="009ebe23-3007-4561-b495-3d81477e5b73" processor="flow-ref">
 				<munit-tools:with-attributes >
-					<munit-tools:with-attribute whereValue="314b6e9c-3f05-4b43-b835-afd0d9c75588" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="67a6a553-8d52-484d-adcb-26fc66df83ac" attributeName="doc:id" />
 				</munit-tools:with-attributes>
 				<munit-tools:then-return >
 					<munit-tools:payload value="#[output application/json --- readUrl('classpath://posttransactionsapplicationjsonb2bp21sysapispecconfigtest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
@@ -175,14 +176,12 @@ assert_expression_payload::main({payload: payload, attributes: attributes, vars:
 			<flow-ref doc:name="Flow-ref to post:\transactions:application\json:b2b-p21-sys-api-spec-config" doc:id="02b729fa-ab13-426f-a699-eece4b7b750e" name="post:\transactions:application\json:b2b-p21-sys-api-spec-config"/>
 		</munit:execution>
 		<munit:validation >
-			<munit-tools:assert doc:name="Assert payload" doc:id="270d1476-f539-4dbf-8fcd-022b6d895335" message="The payload does not match">
-				<munit-tools:that ><![CDATA[#[%dw 2.0
-import posttransactionsapplicationjsonb2bp21sysapispecconfigtest1::assert_expression_payload
+			<munit-tools:assert doc:name="Assert payload" doc:id="e0ccb30f-8794-4a00-b3f9-64cfa1d2b1e6" message="The payload does not match">
+				<munit-tools:that><![CDATA[#[%dw 2.0
+import posttransactionsapplicationjsonb2bp21sysapispecconfigtest::assert_expression_payload
 ---
 assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
 			</munit-tools:assert>
 		</munit:validation>
 	</munit:test>
-
-
 </mule>

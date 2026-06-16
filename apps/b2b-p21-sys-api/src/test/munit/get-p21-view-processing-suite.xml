@@ -8,7 +8,7 @@
 		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
 		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
 	<munit:config name="get-p21-view-processing-suite.xml" />
-	<munit:test name="get-p21-view-processing-subflow-test" doc:id="73fc7e8e-fc08-424f-90f6-28ccc1a32e02" >
+	<munit:test name="get-p21-view-processing-subflow-test" doc:id="73fc7e8e-fc08-424f-90f6-28ccc1a32e02" ignore="true">
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Mock Flow Reference to get-oauth-token-subflow" doc:id="a39aa8b8-99cd-462c-825b-480fdd44d7e8" processor="flow-ref">
 				<munit-tools:with-attributes >

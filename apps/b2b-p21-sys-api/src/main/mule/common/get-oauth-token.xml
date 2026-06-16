@@ -27,8 +27,8 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 					doc:id="d771052c-3f62-4e3a-a43f-0f642473ba02"
 					message="#[import p from Mule&#10;output application/json&#10;---&#10;&#10;{&#10;	&quot;message&quot;:&quot;Begin P21 auth token request.&quot;,&#10;	&quot;tracePoint&quot;: &quot;BEFORE_REQUEST&quot;,&#10;	&quot;correlationId&quot;: correlationId,&#10;	&quot;details&quot;: &quot;tokenRequestUrl: HTTPS://&quot; ++ p('P21api.host') ++ &quot;:&quot; ++ p('P21api.port') ++ p('P21api.tokenRequestUrl') ++ &quot;username:&quot; ++ p('P21api.username'),&#10;}]" />
 				<http:request doc:name="Request for Auth Token"
-					doc:id="56a0be28-ecea-4404-80b6-04d522090b84" method="POST"
-					url="https://p21-dev12api.flowcontrolgroup.com:3443/api/security/token/?username=mulesoftint&amp;password=1XxnyPs%40QH%5E1" />
+					doc:id="56a0be28-ecea-4404-80b6-04d522090b84" method="${oauth.request.method}"
+					url="${oauth.request.url}" />
 				<logger level="DEBUG" doc:name="After Token Request Logger"
 					doc:id="5e2e860c-8b69-4b53-b444-9de8bb1ee274"
 					message='#[%dw 2.0 &#10;output application/json&#10;---&#10;&#10;{&#10;	"message":"End P21 auth token request.",&#10;	"tracePoint": "AFTER_REQUEST",&#10;	"correlationId": correlationId,&#10;	"authToken": vars.authToken&#10;}]' />

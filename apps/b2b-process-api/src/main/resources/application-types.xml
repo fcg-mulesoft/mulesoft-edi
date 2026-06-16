@@ -5,5 +5,4 @@
   <types:enrichment select="#2befd336-0a59-43f8-9148-d9d8d5594758"/>
   <types:enrichment select="#ff949245-ccb8-49be-94c6-25a6142e1e4a"/>
   <types:enrichment select="#5a172f1c-58e2-4c38-8ad3-d51f8e86eafe"/>
-  <types:enrichment select="#ab0afd4b-e630-49be-b19c-8c64728df459"/>
 </types:mule>

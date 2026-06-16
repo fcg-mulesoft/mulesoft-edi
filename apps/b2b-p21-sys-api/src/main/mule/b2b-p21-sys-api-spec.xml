@@ -8,8 +8,8 @@
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
 	<flow name="b2b-p21-sys-api-spec-main">
 		<http:listener
-			config-ref="b2b-p21-sys-api-spec-httpListenerConfig"
-			path="${http.path.listener}">
+			config-ref="b2b-p21-sys-api-spec-httpListenerConfig
+			path="${http.path.listener}" doc:name="b2b-p21-sys-api-spec-main">
 			<http:response
 				statusCode="#[vars.httpStatus default 200]">
 				<http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
@@ -54,5 +54,9 @@
 					name="post-p21-transaction-processing-subflow" />
 			</otherwise>
 		</choice>
+	</flow>
+	<flow
+		name="post:\transactions\custom:application\xml:b2b-p21-sys-api-spec-config">
+		<flow-ref doc:name="Flow Reference to post-p21-transaction-xml-processing-subflow" doc:id="9f6008ae-5d49-439d-b624-7dad5394a314" name="post-p21-transaction-xml-processing-subflow" />
 	</flow>
 </mule>

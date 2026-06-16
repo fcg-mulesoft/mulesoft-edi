@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd 
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+	<flow name="p21-coupa-invoice-processing-scheduler-flow" doc:id="9a0e060e-38ad-4ed3-a682-442c5a4c69b7">
+
+    <scheduler doc:name="Scheduler">
+			<scheduling-strategy >
+				<fixed-frequency frequency="72" timeUnit="HOURS" />
+			</scheduling-strategy>
+		</scheduler>
+
+    <!-- 1. Get Watermark -->
+		<os:retrieve doc:name="Retrieve Last Successful Watermark" doc:id="148b1216-6d53-48e0-a705-ab3e11a4d1d8" key="p21-invoice-watermark" target="watermark" objectStore="Object_store">
+			<os:default-value ><![CDATA[#[%dw 2.0
+output application/json
+---
+(now() - |PT12H|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
+		</os:retrieve>
+		<set-variable value="#[now()]" doc:name="Current Run Time" doc:id="79f9f378-8dde-4947-ae55-a6dda422fb0f" variableName="currentRunDateTime"/>
+		<logger level="INFO" message="Starting P21 Invoice Sync - Watermark: #[vars.watermark]" />
+
+    <!-- 2. Publish first batch to VM -->
+		<set-variable value="#[output application/json&#10;---&#10;{&#10;    watermark: vars.watermark,&#10;    currentRunDateTime: vars.currentRunDateTime&#10;}]" doc:name="VM Payload" doc:id="234b39a2-cc00-4af4-adec-66e5c83ae948" variableName="vmPayload" />
+		<flow-ref doc:name="process-p21-invoice-batch-coupa" doc:id="b0c42780-c72d-453f-a09c-e4993c28d715" name="process-p21-invoice-batch-coupa"/>
+		<error-handler ref="global-common-error-handler" />
+
+
+</flow>
+<sub-flow name="process-p21-invoice-batch-coupa" doc:id="d5e75bc5-432a-464d-a720-62dd51df2705">
+    <ee:transform doc:name="var : httpOperation - get invoices" doc:id="3c6275f3-e697-4b9e-b0b8-325aa3bd2273">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationGetInvoice.dwl" variableName="httpOperation" />
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="9d6851df-95ab-4c02-a6ea-3ed4c5cd931e" name="common-http-request-subflow" target="p21Response" />
+		<logger level="INFO" message="Fetched #[sizeOf(vars.p21Response.value)] records as part of this run" />
+
+    <!-- Transform -->
+    <ee:transform doc:name="Group Invoices" doc:id="01f5b7d7-d5b4-423c-8821-62818889f4d3" >
+			<ee:message >
+				<ee:set-payload resource="dwl/coupa-inbound-invoice-processing-subflow/p_p21InvoicesGrouping.dwl" />
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="6fbae4fa-9cba-4787-908b-5648be52837f">
+			<when expression="#[sizeOf(vars.p21Response.value) &gt; 0]">
+				<parallel-foreach doc:name="Parallel For Each" doc:id="a1689c95-1598-46a1-a227-04ec1cb8ff71" collection="#[payload]">
+					<logger level="INFO" doc:name="Current Invoice Information" doc:id="13dba9bf-8834-4bb8-a470-14d951137178" message="Processing Invoice #[payload.invoice_no] dated #[payload.invoice_date] having #[payload.total_line_count] lines for amount #[payload.total_amount] related to company #[payload.company_id]"/>
+					<ee:transform doc:name="To EDI Format" doc:id="51786b2c-059b-497d-bce4-e5dc38d7d31d">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationPostCoupaInvoice.dwl" variableName="httpOperation" />
+			</ee:variables>
+		</ee:transform>
+					<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="0d1e3063-a16b-4e91-92a0-ac7955da0dd0" name="common-http-request-subflow" />
+		</parallel-foreach>
+				<os:store doc:name="Store" doc:id="16602361-6fb5-4b0b-b519-a3da5c18850c" key="p21-invoice-watermark" objectStore="Object_store">
+					<os:value><![CDATA[#[vars.p21Response.value[-1].date_last_modified]]]></os:value>
+				</os:store>
+				<logger level="INFO" message="Watermark updated to #[vars.p21Response.value[-1].date_last_modified]" doc:name="Process Completed" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="No Records got updated" doc:id="a9e54a09-9f6a-4023-9108-f281cfb132ae" message="No Records got updated in P21 post Last Run. Last Watermark values is #[vars.vmPayload.watermark]" />
+			</otherwise>
+		</choice>
+
+    <!-- Send to EDI Partner -->
+
+    <!-- Check for more records -->
+</sub-flow>
+<flow name="p21-adhoc-invoice-post" doc:id="63809f69-248a-477e-b1c2-ceb376258a70">
+    <try>
+        <!-- Extract invoice numbers -->
+        <set-variable variableName="invoiceList" value="#[payload.invoiceNos splitBy ',']" />
+
+        <ee:transform doc:name="var : httpOperation - get invoices by Invoice Number" doc:id="03db7307-34ba-4719-87b1-2efa2e6b1ed3">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationGetInvoicesByInvoiceNumber.dwl" variableName="httpOperation" />
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="5deade84-4e85-465c-bfdf-cb248afd7ffa" name="common-http-request-subflow" target="p21Response" />
+			<ee:transform doc:name="To EDI Format" doc:id="79dfe91b-6bda-4e42-8643-7db4e48a741d">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationPostCoupaInvoice.dwl" variableName="httpOperation" />
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="cb1478b1-481f-4298-9be3-aa0d219730e1" name="common-http-request-subflow" target="ediResponse" />
+			<set-payload value="#[{ status: 'SUCCESS', processed: sizeOf(vars.httpOperation.body.value), ediResponse: vars.ediResponse }]" doc:name="Set Payload" doc:id="0bcaa031-5c26-4a2c-b280-8ed046c7446a" />
+			<error-handler>
+            <on-error-propagate>
+                <logger level="ERROR" message="Adhoc failed for invoices #[vars.invoiceList]: #[error.description]" />
+            </on-error-propagate>
+        </error-handler>
+    </try>
+</flow>
+<flow name="update-p21-watermark">
+
+    <os:store doc:name="Store" doc:id="f9c4fdb7-5a59-47ad-885b-b1ce3d5ba73d" key="p21-invoice-watermark" objectStore="Object_store">
+			<os:value ><![CDATA[#[payload.watermark]]]></os:value>
+		</os:store>
+		<set-payload value="#[{ status: 'SUCCESS', message: 'Watermark updated to ' ++ payload.watermark }]" doc:name="Set Payload" doc:id="ec79f7aa-a7c5-4b08-8128-085c6505f9a0" />
+
+    <logger level="INFO" message="Watermark manually updated to #[payload.watermark]" />
+</flow>
+</mule>
