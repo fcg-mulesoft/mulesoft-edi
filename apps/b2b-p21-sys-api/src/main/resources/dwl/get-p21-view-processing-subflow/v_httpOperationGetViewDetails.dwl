@@ -76,7 +76,7 @@ purchaseOrder: {
 			queryParams: {
 				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
 			}
-		}
+		},
         outbound: {
             view: Mule::p('viewNames.coupaInvoiceOutbound'),
             queryParams: {
@@ -138,6 +138,8 @@ purchaseOrder: {
 				"\$filter": "date_last_modified ge  " ++ date_last_modified
 			}
 		}
+	}
+	
 	}
 var selectedConfig =
 
