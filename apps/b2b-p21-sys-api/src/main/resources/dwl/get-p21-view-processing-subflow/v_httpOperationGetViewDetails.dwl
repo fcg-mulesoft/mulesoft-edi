@@ -66,7 +66,7 @@ purchaseOrder: {
 		validation: {
 			view: Mule::p('viewNames.purchaseOrderAckInbound'),
 			queryParams: {
-				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
+				"\$filter": (businesskey map ("po_no eq " ++ $ )) joinBy " or "
 			}
 		}
 	},
