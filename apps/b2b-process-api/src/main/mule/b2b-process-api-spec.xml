@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-    <apikit:config name="b2b-process-api-spec-config" api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-process-api-spec:1.0.7:raml:zip:b2b-process-api-spec.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <http:listener-config name="HTTP_Listener_Configuration" doc:name="HTTP Listener config" doc:id="ddcf9061-7e2e-4b98-b4d0-e2e7a80d4cff">
-        <http:listener-connection host="0.0.0.0" port="${https.private.port}" protocol="HTTPS" tlsContext="TLS_Context" />
-    </http:listener-config>
-    <http:request-config name="partnerManager" doc:name="HTTP Request configuration" doc:id="696f8b10-34f7-43b6-83f5-9bd52f5c9407" >
-		<http:request-connection protocol="HTTPS" host="b2b-inbound-http-d975-zrx5fd.y7366p.usa-e1.cloudhub.io" port="443"/>
-	</http:request-config>
 	<flow name="b2b-process-api-spec-main" doc:id="61ca2ba4-6c49-4bb9-8cd1-ad6bd561f615">
-        <http:listener config-ref="HTTP_Listener_Configuration" path="${https.basePath}" doc:name="b2b-process-api-spec-main">
+        <http:listener path="${https.basePath}" doc:name="b2b-process-api-spec-main" config-ref="HTTP_Listener_Configuration">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
@@ -39,7 +32,7 @@ output application/json
 payload]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <apikit:router config-ref="b2b-process-api-spec-config" />
+        <apikit:router config-ref="b2b-process-api-spec-config"/>
         <error-handler ref="global-common-error-handler" />
     </flow>
     <flow name="get:\healthCheck:b2b-process-api-spec-config">
@@ -197,19 +190,6 @@ output application/json
 		<flow-ref doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="234c0477-eac1-41f3-89ac-659d35113b13" name="outbound-invoice-processing-subflow" />
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="ce6f1ad5-30ee-4e4e-b877-f6786d87d3ea" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
 	</flow>
-	<flow name="post:\coupainboundTransactions:application\xml:b2b-process-api-spec-config">
-        <ee:transform doc:name="Transform Message">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  status: "success",
-  message: "Transaction processed successfully"
-} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
-    </flow>
 	<flow name="shipment-outbound-scheduled-flow" doc:id="a73526f3-22ef-4be8-bb6a-b13c75e82454" maxConcurrency="1" >
 		<scheduler doc:name="EVERY 3 HOURS" doc:id="d4e29f4a-0d3b-4a7f-9bc3-7997d68496ac" >
 			<scheduling-strategy >
