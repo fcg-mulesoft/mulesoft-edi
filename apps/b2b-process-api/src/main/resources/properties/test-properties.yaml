@@ -23,8 +23,6 @@ b2b-p21-sys-api:
     validation: "validation"
     outbound: "outbound"
     total: "total"
-  validationMode:
-    xref: "xref"
     po: "po"
     customerPart: "customerPart"
   processingMode:

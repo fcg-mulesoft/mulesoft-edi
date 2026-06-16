@@ -71,10 +71,10 @@ purchaseOrder: {
 		}
 	},
     purchaseOrderInvoice: {
-        validation: {
+		validation: {
 			view: Mule::p('viewNames.purchaseOrderInvoiceInbound'),
 			queryParams: {
-				"\$filter": (businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or "
+				"\$filter": (businesskey map ("po_no eq " ++ $)) joinBy " or "
 			}
 		},
         outbound: {
