@@ -15,8 +15,8 @@ var customerItemId = vars.customerItemValidationResponse
 	},
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
-		"processingMode": "direct",
-		"checkType": "catalogPrice",
+		"processingMode": Mule::p('b2b-p21-sys-api.processingMode.direct'),
+		"checkType": Mule::p('b2b-p21-sys-api.checkType.catalogPrice'),
 		"customerId": vars.ediXrefResponse.customer_id[0],
 		"companyId": vars.ediXrefResponse.company_id[0],
 		"salesLocId": vars.ediXrefResponse.preferred_location_id[0]

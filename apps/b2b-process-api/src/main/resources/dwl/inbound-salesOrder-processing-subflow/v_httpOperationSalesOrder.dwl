@@ -37,8 +37,8 @@ var headerMessage =
     },
     "queryParams": {
         "transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
-        "processingMode": "direct",
-        "checkType": "default"
+        "processingMode":Mule::p('b2b-p21-sys-api.processingMode.direct'),
+        "checkType": Mule::p('b2b-p21-sys-api.checkType.default')
     },
     "uriParams": {},
     "untilsuccessful": {

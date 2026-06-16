@@ -23,6 +23,14 @@ b2b-p21-sys-api:
     validation: "validation"
     outbound: "outbound"
     total: "total"
+    po: "po"
+    customerPart: "customerPart"
+  processingMode:
+    direct: "direct"
+    
+  checkType:
+    catalogPrice: "catalogPrice"
+    default: "default"
   view:
     path: "/views"
     method: "GET"

@@ -26,7 +26,7 @@ import toBase64 from dw::core::Binaries
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
-		"validationMode" : "xref",
+		"validationMode" : Mule::p('b2b-p21-sys-api.validationMode.xref'),
 		"companyId": "TPA",
 		"ediRefId" : (payload[0].b2bMessage.header.partyInformation
     filter ($.qualifier == "BY"))[0].identificationCode default ""
@@ -121,7 +121,7 @@ import toBase64 from dw::core::Binaries
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
-		"validationMode": "customerPart",
+		"validationMode": Mule::p('b2b-p21-sys-api.validationMode.customerPart'),
 		"customerId": vars.ediXrefResponse.customer_id[0],
 		"businesskey":(vars.initialPayload flatMap ((x) -> x.b2bMessage.detail.itemDetails))
     map ((item) -> item.buyersPartNumber)

@@ -15,7 +15,7 @@ import toBase64 from dw::core::Binaries
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
 		"businesskey": vars.initialPayload.b2bMessage.header.poNumber[0] default null,
-		"validationMode": "po",
+		"validationMode": Mule::p('b2b-p21-sys-api.validationMode.po'),
 		"customerId": vars.ediXrefResponse.customer_id[0],
 		"companyId": vars.ediXrefResponse.company_id[0],
 	},

@@ -1,11 +1,11 @@
-#TEST Environment Properties
+#DEV Environment Properties
 
 api:
   name: "b2b-process-api-app"
   id: "20869875"
 
 b2b-p21-sys-api:
-  timeout: "30000"
+  timeout: "150000"
   host: "b2b-p21-sys-api-dev-zrx5fd.internal-y7366p.usa-e1.cloudhub.io"
   basePath: "/api/"
   port: "8092"
@@ -18,10 +18,21 @@ b2b-p21-sys-api:
     salesOrderAck: "salesOrderAck"
     salesOrderInvoice: "salesOrderInvoice"
     salesOrderShipment: "salesOrderShipment"
+    partsPrice: "partsPrice"
   purpose:
     validation: "validation"
     outbound: "outbound"
     total: "total"
+  validationMode:
+    xref: "xref"
+    po: "po"
+    customerPart: "customerPart"
+  processingMode:
+    direct: "direct"
+    
+  checkType:
+    catalogPrice: "catalogPrice"
+    default: "default"
   view:
     path: "/views"
     method: "GET"
@@ -30,6 +41,19 @@ b2b-p21-sys-api:
       interval: "5000"
   transaction:
     path: "/transactions"
+    method: "POST"
+    untilsuccessful:
+      maxRetries: "5"
+      interval: "5000"
+    custom:
+      path: "/transactions/custom"
+b2b-inbound-partner-mgmt-api:
+  timeout: "150000"
+  host: "b2b-inbound-http-9yzw-zrx5fd.y7366p.usa-e1.cloudhub.io"
+  basePath: "/api/"
+  port: "443"
+  coupa-invoice:
+    path: "/JSON-json-to-xml-inbound-invoice-coupa"
     method: "POST"
     untilsuccessful:
       maxRetries: "5"
@@ -58,6 +82,9 @@ apm:
     port: "443"
     basePath: "/api"
     path: "/out-src-purchase-order"
+    invoice: "/out-src-invoice"
+    asn: "/out-src-shipment-notice"
+    poAck: "/out-src-poAck"
     untilsuccessful:
       maxRetries: "5"
       interval: "5000"
@@ -72,3 +99,5 @@ azure:
 fcg:
   edi_id: "117414135T"
 
+email:
+  toRecipient: "harshavardhan.reddy@caeliusconsulting.com,anshul.negi@caeliusconsulting.com,priyanshu.dhawan@caeliusconsulting.com,gopi.makutam@caeliusconsulting.com,bighnesh.sahoo@caeliusconsulting.com,Mulesoft_nonprod_support@flowcontrolgroup.com"
