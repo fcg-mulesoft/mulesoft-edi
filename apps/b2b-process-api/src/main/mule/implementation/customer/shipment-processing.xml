@@ -74,8 +74,8 @@ groupedPayload pluck ((records, pickTicketNo) -> {
                 },
  
             shipNoticeNumber: records[0].BSN02_ShipNoticeNo,
-            receiverId: records[0].TP_edi_isa05_id,
-            senderId: "",
+			receiverId: records[0].TP_edi_isa05_id ++ "T",
+            senderId: Mule::p(lower(records[0].trading_partner_name) ++ ".ack.senderId") ,
  
             shippedDateQualifier: records[0].DTM01_ShippedDateQual,
             shippedDate: records[0].DTM02_ShippedDate,

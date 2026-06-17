@@ -7,8 +7,8 @@ var groupedOrders = vars.ackData.value groupBy $.BAK03_CustPO
 groupedOrders pluck ((orderItems, orderNo) -> {
     b2bMessage: {
         header: {
-            senderId: Mule::p('vantage.ack.senderId'),
-            receiverId: orderItems[0]."TP_edi_isa05_id" as String,
+			receiverId: orderItems[0].TP_edi_isa05_id ++ "T",
+            senderId: Mule::p(lower(orderItems[0].trading_partner_name) ++ ".ack.senderId") ,
             acknowledgmentPurposeCode: orderItems[0].BAK01_Purpose,
             acknowledgmentType: orderItems[0].BAK02_AckType,
             purchaseOrderNumber: orderItems[0].BAK03_CustPO,
