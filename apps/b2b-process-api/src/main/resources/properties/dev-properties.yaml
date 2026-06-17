@@ -6,7 +6,7 @@ api:
 
 b2b-p21-sys-api:
   timeout: "150000"
-  host: "b2b-p21-sys-api-dev-zrx5fd.internal-y7366p.usa-e1.cloudhub.io"
+  host: "localhost"
   basePath: "/api/"
   port: "8092"
   transactionType:
@@ -98,6 +98,17 @@ azure:
 #Fcg sender Id
 fcg:
   edi_id: "117414135T"
+ 
+# Partners
+partner:
+  inbound:
+    "1631404318T": "FESTO"
+    "960163954IDXT": "VANTAGE"
+    "default": "N/A"
+  outbound:
+    "960163954IDXT": "VANTAGE"
+    "234093": "FESTO"
+    "default": "N/A"
 
 email:
   toRecipient: "harshavardhan.reddy@caeliusconsulting.com,anshul.negi@caeliusconsulting.com,priyanshu.dhawan@caeliusconsulting.com,gopi.makutam@caeliusconsulting.com,bighnesh.sahoo@caeliusconsulting.com,Mulesoft_nonprod_support@flowcontrolgroup.com"
