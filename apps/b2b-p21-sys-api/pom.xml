@@ -79,6 +79,7 @@
 							<ignoreFile>b2b-p21-sys-api-spec-main</ignoreFile>
 							<ignoreFile>post:\coupa\purchaseOrder:application\xml:b2b-p21-sys-api-spec-config</ignoreFile>
 							<ignoreFile>get-healthcheck-subflow</ignoreFile>
+							<ignoreFile>common/get-oauth-token.xml</ignoreFile>
 							<ignoreFile>get-p21-view-processing-subflow</ignoreFile>
 							<ignoreFile>post-p21-transaction-processing-subflow</ignoreFile>
 							<ignoreFile>post-p21-coupa-purchaseorder-processing-subflow</ignoreFile>
@@ -90,6 +91,14 @@
 							<ignoreFile>implementations/post-p21-xml-transaction-processing.xml</ignoreFile> 
 							<ignoreFile>implementations/post-p21-xml-transaction-processing.xml</ignoreFile>
 						</ignoreFiles>
+						<ignoreFlows>
+							<ignoreFlow>get-oauth-token-subflow</ignoreFlow>
+							<ignoreFlow>post-p21-coupa-purchaseorder-processing-subflow</ignoreFlow>
+							<ignoreFlow>get-p21-view-processing-subflow</ignoreFlow>
+							<ignoreFlow>post-p21-entity-processing-subflow</ignoreFlow>
+							<ignoreFlow>post-p21-transaction-processing-subflow</ignoreFlow>
+							<ignoreFlow>post-p21-transaction-xml-processing-subflow</ignoreFlow>
+						</ignoreFlows>      
 					</coverage>
 				</configuration>
 			</plugin>
