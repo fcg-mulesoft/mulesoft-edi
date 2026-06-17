@@ -76,7 +76,7 @@ logger:
 #Sender Id
 vantage:
   ack:
-    senderId: "TRIPHASE"
+    senderId: "117414135T"
      
 edi:
   default:
