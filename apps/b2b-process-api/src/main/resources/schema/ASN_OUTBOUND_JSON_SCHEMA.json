@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "856 ASN Validation Schema",
+  "type": "object",
+  "required": ["b2bMessage"],
+  "properties": {
+    "b2bMessage": {
+      "type": "object",
+      "required": ["header", "detail"],
+      "properties": {
+        "header": {
+          "type": "object",
+          "required": [
+            "purposeCode",
+            "shipDate",
+            "shipTime",
+            "shipNoticeNumber"
+          ],
+          "properties": {
+            "purposeCode": {
+              "type": "string",
+              "minLength": 1
+            },
+            "shipDate": {
+              "type": "string"
+            },
+            "shipTime": {
+              "type": "string"
+            },
+            "shipNoticeNumber": {
+              "type": ["string", "number"]
+            },
+            "receiverId": {
+              "type": "string"
+            },
+            "senderId": {
+              "type": "string"
+            },
+            "shippedDateQualifier": {
+              "type": "string"
+            },
+            "shippedDate": {
+              "type": "string"
+            },
+            "estimatedDeliveryDateQualifier": {
+              "type": "string"
+            },
+            "estimatedDeliveryDate": {
+              "type": "string"
+            }
+          }
+        },
+        "detail": {
+          "type": "object",
+          "required": ["shipmentInformation"],
+          "properties": {
+            "shipmentInformation": {
+              "type": "object",
+              "required": [
+                "partyInformation",
+                "orderInformation"
+              ],
+              "properties": {
+                "carrierInformation": {
+                  "type": "object",
+                  "properties": {
+                    "routingQualifier": {
+                      "type": "string"
+                    },
+                    "IdQualifier": {
+                      "type": "string"
+                    },
+                    "carrierId": {
+                      "type": ["string", "number"]
+                    },
+                    "transportationMethodCode": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "measurementRef": {
+                  "type": "string"
+                },
+                "weightQualifier": {
+                  "type": "string"
+                },
+                "weight": {
+                  "type": "number"
+                },
+                "unitOfMeasure": {
+                  "type": "string"
+                },
+                "trackingQual": {
+                  "type": "string"
+                },
+                "trackingNo": {
+                  "type": ["string", "null"]
+                },
+                "bolQual": {
+                  "type": "string"
+                },
+                "billOfLadingNumber": {
+                  "type": ["string", "null"]
+                },
+                "shipmentTerms": {
+                  "type": "string"
+                },
+                "partyInformation": {
+                  "type": "array",
+                  "minItems": 2,
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "partyCode",
+                      "name"
+                    ],
+                    "properties": {
+                      "partyCode": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "codeQualifier": {
+                        "type": "string"
+                      },
+                      "identificationCode": {
+                        "type": ["string", "number"]
+                      },
+                      "addressLine1": {
+                        "type": "string"
+                      },
+                      "city": {
+                        "type": "string"
+                      },
+                      "state": {
+                        "type": "string"
+                      },
+                      "zipCode": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "contains": {
+                    "type": "object",
+                    "properties": {
+                      "partyCode": {
+                        "const": "SF"
+                      }
+                    }
+                  }
+                },
+                "orderInformation": {
+                  "type": "object",
+                  "required": [
+                    "poNumber",
+                    "lineItems"
+                  ],
+                  "properties": {
+                    "poNumber": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "sourceOrderNumber": {
+                      "type": "string"
+                    },
+                    "poDate": {
+                      "type": "string"
+                    },
+                    "lineItems": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "buyersPartNumber",
+                          "shippedQuantity"
+                        ],
+                        "properties": {
+                          "buyersPartNumber": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "vendorsItemNumber": {
+                            "type": ["string", "null"]
+                          },
+                          "upc": {
+                            "type": ["string", "null"]
+                          },
+                          "shippedQuantity": {
+                            "type": "number"
+                          },
+                          "uom": {
+                            "type": "string"
+                          },
+                          "descriptionType": {
+                            "type": "string"
+                          },
+                          "productDescription": {
+                            "type": "string"
+                          },
+                          "packListNo": {
+                            "type": ["string", "number", "null"]
+                          },
+                          "barCodedSerialNo": {
+                            "type": ["string", "number","null"]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

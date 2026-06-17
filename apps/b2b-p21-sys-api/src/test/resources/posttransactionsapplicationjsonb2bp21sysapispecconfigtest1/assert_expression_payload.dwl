@@ -1,0 +1,55 @@
+%dw 2.0
+import * from dw::test::Asserts
+---
+payload must equalTo({
+  "ArrayOfItemPrice": {
+    "ItemPrice": {
+      "ItemId": "TBM2G-11526D-AHAA-00",
+      "LocationId": "41000",
+      "QuantityAvailable": "86.000000000",
+      "QuantityOnHand": "94.000000000",
+      "QuantityAllocated": "8.000000000",
+      "QuantityNonPickable": "0",
+      "QuantityQuarantined": "0",
+      "QuantityFrozen": "0",
+      "LocationType": "Standard",
+      "UnitPrice": "1354.000000000",
+      "BaseUnitPrice": "1354.000000000",
+      "UOM": "EA",
+      "UOMUnitSize": "1.000000000",
+      "PricePageUid": "0",
+      "PriceUOM": "EA",
+      "PriceUnitSize": "1.000000000",
+      "ExtendedPrice": "1354.000000000",
+      "CalcValue": "1.000000000",
+      "UnitCommissionCost": "857.082000000",
+      "UnitOtherCost": "857.082000000",
+      "UnitSalesCost": "744.000000000",
+      "LotCosted": "N"
+    },
+    "ItemPrice": {
+      "ItemId": "TBM2G-11526D-AHAA-00",
+      "LocationId": "41000",
+      "QuantityAvailable": "86.000000000",
+      "QuantityOnHand": "94.000000000",
+      "QuantityAllocated": "8.000000000",
+      "QuantityNonPickable": "0",
+      "QuantityQuarantined": "0",
+      "QuantityFrozen": "0",
+      "LocationType": "Standard",
+      "UnitPrice": "1354.000000000",
+      "BaseUnitPrice": "1354.000000000",
+      "UOM": "EA",
+      "UOMUnitSize": "1.000000000",
+      "PricePageUid": "0",
+      "PriceUOM": "EA",
+      "PriceUnitSize": "1.000000000",
+      "ExtendedPrice": "13540.000000000",
+      "CalcValue": "1.000000000",
+      "UnitCommissionCost": "857.082000000",
+      "UnitOtherCost": "857.082000000",
+      "UnitSalesCost": "744.000000000",
+      "LotCosted": "N"
+    }
+  }
+})
