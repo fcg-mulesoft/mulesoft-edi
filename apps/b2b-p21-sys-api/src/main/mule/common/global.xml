@@ -52,6 +52,8 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
             </email:properties>
         </email:smtp-connection>
     </email:smtp-config>
+	<global-property doc:name="Global Property" doc:id="985365f6-81ea-4f92-a5e8-d4773c129e37" name="mule.env" value="dev" />
+	<global-property doc:name="Global Property" doc:id="e36c5bba-26ff-44db-b73f-57f3774a4011" name="mule.key" value="fcgMuleKey123456" />
 
 
 </mule>
