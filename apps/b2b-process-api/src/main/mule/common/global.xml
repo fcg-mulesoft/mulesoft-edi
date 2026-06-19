@@ -34,7 +34,6 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
         </email:smtp-connection>
     </email:smtp-config>
 	<os:object-store name="Object_store" doc:name="Object store" doc:id="f2a38677-1eeb-47c2-8c6b-87a11cb44897" entryTtl="${objectstore.token.entryTTL}" entryTtlUnit="HOURS" expirationInterval="${objectstore.token.expirationInterval}" expirationIntervalUnit="HOURS" persistent="false" maxEntries="${objectstore.token.maxEntries}"/>
-<!-- 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="77b514bd-ac85-47f2-b5b8-7873018dcbb2" flowRef="b2b-process-api-spec-main" /> -->
 	<azure-storage:config name="Azure_Storage_Config" doc:name="Azure Storage Config" doc:id="62dd0a7a-502d-4fe5-8e4f-eeda6573ac2b" >
 		<azure-storage:sas-token-azure-connection accountName="${azure.accountname}" sasToken="${secure::azure.sastoken}"/>
 	</azure-storage:config>
@@ -51,4 +50,5 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 			<vm:queue queueName="p21.invoice.fetch" />
 		</vm:queues>
 	</vm:config>
+	<os:object-store name="Object_Store_Invoice_Vantage" doc:name="Object store" doc:id="6d6a9d16-65da-45b2-8223-71110a9065ae" persistent="false" maxEntries="2" entryTtl="12" entryTtlUnit="HOURS" expirationInterval="30" />
 </mule>

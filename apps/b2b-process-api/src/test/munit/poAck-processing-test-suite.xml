@@ -45,6 +45,4 @@
 			</munit-tools:verify-call>
 		</munit:validation>
 	</munit:test>
-
-
 </mule>
