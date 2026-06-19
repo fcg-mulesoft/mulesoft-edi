@@ -136,7 +136,7 @@ output application/json
         <logger level="INFO" doc:name="LOG INFO : END" doc:id="00053657-e525-43b6-a7a2-8975ae96d6eb" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;END&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: vars.initialVariables.correlationId,&#xA; sourceSystem: &quot;APM - Anypoint Partner Manager&quot;,&#xA; targetSystem: &quot;Email&quot;,&#xA; message: &quot;B2B Alert Notification process completed successfully.&quot;&#xA;}]" />
         <error-handler ref="global-common-error-handler" />
     </flow>
-	<!-- [STUDIO:"b2b-process-api-cxml-flow"]<flow name="b2b-process-api-cxml-flow" doc:id="8831e8f3-8e30-44d8-a311-c1cbc2d80555" >
+	 [STUDIO:"b2b-process-api-cxml-flow"]<!-- [STUDIO:"b2b-process-api-cxml-flow"]<flow name="b2b-process-api-cxml-flow" doc:id="8831e8f3-8e30-44d8-a311-c1cbc2d80555" >
 		<http:listener doc:name="b2b-process-api-spec-main" doc:id="6431b1e9-0ad2-4127-ac9a-312415a3068d" config-ref="HTTP_Listener_Configuration" path="/coupainboundTransactions/cxml" >
 			<http:response statusCode="#[vars.httpStatus default 200&#93;" >
 				<http:headers ><![CDATA[#[vars.outboundHeaders default {}&#93;&#93;&#93;></http:headers>
@@ -167,7 +167,7 @@ read(payload, 'application/xml')&#93;&#93;></ee:set-payload>
 			<ee:variables >
 				<ee:set-variable variableName="initialVariables" ><![CDATA[%dw 2.0
 output application/json
----
+&#45;&#45;-
 {
 	"source": "P21",
 	"target": "APM",
@@ -175,13 +175,13 @@ output application/json
 	correlationId: correlationId default uuid(),
 	timestamp: now(),
 	status: "STARTED"
-}]]></ee:set-variable>
+}&#93;&#93;></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO : START" doc:id="bc4c39bb-4a7a-40c9-a4b2-c9a655f17868" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="bc4c39bb-4a7a-40c9-a4b2-c9a655f17868" message='#[%dw 2.0&#10;output application/json&#10;&#45;&#45;-&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}&#93;' />
 		<flow-ref doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="234c0477-eac1-41f3-89ac-659d35113b13" name="outbound-invoice-processing-subflow" />
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="ce6f1ad5-30ee-4e4e-b877-f6786d87d3ea" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-	</flow>
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="ce6f1ad5-30ee-4e4e-b877-f6786d87d3ea" message='#[%dw 2.0&#10;output application/json&#10;&#45;&#45;-&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}&#93;' />
+	</flow> [STUDIO] -->
 	<flow name="shipment-outbound-scheduled-flow" doc:id="a73526f3-22ef-4be8-bb6a-b13c75e82454" maxConcurrency="1" >
 		<scheduler doc:name="EVERY 3 HOURS" doc:id="d4e29f4a-0d3b-4a7f-9bc3-7997d68496ac" >
 			<scheduling-strategy >
@@ -207,5 +207,5 @@ output application/json
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="0b7e3d52-0980-49ec-973f-4d25a0f7a4e4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
 		<flow-ref doc:name="Flow Reference To outbound-shipment-processing-subflow" doc:id="3c5eba7e-e8e0-40e5-aac9-ffae5ec2e541" name="outbound-shipment-processing-subflow" />
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="349d2194-54f1-4bc9-83f6-0d655646605d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-	</flow>
+	</flow> 
 </mule>
