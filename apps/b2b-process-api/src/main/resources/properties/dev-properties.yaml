@@ -6,7 +6,7 @@ api:
 
 b2b-p21-sys-api:
   timeout: "150000"
-  host: "localhost"
+  host: "b2b-p21-sys-api-dev-zrx5fd.internal-y7366p.usa-e1.cloudhub.io"
   basePath: "/api/"
   port: "8092"
   transactionType:
