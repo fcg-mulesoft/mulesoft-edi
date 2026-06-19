@@ -234,7 +234,7 @@
 			</munit-tools:verify-call>
 		</munit:validation>
 	</munit:test>
-	<munit:test name="poAck-outbound-scheduled-flowTest" doc:id="94e32997-155c-46a0-a288-be8d39e61c46" description="Test" ignore="true">
+	<munit:test name="poAck-outbound-scheduled-flowTest" doc:id="94e32997-155c-46a0-a288-be8d39e61c46" description="Test">
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="333b6b0a-037b-46a0-8b35-1222fc4826c3" processor="flow-ref">
 				<munit-tools:with-attributes >
