@@ -47,6 +47,14 @@ objectstore:
     expirationInterval: "29"
     maxEntries: "2"
     
+# Partners
+partner:
+  inbound:
+    "1631404318T": "FESTO"
+    "COUPA": "Coupa"
+  outbound:
+    "234093": "FESTO"
+    "COUPA": "Coupa"
     
 #Scheduler Configuration
 scheduler:
