@@ -17,7 +17,7 @@
   "queryParams": {
     "purpose": "outbound",
     "transactionType": "purchaseOrder",
-    "businesskey": "40418062"
+    "businesskey": "40418062",
   },
   "requestUri": "/api/views?purpose=outbound&transactionType=purchaseOrder&businesskey=40418062",
   "queryString": "purpose=outbound&transactionType=purchaseOrder&businesskey=40418062",
