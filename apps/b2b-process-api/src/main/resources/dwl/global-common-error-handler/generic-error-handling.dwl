@@ -135,7 +135,9 @@ var bannerColor =
 var ve = vars.isValid.validationErrors default {}
 
 var msgPoNumber = safe(cdmHeader.poNumber default "" as String,
-                    safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, "N/A"))
+                    safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, 
+                    	safe(vars.initialPayload.Order.PoNo default "" as String,"N/A")
+                    ))
 
 var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as String
 
