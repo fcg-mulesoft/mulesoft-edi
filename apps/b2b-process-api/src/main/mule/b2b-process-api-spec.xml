@@ -182,6 +182,60 @@ output application/json
 		<flow-ref doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="234c0477-eac1-41f3-89ac-659d35113b13" name="outbound-invoice-processing-subflow" />
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="ce6f1ad5-30ee-4e4e-b877-f6786d87d3ea" message='#[%dw 2.0&#10;output application/json&#10;&#45;&#45;-&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}&#93;' />
 	</flow> [STUDIO] -->
+	 <flow name="poAck-outbound-scheduled-flow" doc:id="c56a91e5-1d46-4698-8c65-fe2418b3ebfa" maxConcurrency="1">
+        <scheduler doc:name="EVERY 3 HOURS" doc:id="eea15be8-70e2-4e7c-a48a-9045276f296f">
+            <scheduling-strategy>
+                <cron expression="${scheduler.outbound.purchaseOrder.frequency}" timeZone="${scheduler.outbound.purchaseOrder.timeZone}" />
+            </scheduling-strategy>
+        </scheduler>
+        <ee:transform doc:name="var: initialVariables" doc:id="9efd3e2c-ec93-4ffa-a301-b19deaeef91e">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="initialVariables"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"source": "P21",
+	"target": "APM",
+	"integration-type": "Outbound-855",
+	correlationId: correlationId default uuid(),
+	timestamp: now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+	},
+	status: "STARTED"
+}]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="LOG INFO : START" doc:id="3b2170c7-a5d4-4bb7-a7d6-7656b7cbb63b" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;START&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: vars.initialVariables.correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
+        <flow-ref doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="7e208376-ce3b-4cba-b372-b0f9f46c92ba" name="outbound-poAck-processing-subflow" />
+        <logger level="INFO" doc:name="LOG INFO : END" doc:id="e2565ea7-eccb-40ce-a5bd-cb49c3e22ebd" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;END&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
+    </flow>
+    <flow name="invoice-outbound-scheduled-flow" doc:id="8c39947d-641e-41e3-bbbc-0fa12c15ef76" maxConcurrency="1">
+		<scheduler doc:name="EVERY 3 HOURS" doc:id="8abea1fc-a0eb-4b4c-a74d-f90f0342b9ab" >
+			<scheduling-strategy >
+				<fixed-frequency startDelay="1" timeUnit="HOURS" frequency="1"/>
+			</scheduling-strategy>
+		</scheduler>
+		<ee:transform doc:name="var: initialVariables" doc:id="be5383eb-c3a4-4208-84c0-fdfd32828d2d" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="initialVariables" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"source": "P21",
+	"target": "APM",
+	"integration-type": "Outbound-810",
+	correlationId: correlationId default uuid(),
+	timestamp: now(),
+	status: "STARTED"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="f911afa0-75e9-42f7-a681-2b3f653cb95d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+		<flow-ref doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="b33c1887-deca-47c0-abbc-21d3cc0e6cbe" name="outbound-invoice-processing-subflow" />
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="f0381dac-2e04-4071-b88c-6a32c700d0f1" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
+	</flow>
 	<flow name="shipment-outbound-scheduled-flow" doc:id="a73526f3-22ef-4be8-bb6a-b13c75e82454" maxConcurrency="1" >
 		<scheduler doc:name="EVERY 3 HOURS" doc:id="d4e29f4a-0d3b-4a7f-9bc3-7997d68496ac" >
 			<scheduling-strategy >
