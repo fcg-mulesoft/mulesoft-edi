@@ -103,7 +103,9 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 				<reconnect />
 				<email:body contentType="text/html">
 				</email:body>
-					<email:attachments ><![CDATA[#[vars.attachments default []]]]></email:attachments>
+					<email:attachments ><![CDATA[#[{
+	("coupa-request.json":vars.attachments default {})if(vars.emailContent != null),
+}]]]></email:attachments>
 			</email:send>
 				<error-handler >
 					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1cb3c0c4-d819-4fb4-ac33-2817c87a31bc" type="DUPLICATE_MESSAGE">

@@ -22,8 +22,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<choice doc:name="isValid Purchase Order?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
 			<when expression="#[sizeOf(vars.poSearchResponse.value) == 0]">
 						<logger level="INFO" doc:name="PO Search Response" doc:id="64f3d493-cefe-48ce-bff2-a8c18ecc6ce4" message="PO Search Response is #[vars.poSearchResponse]" />
-						<set-variable value="#[output application/java&#10;---&#10;Mule::p('email.toRecipient') ++ &quot;,admorders@kingfiltration.com&quot;]" doc:name="Recipient List" doc:id="e5862529-69fc-4fd8-988c-6eff65dddb4d" variableName="recipientList" />
-						<set-variable value='#[output application/java&#10;---&#10;[{&#10;  name: "coupa-request.json",&#10;  content: write(vars.initialPayload, "application/json"),&#10;  contentType: "application/json"&#10;}]]' doc:name="Attachments" doc:id="7eb8ca71-6483-4f67-a86f-17f257c2426d" variableName="attachments"/>
+						<set-variable value="#[output application/java&#10;---&#10;Mule::p('email.toRecipient') ++ &quot;,sasivikas.tanagala@flowcontrolgroup.com&quot;]" doc:name="Recipient List" doc:id="e5862529-69fc-4fd8-988c-6eff65dddb4d" variableName="recipientList" />
+						<set-variable value='#[output application/json&#10;---&#10;vars.initialPayload]' doc:name="Attachments" doc:id="7eb8ca71-6483-4f67-a86f-17f257c2426d" variableName="attachments"/>
 						<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="4a6405a4-8f2a-48d2-b977-faa97f576756" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Company Id and EDI XRef Id combination is not Available in P21 System."/>
 			</when>
 					<otherwise>
