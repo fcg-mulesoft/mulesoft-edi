@@ -77,11 +77,18 @@ payload]]></ee:set-variable>
 				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_transactionRequestPayload.dwl" variableName="transactionRequestPayload" />
 			</ee:variables>
 		</ee:transform>
-		<ee:transform doc:name="var: httpOperation-post Transaction api" doc:id="2befd336-0a59-43f8-9148-d9d8d5594758">
+		<ee:transform doc:name="var: httpOperation-post Transaction api, vendorName" doc:id="2befd336-0a59-43f8-9148-d9d8d5594758">
 				<ee:message>
 				</ee:message>
 			<ee:variables >
 				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_httpOperationPostTransaction.dwl" variableName="httpOperation" />
+				<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+if (!isEmpty(payload.payload.partnerId))
+(payload.payload.partnerId map  Mule::p("partner.outbound." ++ $)) distinctBy $
+else null
+]]></ee:set-variable>
 			</ee:variables>
 			</ee:transform>
 		<try doc:name="Try" doc:id="cc03ad5f-3328-4572-ba14-2e60914b9af5" >
@@ -133,12 +140,17 @@ payload]]></ee:set-variable>
 			</error-handler>
 		</try>
 		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="f71b33b6-24c0-4dba-863e-4d0e9a803a1b" collection="#[vars.erroredPOs]">
-			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="2375996c-8946-4ca9-991c-58263985c68a" >
+			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="2375996c-8946-4ca9-991c-58263985c68a" >
 				<ee:message >
 					<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_validationError.dwl" />
 				</ee:message>
 				<ee:variables >
 					<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_validationErrorSubject.dwl" variableName="subject" />
+					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+if(!isEmpty(payload.partnerId)) 
+[Mule::p("partner.outbound." ++ payload.partnerId)] else []]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="f2c8b03a-b7db-436e-82b5-8aeb49ded849" name="send-email-subflow"/>

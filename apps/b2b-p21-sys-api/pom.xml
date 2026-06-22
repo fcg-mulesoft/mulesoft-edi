@@ -88,7 +88,7 @@
 							<ignoreFile>get-p21-view-processing-suite.xml</ignoreFile>
 							<ignoreFile>implementations/get-p21-view-processing.xml</ignoreFile>
 							<ignoreFile>implementations/get-p21-view-processing.xml</ignoreFile>
-							<ignoreFile>implementations/post-p21-xml-transaction-processing.xml</ignoreFile> 
+							<ignoreFile>implementations/post-p21-xml-transaction-processing.xml</ignoreFile>
 							<ignoreFile>implementations/post-p21-xml-transaction-processing.xml</ignoreFile>
 						</ignoreFiles>
 						<ignoreFlows>
@@ -98,7 +98,7 @@
 							<ignoreFlow>post-p21-entity-processing-subflow</ignoreFlow>
 							<ignoreFlow>post-p21-transaction-processing-subflow</ignoreFlow>
 							<ignoreFlow>post-p21-transaction-xml-processing-subflow</ignoreFlow>
-						</ignoreFlows>      
+						</ignoreFlows>
 					</coverage>
 				</configuration>
 			</plugin>
@@ -163,17 +163,17 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
-			<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
-			<artifactId>b2b-p21-sys-api-spec</artifactId>
-			<version>1.0.9</version>
-			<classifier>raml</classifier>
-			<type>zip</type>
-		</dependency>
-		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-validation-module</artifactId>
 			<version>2.0.8</version>
 			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
+			<artifactId>b2b-p21-sys-api-spec</artifactId>
+			<version>1.0.10</version>
+			<classifier>raml</classifier>
+			<type>zip</type>
 		</dependency>
 	</dependencies>
 

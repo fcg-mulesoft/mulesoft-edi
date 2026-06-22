@@ -606,7 +606,8 @@ segments joinBy " | "]]></ee:set-variable>
 					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
 output application/json
 ---
-Mule::p("partner.outbound." ++ payload.partnerId)]]></ee:set-variable>
+if(!isEmpty(payload.partnerId)) 
+[Mule::p("partner.outbound." ++ payload.partnerId)] else []]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="cc1c3bd0-ffe2-41a9-894a-9a251a50e3e1" name="send-email-subflow" />

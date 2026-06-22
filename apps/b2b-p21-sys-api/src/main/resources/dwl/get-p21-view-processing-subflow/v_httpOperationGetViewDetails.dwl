@@ -138,6 +138,14 @@ purchaseOrder: {
 				"\$filter": "date_last_modified ge  " ++ date_last_modified
 			}
 		}
+	},
+	emailNotification: {
+		total:{
+			view: Mule::p('viewNames.emailNotification'),
+			queryParams: {
+			}
+		}
+
 	}
 	
 	}

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
 	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
 	xmlns:azure-storage="http://www.mulesoft.org/schema/mule/azure-storage"
 	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:os="http://www.mulesoft.org/schema/mule/os"
 	xmlns:email="http://www.mulesoft.org/schema/mule/email"
 	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
 http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
@@ -51,4 +53,6 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 		</vm:queues>
 	</vm:config>
 	<os:object-store name="Object_Store_Invoice_Vantage" doc:name="Object store" doc:id="6d6a9d16-65da-45b2-8223-71110a9065ae" persistent="false" maxEntries="2" entryTtl="12" entryTtlUnit="HOURS" expirationInterval="30" />
+	<ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="b62fae30-094f-425e-ad91-ac696d69c29e" keyGenerationExpression="emailView" objectStore="Object_store_emailView" doc:description="Caching Strategy for Email View"/>
+	<os:object-store name="Object_store_emailView" doc:name="Object store" doc:id="1aa7e8aa-cbf5-47a9-be54-eceee562ac37" entryTtl="7" entryTtlUnit="DAYS" expirationInterval="6" expirationIntervalUnit="DAYS" doc:description="Object Store for Email View"/>
 </mule>

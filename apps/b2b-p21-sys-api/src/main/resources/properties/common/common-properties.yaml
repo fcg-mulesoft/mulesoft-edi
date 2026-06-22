@@ -60,6 +60,7 @@ viewNames:
   coupaInvoiceOutbound: "fcg_edi_xref_vw"
   coupaInvoiceInbound: "fcg_kft_coupa_invoice_outbound_vw"
   coupaOrderOutbound: "fcg_edi_order_vw"
+  emailNotification: "fcg_edi_emailnotification_vw"
 
 #Service Types
 serviceNames:

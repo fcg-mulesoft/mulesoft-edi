@@ -135,12 +135,17 @@ else null
 			</error-handler>
 		</try>
 		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="ad333071-ad43-4fb1-95e7-90c2bbe9aac7" collection="#[vars.erroredPOs]">
-			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="d1ce1bc7-f535-4fa4-afb7-0928ae701184">
+			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="d1ce1bc7-f535-4fa4-afb7-0928ae701184">
 				<ee:message>
 					<ee:set-payload resource="dwl/outbound-poAck-processing-subflow/p_validationError.dwl" />
 				</ee:message>
 				<ee:variables>
 					<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_validationErrorSubject.dwl" variableName="subject" />
+					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+if(!isEmpty(payload.partnerId)) 
+[Mule::p("partner.outbound." ++ payload.partnerId)] else []]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="1a71241c-8444-4d2a-8396-bfd66005cc4e" name="send-email-subflow" />
