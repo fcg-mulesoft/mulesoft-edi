@@ -1,0 +1,25 @@
+# Prod Configuration
+
+# API Autodiscovery
+api:
+  id: "1234"
+  
+# Azure Configuration
+azure:
+ accountname: "stfcgmulesoftpeus2"
+ container: "production"
+ foldername: "/transition_payload"
+ 
+# SMTP Configuration
+email: 
+    read: 
+        timeout: "30"
+    conn: 
+        timeout: "30"
+    write:  
+        timeout: "30"
+    host: "smtp.office365.com"
+    port: "587"
+    user: "mulesoftalerts@fluidflow.onmicrosoft.com"
+    sender: "mulesoftalerts@fluidflow.onmicrosoft.com"
+    receivers: "harshavardhan.reddy@caeliusconsulting.com,anshul.negi@caeliusconsulting.com,priyanshu.dhawan@caeliusconsulting.com,gopi.makutam@caeliusconsulting.com,bighnesh.sahoo@caeliusconsulting.com,Mulesoft_prod_support@flowcontrolgroup.com"

@@ -495,7 +495,7 @@ template replace /\$\{(\w+)\}/ with ((m) ->
 	</error-handler>
 	<sub-flow name="send-email-subflow" doc:id="3d59fe17-1c36-4b61-9db9-b7b28bb43b26" >
 		<logger level="INFO" doc:name="LOG DEBUG: Before Email" doc:id="865780b6-1c95-48f3-89fe-5d69039fbf73" message="Start: Email Alert" />
-		<email:send doc:name="Send Email" doc:id="d7d7b632-9777-49d7-831b-2e0f3baf73ea" config-ref="Email_SMTP" fromAddress="${email.sender}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('api.name'))]" toAddresses="#[p('email.receivers') splitBy(&quot;,&quot;)]">
+		<email:send doc:name="Send Email" doc:id="d7d7b632-9777-49d7-831b-2e0f3baf73ea" config-ref="Email_SMTP" fromAddress="${email.sender}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('app.name'))]" toAddresses="#[p('email.receivers') splitBy(&quot;,&quot;)]">
 				<reconnect />
 				<email:body contentType="text/html">
 				</email:body>

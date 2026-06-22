@@ -20,6 +20,6 @@ email:
         timeout: "30"
     host: "smtp.office365.com"
     port: "587"
-    user: ""
-    sender: ""
+    user: "mulesoftalerts@fluidflow.onmicrosoft.com"
+    sender: "mulesoftalerts@fluidflow.onmicrosoft.com"
     receivers: "harshavardhan.reddy@caeliusconsulting.com,anshul.negi@caeliusconsulting.com,priyanshu.dhawan@caeliusconsulting.com,gopi.makutam@caeliusconsulting.com,bighnesh.sahoo@caeliusconsulting.com,Mulesoft_nonprod_support@flowcontrolgroup.com"
