@@ -45,6 +45,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 								<choice doc:name="Choice" doc:id="5964698f-be9a-44c9-9a9c-009f2d6c6489">
 									<when expression="#[sizeOf((vars.initialPayload.Order.Lines.*OrderLine.ItemId filter (!isEmpty($)))) == 0]">
 										<logger level="INFO" doc:name="No Item Ids" doc:id="619dba09-8f1b-4a5e-b6f7-33676071e106" message="No Item Ids Present in Coupa EDI Request"/>
+										<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="5d98b9ad-40ab-4134-b5a5-76f3ea7a1d62" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Item ID's are not provided in the coming request." />
 									</when>
 									<otherwise >
 										<ee:transform doc:name="var : httpOperation - retrieve p21PartsPrice" doc:id="c416483b-244d-45a4-939d-228971f3bea2">
