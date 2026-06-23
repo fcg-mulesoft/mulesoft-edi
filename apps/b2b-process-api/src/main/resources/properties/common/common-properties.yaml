@@ -51,10 +51,10 @@ objectstore:
 partner:
   inbound:
     "1631404318T": "FESTO"
-    "COUPA": "Coupa"
+    "COUPA": "ADM Coupa"
   outbound:
     "234093": "FESTO"
-    "COUPA": "Coupa"
+    "COUPA": "ADM Coupa"
     
 #Scheduler Configuration
 scheduler:
