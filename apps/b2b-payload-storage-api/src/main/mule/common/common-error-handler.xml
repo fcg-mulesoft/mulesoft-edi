@@ -63,7 +63,7 @@ import * from dw::core::Strings
 					<ee:set-payload resource="dwl/global-error-handler/p_apikitError.dwl" />
 				</ee:message>
 			</ee:transform>
-			<flow-ref doc:name="send-email-subflow" doc:id="da143965-7bb3-4094-b171-0a9311723485" name="send-email-subflow" />
+			<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="da143965-7bb3-4094-b171-0a9311723485" name="send-email-subflow" />
 			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="54654679-c19c-4c3f-8fec-abb7e9038cc5" />
 			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="1e2a87b5-10d1-43a6-80a6-df8bfdec061c" category="com.apikit.errors" message="#[vars.errorResponse]"/>
 		
@@ -116,7 +116,7 @@ import * from dw::core::Strings
 					<ee:set-payload resource="dwl/global-error-handler/p_genericError.dwl" />
 				</ee:message>
 			</ee:transform>
-			<flow-ref doc:name="send-email-subflow" doc:id="372c7e3c-9111-4562-9c92-a072dd2a9f78" name="send-email-subflow" />
+			<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="372c7e3c-9111-4562-9c92-a072dd2a9f78" name="send-email-subflow" />
 			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="5a9d8498-5085-44a7-9bcd-1094f3fdcf8f" />
 			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="a8ffcc12-6fb4-4243-b017-fa5d3da97dd8" message="#[vars.errorResponse]" category="com.generic.errors" />
 		

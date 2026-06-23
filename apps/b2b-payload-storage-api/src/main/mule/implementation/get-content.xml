@@ -19,8 +19,8 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
 		<azure-storage:download-blob doc:name="Download Transaction Payload" doc:id="1b52762d-356f-4b88-a478-08fd595c3edc" config-ref="Azure_Storage_Config">
 			<azure-storage:blob container="#[Mule::p('azure.container')]" fileName="#[Mule::p('azure.foldername')++ &quot;/&quot; ++ vars.parameter.contentrecordid ++ &quot;.txt&quot;]" />
 		</azure-storage:download-blob>
-		<logger level="DEBUG" doc:name="Log : Payload" doc:id="52834110-6ec0-4c58-9f42-80d3918324ab" message="#[payload]"/>
-		<logger level="INFO" doc:name="END" doc:id="12ebcc0b-d494-414b-82c3-0663dbd38c71" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: vars.correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;,&#10;	&quot;target&quot;: &quot;Azure&quot;,&#10;	&quot;message&quot;: &quot;Get Content Sub Flow &quot; &#10;}]" />
+		<logger level="DEBUG" doc:name="Log : Payload" doc:id="52834110-6ec0-4c58-9f42-80d3918324ab" message="#[payload]" category="${logger.debug.category}"/>
+		<logger level="INFO" doc:name="END" doc:id="12ebcc0b-d494-414b-82c3-0663dbd38c71" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: vars.correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;,&#10;	&quot;target&quot;: &quot;Azure&quot;,&#10;	&quot;message&quot;: &quot;Get Content Sub Flow &quot; &#10;}]" category="${logger.debug.category}"/>
 		
 </sub-flow>
 	

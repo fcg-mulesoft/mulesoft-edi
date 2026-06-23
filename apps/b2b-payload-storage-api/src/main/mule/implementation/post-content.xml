@@ -37,6 +37,7 @@ output application/java
 			</ee:variables>
 		
 </ee:transform>
+		<logger level="DEBUG" doc:name="Log : Payload" doc:id="559d8402-8a90-4a94-999d-eba0d58a79d5" message="#[payload]" />
 		<logger level="INFO" doc:name="END" doc:id="619fcacc-3067-4607-aea4-16ab5cef134f" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;env&quot;: Mule::p('env'),&#10;	&quot;transactionId&quot;: vars.correlationId,&#10;	&quot;applicationName&quot;: app.name ,&#10;	&quot;flowName&quot;: flow.name ++ &quot;: End&quot; ,&#10;	&quot;timestamp&quot;: now() ,&#10;	&quot;eventType&quot;: &quot;INFO&quot;,&#10;	&quot;target&quot;: &quot;Azure&quot;,&#10;	&quot;message&quot;: &quot;Post Content Sub Flow &quot; &#10;}]"/>
     
 </sub-flow>

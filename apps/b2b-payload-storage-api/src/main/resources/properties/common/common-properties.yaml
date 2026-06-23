@@ -26,3 +26,8 @@ email:
   reconnection:
     attempts: "3"
     frequency: "2000"
+
+#Logger 
+logger:
+  debug:
+    category: "com.mycompany.b2b.edi"
