@@ -12,14 +12,7 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
 		<ee:transform doc:name="Variables : parameter" doc:id="b2424625-79d3-4362-8108-58db058b6aeb">
 			<ee:message />
 			<ee:variables>
-				<ee:set-variable variableName="parameter"><![CDATA[%dw 2.0
-output application/json
----
-{
-	envId: attributes.uriParams.envId,
-	contentrecordid:attributes.uriParams.contentRecordId ,
-	orgId: attributes.uriParams.orgId
-}]]></ee:set-variable>
+				<ee:set-variable resource="dwl/get-content-sub-flow/v_parameter.dwl" variableName="parameter" />
 			</ee:variables>
 		</ee:transform>
 		<logger level="DEBUG" doc:name="Log : Parameters" doc:id="af6d766a-17e6-4fba-a1da-074a88f7b4ed" message='#[%dw 2.0&#10;output application/json&#10;import * from dw::util::Values&#10;---&#10;vars.parameter mask field ("envId") with "************" mask field ("orgId") with "**************"]' />

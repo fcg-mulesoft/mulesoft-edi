@@ -15,14 +15,7 @@ http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="parameter" ><![CDATA[%dw 2.0
-output application/json
----
-{
-	envId: attributes.uriParams.envId  ,
-	contentrecordid:uuid(),
-	orgId: attributes.uriParams.orgId
-}]]></ee:set-variable>
+				<ee:set-variable resource="dwl/post-content-sub-flow/v_parameter.dwl" variableName="parameter" />
 			</ee:variables>
 		</ee:transform>
 		<logger level="DEBUG" doc:name="Log : Parameters" doc:id="0d18151a-c1ee-4646-b481-e2f37657dc93" message='#[%dw 2.0&#10;output application/json&#10;import * from dw::util::Values&#10;---&#10;vars.parameter mask field ("envId") with "************" mask field ("orgId") with "**************"]'/>
@@ -31,13 +24,7 @@ output application/json
 		</azure-storage:upload-blob>
 		<ee:transform doc:name="Variable : outboundHeaders" doc:id="8781b528-a4cb-4ec7-83cf-e2ada794a952">
 			<ee:message>
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	contentrecordid : vars.parameter.contentrecordid
-}
-	]]></ee:set-payload>
+				<ee:set-payload resource="dwl/post-content-sub-flow/p_outboundHeaders.dwl" />
 			</ee:message>
 			<ee:variables >
 				<ee:set-variable variableName="outboundHeaders" ><![CDATA[%dw 2.0

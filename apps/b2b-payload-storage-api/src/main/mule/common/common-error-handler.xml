@@ -24,15 +24,9 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 				<ee:message >
 				</ee:message>
 				<ee:variables >
-					<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
-output application/json
----
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:BAD_REQUEST") (400) else
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_FOUND") (404) else
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:METHOD_NOT_ALLOWED") (405) else
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_ACCEPTABLE") (406) else
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:UNSUPPORTED_MEDIA_TYPE") (415) else (500)]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-error-handler/v_httpStatus_apikitError.dwl" variableName="httpStatus" />
 				
+
 </ee:variables>
 			</ee:transform>
 			<ee:transform doc:name="Response payload" doc:id="66303c17-0114-4390-99d1-a7882c650044">
@@ -60,190 +54,13 @@ import * from dw::core::Strings
 	"integration": vars.integration.information
 	
 }]]></ee:set-variable>
-					<ee:set-variable variableName="errorResponse"><![CDATA[%dw 2.0
-output application/json
----
-{
-	"correlationId": (correlationId default uuid()),
-	"statusCode": vars.httpStatus,
-	"statusMessage": (error.errorType.namespace ++ ":" ++ error.errorType.identifier),
-	"description": if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription,
-	"timestamp": (((now() >> "UTC")  as String {
-		format : "yyyy/MM/dd HH:mm:ss"
-	}) ++ " UTC"),
-	notificationRequired: true
-}]]></ee:set-variable>
-				</ee:variables>
+					<ee:set-variable resource="dwl/global-error-handler/v_errorResponse_apikitError.dwl" variableName="errorResponse" />
+				
+</ee:variables>
 			</ee:transform>
 			<ee:transform doc:name="Prepare Email Payload" doc:id="f831aa8f-99e3-4ebb-9cef-aee3592b5e39" >
 				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
-output text/plain
-
-fun safe(v, d = "N/A") =
-    if (v == null or (v is String and trim(v) == "")) d else v
-
-var errResp = vars.errorResponse default {}
-var sysInfo = vars.systemInformation default {}
-
-var rawErrNs = error.errorType.namespace default "UNKNOWN"
-var rawErrId = error.errorType.identifier default "ERROR"
-
-var isAzureError = rawErrNs == "AZURE-STORAGE"
-
-var isConnectivityError =
-    rawErrId == "TIMEOUT" or
-    rawErrId == "CONNECTION_TIMEOUT" or
-    rawErrId == "GATEWAY_TIMEOUT" or
-    rawErrId == "RETRY_EXHAUSTED" or
-    rawErrId == "REMOTELY_CLOSED" or
-    rawErrId == "SSL_ERROR" or
-    rawErrId == "SERVICE_UNAVAILABLE"
-
-var errorCategory =
-    if (rawErrNs == "APIKIT") "APIKIT"
-    else if (isAzureError or isConnectivityError) "AZURE_CONNECTIVITY"
-    else "GENERIC"
-
-var errorTitle =
-    if (errorCategory == "APIKIT") "API Error"
-    else if (errorCategory == "AZURE_CONNECTIVITY") "Azure Blob Storage Error"
-    else "System Error"
-
-var bannerColor =
-    if (errorCategory == "APIKIT") "#ef4444"
-    else if (errorCategory == "AZURE_CONNECTIVITY") "#0078d4"
-    else "#ef4444"
-
-var errorTypeValue =
-    if (!isEmpty(errResp.statusMessage default ""))
-        errResp.statusMessage as String
-    else
-        rawErrNs ++ ":" ++ rawErrId
-
-var httpMethod = upper(attributes.method default "")
-
-var azureOperation =
-    if (httpMethod == "POST") "upload to"
-    else if (httpMethod == "GET") "download from"
-    else "access"
-
-var errorResolution =
-    if (errorCategory == "APIKIT")
-        "The request was not formatted correctly and could not be accepted by the system."
-        ++ "\n  1. This is usually caused by a missing or invalid request parameter / header."
-        ++ "\n  2. Review the API specification and ensure all required fields are provided."
-        ++ "\n  3. Contact the integration support team with the Correlation ID shown below if the issue persists."
-
-    else if (errorCategory == "AZURE_CONNECTIVITY")
-        do {
-            var base =
-                if (rawErrId == "RETRY_EXHAUSTED")
-                    "The system attempted to reach Azure Blob Storage multiple times but all attempts failed."
-                    ++ "\n  1. Azure Blob Storage may be experiencing an outage — check Azure Service Health."
-                    ++ "\n  2. Do not retry manually — contact the IT support team to investigate."
-                    ++ "\n  3. The support team will reprocess the request once Azure is back online."
-
-                else if (
-                    rawErrId == "TIMEOUT" or
-                    rawErrId == "CONNECTION_TIMEOUT" or
-                    rawErrId == "GATEWAY_TIMEOUT"
-                )
-                    "Azure Blob Storage did not respond in time — it may be under heavy load or temporarily unavailable."
-                    ++ "\n  1. Wait a few minutes and retry the request."
-                    ++ "\n  2. If the timeout persists, check Azure Service Health for any active incidents."
-                    ++ "\n  3. Contact the IT support team with the Correlation ID if the issue continues."
-
-                else if (rawErrId == "SSL_ERROR")
-                    "A TLS/SSL certificate issue prevented the connection to Azure Blob Storage."
-                    ++ "\n  1. This is a configuration issue — contact the IT support team immediately."
-                    ++ "\n  2. Provide the Correlation ID when raising the issue."
-                    ++ "\n  3. Do not retry until the certificate issue has been resolved."
-
-                else if (rawErrNs == "AZURE-STORAGE")
-                    "The Azure Blob Storage connector returned an error while attempting to "
-                    ++ azureOperation
-                    ++ " Azure Blob Storage."
-                    ++ "\n  1. Verify that the container name and SAS token configured for this environment are valid and have not expired."
-                    ++ "\n  2. Confirm that the blob path (folder/filename) is correct."
-                    ++ "\n  3. Check Azure Blob Storage access policies and ensure the connector has the required permissions."
-                    ++ "\n  4. Contact the IT support team with the Correlation ID if the issue cannot be resolved."
-
-                else
-                    "The integration was unable to connect to Azure Blob Storage."
-                    ++ "\n  1. Check whether Azure Blob Storage is reachable from the Mule environment."
-                    ++ "\n  2. Try resubmitting the request after a few minutes."
-                    ++ "\n  3. Contact the IT support team with the Correlation ID if the problem persists."
-            ---
-            base ++ "\n\n  No data was permanently lost — the request can be safely resubmitted once the issue is resolved."
-        }
-
-    else
-        "An unexpected error occurred while processing this request."
-        ++ "\n  1. Contact the integration support team with the Correlation ID shown below."
-        ++ "\n  2. Do not resubmit until you have heard back from the support team."
-
-var errorDescFull =
-    (safe(
-        errResp.description,
-        error.detailedDescription default error.description default "Unexpected error"
-    ) as String)
-    ++ "\n\nCorrelation ID: "
-    ++ safe(errResp.correlationId, correlationId default uuid())
-    ++ "\nHTTP Status:    "
-    ++ ((errResp.statusCode default vars.httpStatus default 500) as String)
-    ++ "\nStatus Message: "
-    ++ errorTypeValue
-    ++ "\nTimestamp:      "
-    ++ (errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"}))
-
-var message =
-    if (errorCategory == "AZURE_CONNECTIVITY")
-        "Failed to "
-        ++ azureOperation
-        ++ " Azure Blob Storage"
-        ++ (
-            if (rawErrNs == "AZURE-STORAGE")
-                " — the Azure Storage connector returned an error."
-            else
-                ". Error: " ++ rawErrId ++ "."
-        )
-    else if (errorCategory == "APIKIT")
-        "An invalid request was received by the B2B Payload Storage API. Reason: "
-        ++ rawErrId
-        ++ "."
-    else
-        "An unexpected error occurred in the B2B Payload Storage API. Error: "
-        ++ rawErrNs
-        ++ ":"
-        ++ rawErrId
-        ++ "."
-
-var data = {
-    documentType: "B2B Payload Storage API",
-    appName: p("api.name") default "b2b-payload-storage-api",
-    environment: upper(safe(sysInfo.env, p("mule.env"))),
-    errorTitle: errorTitle,
-    bannerColor: bannerColor,
-    errorType: errorTypeValue,
-    errorCategory: errorCategory,
-    status: "FAILED",
-    message: message,
-    errorResolution: errorResolution,
-    errorDescription: errorDescFull,
-    timestamp: errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})
-}
-
-var template =
-    readUrl(
-        "classpath://templates/error-template-payloadStorage-api.html",
-        "text/plain"
-    )
-
----
-template replace /\$\{(\w+)\}/ with ((m) ->
-    (data[m[1]] as String) default ""
-)]]></ee:set-payload>
+					<ee:set-payload resource="dwl/global-error-handler/p_apikitError.dwl" />
 				</ee:message>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="da143965-7bb3-4094-b171-0a9311723485" name="send-email-subflow" />
@@ -256,20 +73,9 @@ template replace /\$\{(\w+)\}/ with ((m) ->
 			<ee:transform doc:name="Status code generator" doc:id="f2195660-36e3-403c-964c-6ba18fc237e2">
 				<ee:message />
 				<ee:variables>
-					<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
-output application/json
----
-if(error.errorType.identifier == "BAD_REQUEST") (400) else
-if(error.errorType.identifier == "NOT_FOUND" and !isEmpty(error.errorMessage.payload))(404) else
-if(error.errorType.identifier == "NOT_FOUND" and isEmpty(error.errorMessage.payload))(504) else
-if(error.errorType.identifier == "METHOD_NOT_ALLOWED") (405) else
-if(error.errorType.identifier == "UNAUTHORIZED" or error.errorType.identifier == "FORBIDDEN") (401) else
-if(error.errorType.identifier == "GATEWAY_TIMEOUT") (504) else
-if(error.errorType.identifier == "BAD_GATEWAY") (502) else
-if (!isEmpty(error.errorMessage.attributes.statusCode default ""))(error.errorMessage.attributes.statusCode) else
-if (!isEmpty(attributes.statusCode))(attributes.statusCode) else
-(500)]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-error-handler/v_httpStatus_genericError.dwl" variableName="httpStatus" />
 				
+
 </ee:variables>
 			</ee:transform>
 			<ee:transform doc:name="Response payload" doc:id="99784093-f66c-4f3c-b952-3b95e13a147d" >
@@ -300,191 +106,14 @@ import * from dw::core::Strings
 	"integration": vars.integration.information
 	
 }]]></ee:set-variable>
-					<ee:set-variable variableName="errorResponse" ><![CDATA[%dw 2.0
-output application/json
-var explictHandlerCodes = p('explicitcodes')
----
-{
-	"correlationId": correlationId default uuid(),
-	"statusCode": (if ( explictHandlerCodes contains vars.httpStatus ) (vars.httpStatus) else (error.errorMessage.payload.statusCode default vars.httpStatus)) default 500,
-	"statusMessage": (if ( explictHandlerCodes contains vars.httpStatus ) ((error.errorType.namespace ++ ":" ++ error.errorType.identifier)) else (error.errorMessage.payload.statusMessage)) default (error.errorType.namespace ++ ":" ++ error.errorType.identifier),
-	"description": (if ( explictHandlerCodes contains vars.httpStatus ) (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription) else (error.errorMessage.payload.description)) default (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription),
-	"timestamp": (if(explictHandlerCodes contains vars.httpStatus) ((now() as String {format : "yyyy/MM/dd HH:mm:ss"}) ++ " UTC") else (error.errorMessage.payload.errorDateTime)) default ((now() as String {format : "yyyy/MM/dd HH:mm:ss"}) ++ " UTC"),
-    "notificationRequired": if (Mule::p('api.name') contains "sys-")(false) else (if ( (explictHandlerCodes contains vars.httpStatus) and (!(isEmpty(error.errorMessage) or (error.errorMessage.attributes.reasonPhrase ~= "BAD GATEWAY" or error.errorMessage.attributes.reasonPhrase ~= "NOT FOUND")))) (false) else if ( (explictHandlerCodes contains vars.httpStatus) and isEmpty(error.errorMessage) ) (true) else if ( !(explictHandlerCodes contains vars.httpStatus) and (!isEmpty(error.errorMessage.payload.notificationRequired )) ) (!(error.errorMessage.payload.notificationRequired))  else true)
-}
-]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-error-handler/v_errorResponse_genericError.dwl" variableName="errorResponse" />
 				
+
 </ee:variables>
 			</ee:transform>
 			<ee:transform doc:name="Prepare Email Payload" doc:id="6da9d0c1-bd43-4ace-a538-70d09da54891" >
 				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
-output text/plain
-
-fun safe(v, d = "N/A") =
-    if (v == null or (v is String and trim(v) == "")) d else v
-
-var errResp = vars.errorResponse default {}
-var sysInfo = vars.systemInformation default {}
-
-var rawErrNs = error.errorType.namespace default "UNKNOWN"
-var rawErrId = error.errorType.identifier default "ERROR"
-
-var isAzureError = rawErrNs == "AZURE-STORAGE"
-
-var isConnectivityError =
-    rawErrId == "TIMEOUT" or
-    rawErrId == "CONNECTION_TIMEOUT" or
-    rawErrId == "GATEWAY_TIMEOUT" or
-    rawErrId == "RETRY_EXHAUSTED" or
-    rawErrId == "REMOTELY_CLOSED" or
-    rawErrId == "SSL_ERROR" or
-    rawErrId == "SERVICE_UNAVAILABLE"
-
-var errorCategory =
-    if (rawErrNs == "APIKIT") "APIKIT"
-    else if (isAzureError or isConnectivityError) "AZURE_CONNECTIVITY"
-    else "GENERIC"
-
-var errorTitle =
-    if (errorCategory == "APIKIT") "API Error"
-    else if (errorCategory == "AZURE_CONNECTIVITY") "Azure Blob Storage Error"
-    else "System Error"
-
-var bannerColor =
-    if (errorCategory == "APIKIT") "#ef4444"
-    else if (errorCategory == "AZURE_CONNECTIVITY") "#0078d4"
-    else "#ef4444"
-
-var errorTypeValue =
-    if (!isEmpty(errResp.statusMessage default ""))
-        errResp.statusMessage as String
-    else
-        rawErrNs ++ ":" ++ rawErrId
-
-var httpMethod = upper(attributes.method default "")
-
-var azureOperation =
-    if (httpMethod == "POST") "upload to"
-    else if (httpMethod == "GET") "download from"
-    else "access"
-
-var errorResolution =
-    if (errorCategory == "APIKIT")
-        "The request was not formatted correctly and could not be accepted by the system."
-        ++ "\n  1. This is usually caused by a missing or invalid request parameter / header."
-        ++ "\n  2. Review the API specification and ensure all required fields are provided."
-        ++ "\n  3. Contact the integration support team with the Correlation ID shown below if the issue persists."
-
-    else if (errorCategory == "AZURE_CONNECTIVITY")
-        do {
-            var base =
-                if (rawErrId == "RETRY_EXHAUSTED")
-                    "The system attempted to reach Azure Blob Storage multiple times but all attempts failed."
-                    ++ "\n  1. Azure Blob Storage may be experiencing an outage — check Azure Service Health."
-                    ++ "\n  2. Do not retry manually — contact the IT support team to investigate."
-                    ++ "\n  3. The support team will reprocess the request once Azure is back online."
-
-                else if (
-                    rawErrId == "TIMEOUT" or
-                    rawErrId == "CONNECTION_TIMEOUT" or
-                    rawErrId == "GATEWAY_TIMEOUT"
-                )
-                    "Azure Blob Storage did not respond in time — it may be under heavy load or temporarily unavailable."
-                    ++ "\n  1. Wait a few minutes and retry the request."
-                    ++ "\n  2. If the timeout persists, check Azure Service Health for any active incidents."
-                    ++ "\n  3. Contact the IT support team with the Correlation ID if the issue continues."
-
-                else if (rawErrId == "SSL_ERROR")
-                    "A TLS/SSL certificate issue prevented the connection to Azure Blob Storage."
-                    ++ "\n  1. This is a configuration issue — contact the IT support team immediately."
-                    ++ "\n  2. Provide the Correlation ID when raising the issue."
-                    ++ "\n  3. Do not retry until the certificate issue has been resolved."
-
-                else if (rawErrNs == "AZURE-STORAGE")
-                    "The Azure Blob Storage connector returned an error while attempting to "
-                    ++ azureOperation
-                    ++ " Azure Blob Storage."
-                    ++ "\n  1. Verify that the container name and SAS token configured for this environment are valid and have not expired."
-                    ++ "\n  2. Confirm that the blob path (folder/filename) is correct."
-                    ++ "\n  3. Check Azure Blob Storage access policies and ensure the connector has the required permissions."
-                    ++ "\n  4. Contact the IT support team with the Correlation ID if the issue cannot be resolved."
-
-                else
-                    "The integration was unable to connect to Azure Blob Storage."
-                    ++ "\n  1. Check whether Azure Blob Storage is reachable from the Mule environment."
-                    ++ "\n  2. Try resubmitting the request after a few minutes."
-                    ++ "\n  3. Contact the IT support team with the Correlation ID if the problem persists."
-            ---
-            base ++ "\n\n  No data was permanently lost — the request can be safely resubmitted once the issue is resolved."
-        }
-
-    else
-        "An unexpected error occurred while processing this request."
-        ++ "\n  1. Contact the integration support team with the Correlation ID shown below."
-        ++ "\n  2. Do not resubmit until you have heard back from the support team."
-
-var errorDescFull =
-    (safe(
-        errResp.description,
-        error.detailedDescription default error.description default "Unexpected error"
-    ) as String)
-    ++ "\n\nCorrelation ID: "
-    ++ safe(errResp.correlationId, correlationId default uuid())
-    ++ "\nHTTP Status:    "
-    ++ ((errResp.statusCode default vars.httpStatus default 500) as String)
-    ++ "\nStatus Message: "
-    ++ errorTypeValue
-    ++ "\nTimestamp:      "
-    ++ (errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"}))
-
-var message =
-    if (errorCategory == "AZURE_CONNECTIVITY")
-        "Failed to "
-        ++ azureOperation
-        ++ " Azure Blob Storage"
-        ++ (
-            if (rawErrNs == "AZURE-STORAGE")
-                " — the Azure Storage connector returned an error."
-            else
-                ". Error: " ++ rawErrId ++ "."
-        )
-    else if (errorCategory == "APIKIT")
-        "An invalid request was received by the B2B Payload Storage API. Reason: "
-        ++ rawErrId
-        ++ "."
-    else
-        "An unexpected error occurred in the B2B Payload Storage API. Error: "
-        ++ rawErrNs
-        ++ ":"
-        ++ rawErrId
-        ++ "."
-
-var data = {
-    documentType: "B2B Payload Storage API",
-    appName: p("api.name") default "b2b-payload-storage-api",
-    environment: upper(safe(sysInfo.env, p("mule.env"))),
-    errorTitle: errorTitle,
-    bannerColor: bannerColor,
-    errorType: errorTypeValue,
-    errorCategory: errorCategory,
-    status: "FAILED",
-    message: message,
-    errorResolution: errorResolution,
-    errorDescription: errorDescFull,
-    timestamp: errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})
-}
-
-var template =
-    readUrl(
-        "classpath://templates/error-template-payloadStorage-api.html",
-        "text/plain"
-    )
-
----
-template replace /\$\{(\w+)\}/ with ((m) ->
-    (data[m[1]] as String) default ""
-)]]></ee:set-payload>
+					<ee:set-payload resource="dwl/global-error-handler/p_genericError.dwl" />
 				</ee:message>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="372c7e3c-9111-4562-9c92-a072dd2a9f78" name="send-email-subflow" />
