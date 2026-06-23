@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "b2bMessageSchema",
+  "type": "object",
+  "required": ["b2bMessage"],
+  "properties": {
+    "B2BMessage": {
+      "type": "object",
+      "required": ["header", "detail", "summary"],
+      "properties": {
+        "Header": {
+          "type": "object",
+          "required": ["invoiceNumber", "invoiceDate"],
+          "properties": {
+            "invoiceNumber": { "type": "string" },
+            "invoiceDate": { "type": "string" },
+            "purchaseOrderNumber": { "type": "string" },
+            "purchaseOrderDate": { "type": "string" },
+            "transactionTypeCode": { "type": "string" },
+            "references": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "qualifier": { "type": "string" },
+                  "referenceNumber": { "type": "string" }
+                }
+              }
+            },
+            "partyInformation": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["qualifier", "name"],
+                "properties": {
+                  "qualifier": { "type": "string" },
+                  "name": { "type": "string" },
+                  "idQualifier": { "type": "string" },
+                  "idCode": { "type": "string" },
+                  "address1": { "type": "string" },
+                  "address2": { "type": "string" },
+                  "city": { "type": "string" },
+                  "state": { "type": "string" },
+                  "postalCode": { "type": "string" },
+                  "country": { "type": "string" }
+                }
+              }
+            },
+            "dates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "dateQualifier": { "type": "string" },
+                  "date": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "detail": {
+          "type": "object",
+          "required": ["lineItems"],
+          "properties": {
+            "lineItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["lineNo", "qtyInvoiced"],
+                "properties": {
+                  "lineNo": { "type": "integer" },
+                  "qtyInvoiced": { "type": "number" },
+                  "uom": { "type": "string" },
+                  "unitPrice": { "type": "number" },
+                  "basisCode": { "type": "string" },
+                  "productIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "qualifier": { "type": "string" },
+                        "id": { "type": "string" }
+                      }
+                    }
+                  },
+                  "pricing": {
+                    "type": "object",
+                    "properties": {
+                      "priceCode": { "type": "string" },
+                      "unitPrice": { "type": "number" },
+                      "quantity": { "type": "number" },
+                      "uom": { "type": "string" }
+                    }
+                  },
+                  "productDescription": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "descriptionType": { "type": "string" },
+                        "description": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Summary": {
+          "type": "object",
+          "required": ["totalAmount"],
+          "properties": {
+            "totalAmount": { "type": "number" },
+            "totalLineItems": { "type": "integer" }
+          }
+        }
+      }
+    }
+  }
+}

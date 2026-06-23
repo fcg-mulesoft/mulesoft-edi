@@ -51,8 +51,10 @@ objectstore:
 partner:
   inbound:
     "1631404318T": "FESTO"
+    "COUPA": "Coupa"
   outbound:
     "234093": "FESTO"
+    "COUPA": "Coupa"
     
 #Scheduler Configuration
 scheduler:
@@ -69,7 +71,18 @@ logger:
   debug:
     category: "com.mycompany.b2b.edi"
     
+#Sender Id
+vantage:
+  ack:
+    senderId: "117414135T"
+     
+edi:
+  default:
+    item:
+      id: "NON-STOCK"
+    company:
+      id: "KFT"
+
 #Maxconcurrency
 maxConcurrency:
  attempt: "5"
-  

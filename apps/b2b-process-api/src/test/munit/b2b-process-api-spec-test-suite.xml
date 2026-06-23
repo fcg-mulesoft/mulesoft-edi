@@ -234,6 +234,25 @@
 			</munit-tools:verify-call>
 		</munit:validation>
 	</munit:test>
+	<munit:test name="poAck-outbound-scheduled-flowTest" doc:id="94e32997-155c-46a0-a288-be8d39e61c46" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="333b6b0a-037b-46a0-8b35-1222fc4826c3" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="674cd290-af17-4b28-908e-52b31dc6bd39" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to poAck-outbound-scheduled-flow" doc:id="15904e22-85a2-4b66-9af0-1786e0ea5bce" name="poAck-outbound-scheduled-flow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="LOG INFO: End Flow" doc:id="3ae89050-9b81-4069-adca-c26d51f51ecd" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="2e80fac5-e113-46be-97b1-7842dc2085c6" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
 
 
 </mule>

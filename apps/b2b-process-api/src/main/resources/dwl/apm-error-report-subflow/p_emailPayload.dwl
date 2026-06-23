@@ -23,7 +23,7 @@ var directionContext =
     else                            allDirections[0] default "N/A"
 
 var vendorSummary =
-    ((errorData map (v) -> safe(v.vendor as String, "UNKNOWN")) distinctBy $) joinBy ", "
+    ((errorData map (v) -> safe(v.vendor as String, "N/A")) distinctBy $) joinBy ", "
 
 var poSummary =
     ((allPurchaseOrders map (po) -> safe(po.poNumber as String, "N/A")) distinctBy $) joinBy ", "

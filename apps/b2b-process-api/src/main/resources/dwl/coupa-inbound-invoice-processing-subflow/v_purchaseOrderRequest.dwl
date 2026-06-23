@@ -3,10 +3,10 @@ import trim from dw::core::Strings
 output application/xml skipNullOn="everywhere"
 
 var itemIDSearch =
-    (vars.partsPriceResponse.ArrayOfItemPrice.*ItemPrice.ItemId default [])
+    (vars.partsPriceResponse.value.their_item_id default [])
         map (v) -> trim((v default "") as String)
 
-var defaultItemId = "EDI DEFAULT ITEM"
+var defaultItemId = Mule::p('edi.default.item.id')
 
 fun money(v) = "\u0024" ++ (((v default 0) as Number) as String { format: "0.00" })
 
@@ -83,7 +83,7 @@ var headerNoteText =
           OrderLine:
             validLinesArr map (line) ->
               if (isMatched(line))
-                line mapObject ((value, key) -> if (isEmpty(value)) {} else {(key): value})
+                line mapObject ((value, key) -> if (isEmpty(value)) {} else if (key as String == "ItemId") {(key): (vars.partsPriceResponse.value filter ($.their_item_id == value))[0].our_item_id} else {(key): value})
               else
                 ((line - "ItemId" - "Notes") mapObject ((value, key) -> if (isEmpty(value)) {} else {(key): value})) ++ {
                   ItemId: defaultItemId,

@@ -135,7 +135,9 @@ var bannerColor =
 var ve = vars.isValid.validationErrors default {}
 
 var msgPoNumber = safe(cdmHeader.poNumber default "" as String,
-                    safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, "N/A"))
+                    safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, 
+                    	safe(vars.initialPayload.Order.PoNo default "" as String,"N/A")
+                    ))
 
 var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as String
 
@@ -185,9 +187,20 @@ var shipToRows =
         ++ "<td style='padding:8px;border:1px solid #ddd;'>Ship To</td>"
         ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
 
-var allRows =
-    itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows
+var duplicateRows =
+    (ve.duplicatePo default []) map (e) ->
+        "<tr style='background:#fee2e2;color:#b91c1c;'>"
+        ++ "<td style='padding:8px;border:1px solid #ddd;'>Duplicate</td>"
+        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
 
+var ediXrefId =
+    (ve.ediXrefId default []) map (e) ->
+        "<tr style='background:#fee2e2;color:#b91c1c;'>"
+        ++ "<td style='padding:8px;border:1px solid #ddd;'>Invalid EDI Refrence ID</td>"
+        ++ "<td style='padding:8px;border:1px solid #ddd;'>" ++ e ++ "</td></tr>"
+		
+var allRows =
+    itemRows ++ carrierRows ++ externalPoRows ++ customerPartRows ++ totalRows ++ shipToRows ++ duplicateRows ++ ediXrefId
 var validationHtml =
     if (sizeOf(allRows) > 0)
         "<table style='width:100%;border-collapse:collapse;margin-top:10px;'>"

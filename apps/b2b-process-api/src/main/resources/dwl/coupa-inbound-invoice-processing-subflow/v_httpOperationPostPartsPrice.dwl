@@ -1,26 +1,27 @@
 %dw 2.0
 output application/json
+import toBase64 from dw::core::Binaries
 ---
 {
-	"method": Mule::p('b2b-p21-sys-api.transaction.method'),
+	"method": Mule::p('b2b-p21-sys-api.view.method'),
 	"host": Mule::p('b2b-p21-sys-api.host'),
 	"port": Mule::p('b2b-p21-sys-api.port'),
 	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
-	"path": Mule::p('b2b-p21-sys-api.transaction.custom.path'),
+	"path": Mule::p('b2b-p21-sys-api.view.path'),
 	"headers": {
-		"x-correlation-id": vars.integration.correlationId,
-		"Content-Type": "application/xml"
+		"x-correlation-id": vars.integration.correlationId
 	},
 	"queryParams": {
-		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.partsPrice'),
-		"companyId": vars.poSearchResponse.value[0].company_id,
-		"customerId": vars.poSearchResponse.value[0].customer_id,
-		"salesLocId": vars.poSearchResponse.value[0].preferred_location_id
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrder'),
+		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
+		"businesskey": (((vars.initialPayload.Order.Lines.*OrderLine.ItemId filter (!isEmpty($))) joinBy "|") default "")
 	},
 	"uriParams": {
 	},
+	"body": {
+	},
 	"untilsuccessful": {
-		"maxRetries": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.maxRetries'),
-		"interval": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.interval')
+		"maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
 	}
 }
