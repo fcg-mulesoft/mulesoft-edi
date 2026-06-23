@@ -35,7 +35,29 @@ payload]]></ee:set-variable>
         <apikit:router config-ref="b2b-process-api-spec-config"/>
         <error-handler ref="global-common-error-handler" />
     </flow>
-    <flow name="get:\healthCheck:b2b-process-api-spec-config">
+    <flow name="b2b-process-api-specFlow" doc:id="85d99892-8f5e-4185-a101-db9b9a68a4bf" >
+		<http:listener doc:name="Listener" doc:id="8628aeef-8c69-460c-8a24-7716390d9988" config-ref="HTTP_Listener_Configuration" path="/test"/>
+		<ee:transform doc:name="var : integration, initialPayload" doc:id="3faa7298-e98c-48a4-a805-c0cf5942b545">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="integration"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"source" : "APM" ,
+	"target" : "P21",
+	"integration-type" : "Inbound " ++ attributes.queryParams."type" ++ " " ++ payload[0]."b2bMessage"."header"."documentType" default payload,
+	"correlationId": correlationId,
+	"timestamp": now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+	},
+	"transmissionId" : payload[0].b2bMessage.header.transmissionId default ""
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="17fd7b8b-5620-426e-a695-7d615eb36685" name="outbound-invoice-processing-subflow"/>
+	</flow>
+	<flow name="get:\healthCheck:b2b-process-api-spec-config">
         <ee:transform doc:name="Prepare healthCheck Response">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0

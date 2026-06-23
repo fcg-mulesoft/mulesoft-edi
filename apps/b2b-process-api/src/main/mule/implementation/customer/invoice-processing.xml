@@ -8,13 +8,63 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<sub-flow name="outbound-invoice-processing-subflow" doc:id="06e87453-aa24-4240-ac71-df7103f55bef" >
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="de22f5c5-fc90-4e14-9e5a-1b635228c0d8" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;START&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
-		<os:retrieve doc:name="InvoiceLastRunTimestamp" doc:id="589e6dea-666d-4387-8ad6-e2b770968166" objectStore="Object_Store_Invoice_Vantage" key="InvoiceLastRunTimestamp" target="timeStamp">
-			<os:default-value ><![CDATA[#[now() - |PT24H|]]]></os:default-value>
+		<choice doc:name="Choice" doc:id="9eb79dc8-60dd-43ce-9307-c80c36725630" >
+			<when expression="#[attributes.queryParams.startTime != null and attributes.queryParams.endTime != null]">
+				<ee:transform doc:name="var: httpOperation" doc:id="29b1dbc7-6b33-4a28-aeb2-ac4bf3de1d89" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+
+---
+{
+    "method": Mule::p('b2b-p21-sys-api.view.method'),
+    "host": Mule::p('b2b-p21-sys-api.host'),
+    "port": Mule::p('b2b-p21-sys-api.port'),
+    "basePath": Mule::p('b2b-p21-sys-api.basePath'),
+    "path": Mule::p('b2b-p21-sys-api.view.path'),
+    "headers": {
+        "x-correlation-id": vars.initialVariables.correlationId
+    },
+    "queryParams":
+        {
+            "transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderInvoice'),
+            "purpose": Mule::p('b2b-p21-sys-api.purpose.outbound'),
+            "startTime": attributes.queryParams.startTime,
+            "endTime": attributes.queryParams.endTime
+        }
+        ++ (
+            if (!isEmpty(attributes.queryParams.partnerName default ""))
+            { "partnerName": attributes.queryParams.partnerName }
+            else
+            {}
+        )
+        ++ (
+            if (!isEmpty(attributes.queryParams.businessKey default ""))
+            { "businessKey": attributes.queryParams.businessKey }
+            else
+            {}
+        ),
+    "uriParams": {},
+    "body": {},
+    "untilsuccessful": {
+        "maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
+        "interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
+    }
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<os:retrieve doc:name="InvoiceLastRunTimestamp" doc:id="589e6dea-666d-4387-8ad6-e2b770968166" objectStore="Object_Store_Invoice_Vantage" key="InvoiceLastRunTimestamp" target="timeStamp">
+			<os:default-value><![CDATA[#[now() - |PT24H|]]]></os:default-value>
 		</os:retrieve>
-		<ee:transform doc:name="var : httpOperation - get invoice Data" doc:id="ab0afd4b-e630-49be-b19c-8c64728df459" >
+				<ee:transform doc:name="var : httpOperation - get invoice Data" doc:id="ab0afd4b-e630-49be-b19c-8c64728df459">
 			<ee:message />
-			<ee:variables >
-				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+			<ee:variables>
+				<ee:set-variable variableName="httpOperation"><![CDATA[%dw 2.0
 output application/json
 import toBase64 from dw::core::Binaries
 var objectStorePayload = payload
@@ -52,6 +102,8 @@ var modifiedTime =
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
+			</otherwise>
+		</choice>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="f3020b94-7a8d-43c7-b187-89d5b377d1ca" name="common-http-request-subflow" target="invoiceData" />
 		<ee:transform doc:name="View to CDM transformation" doc:id="3f76f0fb-2f75-41eb-93f5-d60feed5ff34" >
 			<ee:message >
@@ -295,8 +347,8 @@ map (entry) -> {
 ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<os:store doc:name="InvoiceLastRunTimestamp" doc:id="2e22e55b-f7ce-4699-a03d-f9894bb7348f" key="InvoiceLastRunTimestamp" objectStore="Object_Store_Invoice_Vantage" >
-			<os:value ><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
+		<os:store doc:name="InvoiceLastRunTimestamp" doc:id="2e22e55b-f7ce-4699-a03d-f9894bb7348f" key="InvoiceLastRunTimestamp" objectStore="Object_Store_Invoice_Vantage">
+			<os:value><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
 		</os:store>
 		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="419b7e8b-9b4d-49b5-8b84-3aba967bc927" collection="#[vars.errorInvoices]">
 			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="5773ae1f-6d59-4f7f-919e-d1d2f1a0b4c0" >
