@@ -129,7 +129,7 @@ var subjectSegments = [
 ] filter present($)
 
 var data = {
-    flowDirection:    "INBOUND",
+    flowDirection:    "OUTBOUND",
     documentType:     safe(integration."integration-type", "API"),
     appName:          p('api.name') default "Mule Application",
     transactionType:  safe(integration."integration-type", "API"),
