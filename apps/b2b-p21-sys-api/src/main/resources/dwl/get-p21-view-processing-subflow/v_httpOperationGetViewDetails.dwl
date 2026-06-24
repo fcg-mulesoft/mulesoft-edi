@@ -169,7 +169,22 @@ var routingConfig = {
 		outbound: {
 			view: Mule::p('viewNames.purchaseOrderShipmentOutbound'),
 			queryParams: {
-				"\$filter": ""
+				 "\$filter":
+                (
+                    [
+                        "date_last_modified ge " ++ startTime,
+                        "date_last_modified le " ++ endTime,
+                        if (!isEmpty(businesskey))
+                            "(" ++ ((businesskey map ("invoice_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+                        else
+                            null,
+                        if (!isEmpty(partnerName))
+                            "trading_partner_name eq '" ++ partnerName ++ "'"
+                        else
+                            null
+                    ]
+                    filter ($ != null)
+                ) joinBy " and "
 			}
 		}
 	},

@@ -8,13 +8,62 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
 	<sub-flow name="outbound-shipment-processing-subflow" doc:id="66590203-c624-4382-b79e-e2be3458ab0d" >
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="61588b7c-23d0-4e8a-8ddb-6619bd130755" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;START&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
-		<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage" target="lastRunTimestamp" >
-			<os:default-value ><![CDATA[#[now() - |PT24H|]]]></os:default-value>
+		<choice doc:name="Choice" doc:id="d69b0488-df28-4149-8f6b-8aa4c0ced09b" >
+			<when expression="#[attributes.queryParams.startTime != null and attributes.queryParams.endTime != null]">
+				<ee:transform doc:name="var: httpOperation" doc:id="384e9097-0188-4887-adbe-7e71a964486c" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+
+---
+{
+    "method": Mule::p('b2b-p21-sys-api.view.method'),
+    "host": Mule::p('b2b-p21-sys-api.host'),
+    "port": Mule::p('b2b-p21-sys-api.port'),
+    "basePath": Mule::p('b2b-p21-sys-api.basePath'),
+    "path": Mule::p('b2b-p21-sys-api.view.path'),
+    "headers": {
+        "x-correlation-id": vars.initialVariables.correlationId
+    },
+    "queryParams":
+        {
+            "transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderInvoice'),
+            "purpose": Mule::p('b2b-p21-sys-api.purpose.outbound'),
+            "startTime": attributes.queryParams.startTime,
+            "endTime": attributes.queryParams.endTime
+        }
+        ++ (
+            if (!isEmpty(attributes.queryParams.partnerName default ""))
+            { "partnerName": attributes.queryParams.partnerName }
+            else
+            {}
+        )
+        ++ (
+            if (!isEmpty(attributes.queryParams.businessKey default ""))
+            { "businessKey": attributes.queryParams.businessKey }
+            else
+            {}
+        ),
+    "uriParams": {},
+    "body": {},
+    "untilsuccessful": {
+        "maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
+        "interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
+    }
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage" target="lastRunTimestamp">
+			<os:default-value><![CDATA[#[now() - |PT24H|]]]></os:default-value>
 		</os:retrieve>
-		<ee:transform doc:name="var : httpOperation - get shipment Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2" >
+				<ee:transform doc:name="var : httpOperation - get shipment Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2">
 			<ee:message />
-			<ee:variables >
-				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+			<ee:variables>
+				<ee:set-variable variableName="httpOperation"><![CDATA[%dw 2.0
 output application/json
 import toBase64 from dw::core::Binaries
 var objectStorePayload = payload
@@ -52,6 +101,8 @@ var modifiedTime =
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
+			</otherwise>
+		</choice>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d0c11a10-2799-4c1f-8d19-fc2f7d0b7c60" name="common-http-request-subflow" target="shipmentData" />
 		<ee:transform doc:name="View to CDM transformation" doc:id="bf579432-3fdb-4099-8eff-239110c0e1bf" >
 			<ee:message >
