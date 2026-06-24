@@ -175,7 +175,7 @@ var routingConfig = {
                         "date_last_modified ge " ++ startTime,
                         "date_last_modified le " ++ endTime,
                         if (!isEmpty(businesskey))
-                            "(" ++ ((businesskey map ("invoice_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+                            "(" ++ ((businesskey map ("pick_ticket_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
                         else
                             null,
                         if (!isEmpty(partnerName))
