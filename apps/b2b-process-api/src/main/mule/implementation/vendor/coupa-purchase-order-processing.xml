@@ -8,6 +8,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="f3eaae67-8060-4585-9b21-8949893def16" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	//flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	//transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	sourceSystem: "Coupa",&#10;	targetSystem: "P21"&#10;}]'/>
 		<choice doc:name="Choice" doc:id="33daa089-b78c-4f89-a758-88319a3d5d8b" >
 			<when expression="#[isEmpty(vars.initialPayload.Order.edixRefId) or isEmpty(vars.initialPayload.Order.PoNo)]">
+				<set-variable value="#[output application/java&#10;---&#10;Mule::p('email.toRecipient') ++ &quot;,admorders@kingfiltration.com&quot;]" doc:name="Recipient List" doc:id="b2813e86-db6b-4898-aac0-384ef91f91cc" variableName="recipientList" />
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="02261f0a-ec38-4558-9583-a3fa3b85e1e0" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Missing PO Number or EDI X Ref Id in request" />
 			</when>
 			<otherwise >
@@ -22,7 +23,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<choice doc:name="isValid Purchase Order?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
 			<when expression="#[sizeOf(vars.poSearchResponse.value) == 0]">
 						<logger level="INFO" doc:name="PO Search Response" doc:id="64f3d493-cefe-48ce-bff2-a8c18ecc6ce4" message="PO Search Response is #[vars.poSearchResponse]" />
-						<set-variable value="#[output application/java&#10;---&#10;Mule::p('email.toRecipient') ++ &quot;,sasivikas.tanagala@flowcontrolgroup.com&quot;]" doc:name="Recipient List" doc:id="e5862529-69fc-4fd8-988c-6eff65dddb4d" variableName="recipientList" />
+						<set-variable value="#[output application/java&#10;---&#10;Mule::p('email.toRecipient') ++ &quot;,admorders@kingfiltration.com&quot;]" doc:name="Recipient List" doc:id="e5862529-69fc-4fd8-988c-6eff65dddb4d" variableName="recipientList" />
 						<set-variable value='#[output application/json&#10;---&#10;vars.initialPayload]' doc:name="Attachments" doc:id="7eb8ca71-6483-4f67-a86f-17f257c2426d" variableName="attachments"/>
 						<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="4a6405a4-8f2a-48d2-b977-faa97f576756" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Company Id and EDI XRef Id combination is not Available in P21 System."/>
 			</when>
@@ -45,7 +46,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 								<choice doc:name="Choice" doc:id="5964698f-be9a-44c9-9a9c-009f2d6c6489">
 									<when expression="#[sizeOf((vars.initialPayload.Order.Lines.*OrderLine.ItemId filter (!isEmpty($)))) == 0]">
 										<logger level="INFO" doc:name="No Item Ids" doc:id="619dba09-8f1b-4a5e-b6f7-33676071e106" message="No Item Ids Present in Coupa EDI Request"/>
-										<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="5d98b9ad-40ab-4134-b5a5-76f3ea7a1d62" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Item ID's are not provided in the coming request." />
+										<!-- [STUDIO:"CUSTOM:VALIDATION_FAILED"]<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="5d98b9ad-40ab-4134-b5a5-76f3ea7a1d62" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Item ID's are not provided in the coming request." /> [STUDIO] -->
 									</when>
 									<otherwise >
 										<ee:transform doc:name="var : httpOperation - retrieve p21PartsPrice" doc:id="c416483b-244d-45a4-939d-228971f3bea2">
@@ -76,6 +77,51 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<logger level="INFO" doc:name="LOG INFO : CoupaPurrchaseOrderCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Coupa Purchase Order Creation Successful. Order Number is " ++ (payload.Order.OrderNo default "NA")&#10;}]' />
 			</otherwise>
 		</choice>
+							</otherwise>
+						</choice>
+						<choice doc:name="Choice" doc:id="503271aa-31f6-42b1-93e1-05315a7a4675">
+							<when expression="#[sizeOf((vars.initialPayload.Order.Lines.*OrderLine.ItemId filter (!isEmpty($)))) == 0]">
+								<ee:transform doc:name="var : errorResponse, systemInformation" doc:id="3f134f80-d445-4afe-8ce2-c9d943fc3fb5">
+									<ee:message />
+									<ee:variables>
+										<ee:set-variable variableName="errorResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationId": (correlationId default uuid()),
+	"statusCode": vars.httpStatus,
+	"statusMessage": "CUSTOM:VALIDATION_FAILED",
+	"description": "Item IDs missing in Coupa request; proceeded with P21 PO creation – reference P21 Order Number : " ++ (payload.Order.OrderNo default "NA"),
+	"timestamp": (((now() >> "UTC")  as String {
+		format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC"),
+	notificationRequired: true
+}]]></ee:set-variable>
+										<ee:set-variable variableName="systemInformation" ><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+{
+	"source": vars.integration.source,
+	"target": vars.integration.target,
+	"env": capitalize(p('mule.env')),	
+	"integration-type": vars.integration."integration-type"
+	
+}]]></ee:set-variable>
+									</ee:variables>
+								</ee:transform>
+								<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="8fd6f691-16f5-4c2e-8d1e-18e3261ebd9f">
+									<ee:message>
+										<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
+									</ee:message>
+									<ee:variables>
+										<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
+									</ee:variables>
+								</ee:transform>
+								<flow-ref doc:name="send-email-subflow" doc:id="c201e9a3-b1ac-495b-a729-58fd677c053d" name="send-email-subflow" />
+							</when>
+							<otherwise >
+								<logger level="INFO" doc:name="LOG INFO : Item Id Empty Email Not Required" doc:id="19a39168-5f2e-48c1-8eae-0c08156216f4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "No Need to Send Item Id Empty Email for Order Number is " ++ (payload.Order.OrderNo default "NA")&#10;}]' />
 							</otherwise>
 						</choice>
 						<logger level="INFO" doc:name="LOG INFO : END" doc:id="7a218d2e-888d-442d-8952-b5cdd14450e9" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
