@@ -27,7 +27,7 @@ jobs:
             b2b-p21-sys-api: 'apps/b2b-p21-sys-api/**'
             
 
-  check-release:
+  deploy-release:
     if: ${{ fromJson(needs.changes.outputs.apps)[0] != null }}
     needs: changes
     runs-on: ubuntu-latest
@@ -35,6 +35,7 @@ jobs:
     permissions:
       contents: write
     strategy:
+      fail-fast: false
       matrix:
         app: ${{ fromJson(needs.changes.outputs.apps) }}
     steps:
@@ -117,22 +118,6 @@ jobs:
         id: app
         working-directory: ./apps/${{ matrix.app }}
         run: echo "version=$(mvn -q help:evaluate -Dexpression=project.version -q -DforceStdout)" >> "$GITHUB_OUTPUT"
-
-      - name: Determine If ${{ matrix.app }}-v${{ steps.app.outputs.version }} Release Exists in GitHub
-        id: check_release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          TAG: ${{ matrix.app }}-v${{ steps.app.outputs.version }}
-        shell: bash
-        run: |
-           if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "Release '$TAG' already exists in $REPO. Continuing with deployment."
-           else
-            echo "exists=false" >> "GITHUB_OUTPUT"
-            echo "No Release named '$TAG' found. Continuing."
-           fi
 
       - name: Determine If ${{ matrix.app }} Exists in CloudHub 2.0
         id: ch2_0_app
