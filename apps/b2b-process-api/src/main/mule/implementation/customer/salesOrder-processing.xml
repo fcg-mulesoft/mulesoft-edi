@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="inbound-salesOrder-processing-subflow" doc:id="41bbc87c-c7d9-4aca-9fb4-d14f708d99f2" >
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="01555037-44eb-4221-924a-11795ca781d0" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	 message: "Starting inbound sales order processing from APM.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
+		<ee:transform doc:name="var: httpOperation" doc:id="b682e8e8-6836-432a-93e7-fc718b8f91a6" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+---
+{
+	"method": Mule::p('b2b-p21-sys-api.view.method'),
+	"host": Mule::p('b2b-p21-sys-api.host'),
+	"port": Mule::p('b2b-p21-sys-api.port'),
+	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
+	"path": Mule::p('b2b-p21-sys-api.view.path'),
+	"headers": {
+		"x-correlation-id": vars.integration.correlationId
+	},
+	"queryParams": {
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
+		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
+		"validationMode" : Mule::p('b2b-p21-sys-api.validationMode.xref'),
+		"companyId": "TPA",
+		"ediRefId" : (payload[0].b2bMessage.header.partyInformation
+    filter ($.qualifier == "BY"))[0].identificationCode default ""
+	},
+	"uriParams": {
+	},
+	"body": {
+	},
+	"untilsuccessful": {
+		"maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="f11e01f4-80c4-43ad-9a86-e2112e75433d" name="common-http-request-subflow" target="ediXrefResponse" targetValue="#[payload.value]"/>
+		<ee:transform doc:name="var: isValid" doc:id="6c661087-fa57-474c-9aaf-5b1adcf497dc" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="isValid" ><![CDATA[%dw 2.0
+output application/json
+
+var response = vars.ediXrefResponse
+var hasInvalidEdiXref = isEmpty(response)
+
+---
+{
+    isValid: !hasInvalidEdiXref,
+    validationErrors:
+        if (hasInvalidEdiXref)
+            {
+                ediXrefId: [
+                    "The EDI X Reference ID is not valid for Company ID TPA."
+                ]
+            }
+        else
+            {}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Is EDI XRef Valid?" doc:id="61b7e6df-ee78-49bc-aa9e-a5e3f4572590" >
+			<when expression="#[vars.isValid.isValid != true]">
+				<logger level="INFO" doc:name="LOG INFO : invalid PurchaseOrder" doc:id="a71b6ad5-e657-484c-9672-ac39528c8f40" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message: "EDI X-Reference Validation failed. Invalid EDI Reference ID for the given Company ID. Stopping process.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
+				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="f2877d26-9e61-415f-942a-07c3984ae1b3" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO : Valid PurchaseOrder" doc:id="35ad53a9-ad6e-4743-8839-b1a77bd38061" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message : "EDI X-Reference validation successful. Proceeding to duplicate PO check.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="var: httpOperation" doc:id="33f45b6a-9d4d-414d-9b53-70d4b8e6801f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_httpOperationP21Lookup.dwl" variableName="httpOperation" />
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="6c7ede21-481c-4fed-97b3-2db0694bde51" name="common-http-request-subflow" target="duplicatePoResponse" targetValue="#[payload.value]"/>
+		<ee:transform doc:name="var : isValid" doc:id="5a172f1c-58e2-4c38-8ad3-d51f8e86eafe" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_isValidDuplicatePoCheck.dwl" variableName="isValid" />
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Is PO Duplicate?" doc:id="1fe107bd-2165-4afa-99bc-57c020e660ce" >
+			<when expression="#[vars.isValid.isValid != true]" >
+				<logger level="INFO" doc:name="LOG INFO : invalid PurchaseOrder" doc:id="c728d8dd-d54e-4f96-81f5-6305163fd972" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message : "Duplicate check failed. The incoming Purchase Order already exists in the system. Stopping process.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
+				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="e71784f5-94be-48d4-9934-32247f928906" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO : Valid PurchaseOrder" doc:id="5967ecdf-18a9-451f-a33e-67b251001caf" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message : "Purchase Order uniqueness validation successful. Proceeding to item and price validation.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="var: httpOperation" doc:id="fec9f003-eccb-424e-8c90-fd28f6d3ddbd" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+---
+{
+	"method": Mule::p('b2b-p21-sys-api.view.method'),
+	"host": Mule::p('b2b-p21-sys-api.host'),
+	"port": Mule::p('b2b-p21-sys-api.port'),
+	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
+	"path": Mule::p('b2b-p21-sys-api.view.path'),
+	"headers": {
+		"x-correlation-id": vars.integration.correlationId
+	},
+	"queryParams": {
+		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
+		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
+		"validationMode": Mule::p('b2b-p21-sys-api.validationMode.customerPart'),
+		"customerId": vars.ediXrefResponse.customer_id[0],
+		"businesskey":(vars.initialPayload flatMap ((x) -> x.b2bMessage.detail.itemDetails))
+    map ((item) -> item.buyersPartNumber)
+    joinBy ",",
+	},
+	"uriParams": {
+	},
+	"body": {
+	},
+	"untilsuccessful": {
+		"maxRetries": Mule::p('b2b-p21-sys-api.view.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.view.untilsuccessful.interval')
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d0f77aaa-dae3-4974-9f53-7bcaf573cc4b" name="common-http-request-subflow" target="customerItemValidationResponse" targetValue="#[payload.value]"/>
+		<logger level="INFO" doc:name="LOG INFO : customer Item Validation" doc:id="4d1c66ca-6b99-4f3a-bfd7-499eff11864d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message: "",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21",&#10;	&#10;}]'/>
+		<ee:transform doc:name="var: httpOperation" doc:id="eb9a9296-3190-4e32-8530-539c5e8d8a95" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_httpOperationPriceCheck.dwl" variableName="httpOperation" />
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="f21ee75d-27c7-43a1-a9f6-c5f4dd625a21" name="common-http-request-subflow" target="salesPricingResponse"/>
+		<ee:transform doc:name="var: isValid" doc:id="970a9d99-9e2c-4ccd-923c-ccf46a736cad" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_isValidPriceValidation.dwl" variableName="isValid" />
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO : PurchaseOrder Price Validation" doc:id="cbdcaed5-583f-4d4a-adbb-c662ec68c69c" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21",&#10;	overallStatus: vars.isValid.validationSummary.overallStatus default null,&#10;	totalLines: vars.isValid.validationSummary.totalLines default null,&#10;	failedLines: vars.isValid.validationSummary.failedLines default null,&#10;	successfulLines: vars.isValid.validationSummary.successfulLines default null,&#10;}]'/>
+		<ee:transform doc:name="var: httpOperation" doc:id="24670e5c-892a-46c2-8ed7-2a2646b8efde">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_httpOperationSalesOrder.dwl" variableName="httpOperation" />
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="5a90d143-a74e-40b4-ab5d-db30a3238ccb" name="common-http-request-subflow"/>
+		<choice doc:name="PO details Mismatch" doc:id="3de6e3a6-8ebb-4e16-9a6a-04e39729f3cd" >
+			<when expression='#[vars.isValid.validationSummary.overallStatus == "FAILED"]'>
+				<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="1e2ca3c5-c4a2-4618-bd29-dfd5112a9966">
+					<ee:message>
+						<ee:set-payload resource="dwl/inbound-salesOrder-processing-subflow/p_mismatchEmailBody.dwl" />
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_subjectMismatchEmail.dwl" variableName="subject" />
+						<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+output application/json
+---
+Mule::p("partner.inbound." ++ vars.initialPayload[0].b2bMessage.header.senderId)]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="180d4597-2c63-41f6-b4e0-0a9b61bc7b35" name="send-email-subflow"/>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="LOG INFO :  Price Match Sccucess" doc:id="2efd245d-291e-4f13-9011-d52b0fee8308" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "PRICE_MATCH_SUCCESS",&#10;	message : "All PO lines matched P21 pricing and items successfully. No CSR review required.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="b2d7df61-f9f8-47df-a129-6ac9f69f049a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
+	</sub-flow>
+</mule>

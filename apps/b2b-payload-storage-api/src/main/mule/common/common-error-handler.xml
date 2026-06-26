@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<email:smtp-config name="Email_SMTP"
+		doc:name="Email SMTP" doc:id="6649ebb9-582b-4747-9e42-f19c8e34c0e6">
+		<email:smtp-connection host="#[Mule::p('email.host')]"
+			connectionTimeout="${email.conn.timeout}"
+			readTimeout="${email.read.timeout}"
+			writeTimeout="${email.write.timeout}" port="#[Mule::p('email.port')]" user="#[Mule::p('email.user')]" password="${secure::email.password}">
+			<email:properties >
+				<email:property key="mail.smtp.starttls.enable" value="true" />
+			</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+	<error-handler name="global-common-error-handler" doc:id="ba8becab-5e3f-4fe4-8740-e92411c2bfe0" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="APIKIT Errors" doc:id="a3f1f9ac-e3cc-4472-a732-7404eeb59bce" when='#[error.errorType.namespace == "APIKIT"]'>
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="99bfcb80-6777-4c96-b850-81c999aa1095" message="Start: Global Error Handler: APIKIT ERROR"/>
+			<ee:transform doc:name="Status code generator" doc:id="96529d0a-81da-4c26-958e-ac7be35d8a7d" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable resource="dwl/global-error-handler/v_httpStatus_apikitError.dwl" variableName="httpStatus" />
+				
+
+</ee:variables>
+			</ee:transform>
+			<ee:transform doc:name="Response payload" doc:id="66303c17-0114-4390-99d1-a7882c650044">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable variableName="errorResponseHtml"><![CDATA[%dw 2.0
+output text/plain
+---
+"Correlation Id: " ++ (correlationId default uuid()) ++ "<br>" ++
+  "Status Code: " ++ vars.httpStatus ++ "<br>" ++
+  "Status Message: " ++ (error.errorType.namespace ++ ":" ++ error.errorType.identifier) ++ "<br>" ++
+  "Description: " ++ (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription) ++ "<br>" ++
+  "Timestamp: " ++ (now() as String {
+	format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC"
+]]></ee:set-variable>
+					<ee:set-variable variableName="systemInformation"><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+{
+	"source": vars.integration.source,
+	"target": vars.integration.target,
+	"env": capitalize(p('mule.env')),	
+	"integration": vars.integration.information
+	
+}]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-error-handler/v_errorResponse_apikitError.dwl" variableName="errorResponse" />
+				
+</ee:variables>
+			</ee:transform>
+			<ee:transform doc:name="Prepare Email Payload" doc:id="f831aa8f-99e3-4ebb-9cef-aee3592b5e39" >
+				<ee:message >
+					<ee:set-payload resource="dwl/global-error-handler/p_apikitError.dwl" />
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="da143965-7bb3-4094-b171-0a9311723485" name="send-email-subflow" />
+			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="54654679-c19c-4c3f-8fec-abb7e9038cc5" />
+			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="1e2a87b5-10d1-43a6-80a6-df8bfdec061c" category="com.apikit.errors" message="#[vars.errorResponse]"/>
+		
+</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="Generic" doc:id="f2b554b2-5998-440a-b4b1-3aaf404df4e8" >
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="14c027bd-c84a-45f0-8f1c-c874389ca4a1" message="Start: Global Error Handler: GENERIC ERROR"/>
+			<ee:transform doc:name="Status code generator" doc:id="f2195660-36e3-403c-964c-6ba18fc237e2">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable resource="dwl/global-error-handler/v_httpStatus_genericError.dwl" variableName="httpStatus" />
+				
+
+</ee:variables>
+			</ee:transform>
+			<ee:transform doc:name="Response payload" doc:id="99784093-f66c-4f3c-b952-3b95e13a147d" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="errorResponseHtml" ><![CDATA[%dw 2.0
+output text/plain
+var explictHandlerCodes = [504,502]
+---
+"Correlation Id: " ++ (correlationId default uuid()) ++ "<br>" ++
+  "Status Code: " ++ ((if ( explictHandlerCodes contains vars.httpStatus ) (vars.httpStatus) else (error.errorMessage.payload.errorCode default vars.httpStatus)) default 500) ++ "<br>" ++
+  "Status Message: " ++ ((if ( explictHandlerCodes contains vars.httpStatus ) ((error.errorType.namespace ++ ":" ++ error.errorType.identifier)) else (error.errorMessage.payload.errorType)) default (error.errorType.namespace ++ ":" ++ error.errorType.identifier)) ++ "<br>" ++
+  "Description: " ++ ((if ( explictHandlerCodes contains vars.httpStatus ) (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription) else (error.errorMessage.payload.errorMessage)) default (if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) contains "RETRY_EXHAUSTED")(error.description) else error.detailedDescription)) ++ "<br>" ++
+  "Timestamp: " ++ ((if ( explictHandlerCodes contains vars.httpStatus ) (((now() >> "UTC")  as String {
+		format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC") else (error.errorMessage.payload.errorDateTime)) default (((now() >> "UTC")  as String {
+		format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC"))]]></ee:set-variable>
+					<ee:set-variable variableName="systemInformation" ><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+{
+	"source": vars.integration.source,
+	"target": vars.integration.target,
+	"env": capitalize(p('mule.env')),	
+	"integration": vars.integration.information
+	
+}]]></ee:set-variable>
+					<ee:set-variable resource="dwl/global-error-handler/v_errorResponse_genericError.dwl" variableName="errorResponse" />
+				
+
+</ee:variables>
+			</ee:transform>
+			<ee:transform doc:name="Prepare Email Payload" doc:id="6da9d0c1-bd43-4ace-a538-70d09da54891" >
+				<ee:message >
+					<ee:set-payload resource="dwl/global-error-handler/p_genericError.dwl" />
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="372c7e3c-9111-4562-9c92-a072dd2a9f78" name="send-email-subflow" />
+			<set-payload value="#[vars.errorResponse]" doc:name="SP: Response" doc:id="5a9d8498-5085-44a7-9bcd-1094f3fdcf8f" />
+			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="a8ffcc12-6fb4-4243-b017-fa5d3da97dd8" message="#[vars.errorResponse]" category="com.generic.errors" />
+		
+</on-error-propagate>
+	</error-handler>
+	<sub-flow name="send-email-subflow" doc:id="3d59fe17-1c36-4b61-9db9-b7b28bb43b26" >
+		<logger level="INFO" doc:name="LOG DEBUG: Before Email" doc:id="865780b6-1c95-48f3-89fe-5d69039fbf73" message="Start: Email Alert" />
+		<email:send doc:name="Send Email" doc:id="d7d7b632-9777-49d7-831b-2e0f3baf73ea" config-ref="Email_SMTP" fromAddress="${email.sender}" subject="#[vars.subject default (&quot;ERROR: &quot; ++ p('app.name'))]" toAddresses="#[p('email.receivers') splitBy(&quot;,&quot;)]">
+				<reconnect />
+				<email:body contentType="text/html">
+				</email:body>
+			</email:send>
+		<logger level="INFO" doc:name="LOG DEBUG: After Email" doc:id="41279bcd-987d-40cc-b2cb-aad726c95f6d" message="End: Email Alert" />
+	
+</sub-flow>
+</mule>

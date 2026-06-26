@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="b2b-process-api-spec-test-suite.xml" />
+	<munit:test name="b2b-process-api-spec-mainTest-ANY"
+		doc:id="2f3941ff-0ef3-4d54-96b9-491e2388d3e0" description="Test"
+		expectedErrorType="ANY">
+		<munit:behavior>
+			<munit:set-event doc:name="Set Payload"
+				doc:id="9c24fb08-55a7-40c6-be6c-9131253807e1">
+				<munit:payload
+					value="#[%dw 2.0&#10;output application/json&#10;---&#10;readUrl('classpath://dwl/invoice-processing-test-suite/payload.dwl')]"
+					encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes
+					value="#[%dw 2.0&#10;output application/json&#10;---&#10;readUrl('classpath://dwl/invoice-processing-test-suite/attributes.dwl')]"
+					mediaType="application/json" />
+				<munit:variables>
+					<munit:variable key="initialPayload"
+						value="#[output application/json --- readUrl('classpath://dwl/invoice-processing-test-suite/payload.dwl')]"
+						mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+			<munit-tools:mock-when
+				doc:name="Mock : apikit:router"
+				doc:id="106c07c4-a6c3-47b7-8e47-57d25ac0c31d"
+				processor="apikit:router">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="b2b-process-api-spec-config"
+						attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return>
+					<munit-tools:error typeId="ANY" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when
+				doc:name="Mock when Send Email"
+				doc:id="59c1cb38-e0e9-4c27-a18c-aad3777b848a" processor="email:send">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<flow-ref doc:name="Flow-ref to b2b-process-api-spec-main"
+				doc:id="51c8d528-1290-4abd-9c41-c343ae0e3776"
+				name="b2b-process-api-spec-main" />
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-that
+				doc:name="Assert that" doc:id="cd2edc7c-245b-4d70-b1a9-8b8ffced0c80"
+				is="#[MunitTools::notNullValue()]" expression="#[payload]" />
+			<munit-tools:verify-call
+				doc:name="LOG INFO: End Flow"
+				doc:id="47d460b8-47a6-4c8e-b656-1dec87dd14ef" processor="logger">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="e0e05fe2-b9c6-45d1-ad6a-ce5a16f734b0"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test
+		name="inbound-transactions-processing-flow-configTest"
+		doc:id="ae5dfb52-67db-4498-9ad9-f8ace9134d27" description="Test">
+		<munit:behavior>
+			<munit:set-event doc:name="Set Payload"
+				doc:id="2892a28b-e19f-4573-b53c-bc5d5e7faac2">
+				<munit:payload
+					value="#[%dw 2.0&#10;output application/json&#10;---&#10;readUrl('classpath://dwl/invoice-processing-test-suite/payload.dwl')]"
+					encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes
+					value="#[%dw 2.0&#10;output application/json&#10;---&#10;readUrl('classpath://dwl/invoice-processing-test-suite/attributes.dwl')]"
+					mediaType="application/json" />
+				<munit:variables>
+					<munit:variable key="initialPayload"
+						value="#[output application/json --- readUrl('classpath://dwl/invoice-processing-test-suite/payload.dwl')]"
+						mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+			<munit-tools:mock-when
+				doc:name="Flow Ref To Inbound Transaction Processing"
+				doc:id="ba7766b9-6e08-4140-810c-1d3d5fef9b05" processor="flow-ref">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="885af747-f4ce-47cd-bc6f-ea61768d6175"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<flow-ref
+				doc:name="Flow-ref to post:\inboundTransactions:application\json:b2b-process-api-spec-config"
+				doc:id="2ae673c0-9491-4778-9d40-3d636bfa48d0"
+				name="post:\inboundTransactions:application\json:b2b-process-api-spec-config" />
+		</munit:execution>
+	</munit:test>
+	<munit:test
+		name="purchase-order-outbound-scheduled-flowTest"
+		doc:id="7493b1de-5f4b-4e24-b353-11cb4353106b" description="Test">
+		<munit:behavior>
+			<munit-tools:mock-when
+				doc:name="Flow Ref To purchase-order-outbound-scheduled-flow"
+				doc:id="d344d288-e968-4ba6-a112-b27b55fd0109" processor="flow-ref">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="305f024e-419d-45fc-9aa2-c6204fe82f06"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<flow-ref
+				doc:name="Flow-ref to purchase-order-outbound-scheduled-flow"
+				doc:id="bb7038dd-abaf-4499-94ff-ea6bfde29e78"
+				name="purchase-order-outbound-scheduled-flow" />
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:verify-call
+				doc:name="LOG INFO : END"
+				doc:id="1f74587e-3aac-4702-a72b-20142339a41d" processor="logger">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="6ee0af0c-950d-4e7b-a2ca-c9dbdf2926ab"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="b2b-alert-notification-apm-flowTest"
+		doc:id="b456eb3c-f25d-4fb9-8295-695c759af49e" description="Test">
+		<munit:behavior>
+			<munit-tools:mock-when
+				doc:name="Flow-ref to b2b-alert-notification-main-subflow"
+				doc:id="db377539-cefd-47aa-a063-772c9c5a159d" processor="flow-ref">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="c7f85bb3-a757-4e9e-a701-e6b1bc5cfa38"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<flow-ref
+				doc:name="Flow-ref to b2b-alert-notification-apm-flow"
+				doc:id="e0f90c35-1300-4ac7-84b4-41fb4133e44e"
+				name="b2b-alert-notification-apm-flow" />
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:verify-call
+				doc:name="LOG INFO : END"
+				doc:id="0aad3a5c-456c-4b38-b4a5-3daeb4c45fc0" processor="logger">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="00053657-e525-43b6-a7a2-8975ae96d6eb"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="b2b-process-api-spec-mainTest-APIKIT"
+		doc:id="cf26851b-1957-44e1-a894-7d7046adec82" description="Test"
+		expectedErrorType="APIKIT:NOT_FOUND">
+		<munit:behavior>
+			<munit:set-event doc:name="Set Payload"
+				doc:id="79ee07bb-fd25-4533-94de-f25f00f5b85e">
+				<munit:payload
+					value="#[%dw 2.0&#10;output application/json&#10;---&#10;readUrl('classpath://dwl/invoice-processing-test-suite/payload.dwl')]"
+					encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes
+					value="#[%dw 2.0&#10;output application/json&#10;---&#10;readUrl('classpath://dwl/invoice-processing-test-suite/attributes.dwl')]"
+					mediaType="application/json" />
+				<munit:variables>
+					<munit:variable key="initialPayload"
+						value="#[output application/json --- readUrl('classpath://dwl/invoice-processing-test-suite/payload.dwl')]"
+						mediaType="application/json" />
+					<munit:variable key="initialVariables"
+						value='{"integration-type": "Outbound-850"}' encoding="UTF-8"
+						mediaType="application/json" />
+
+				</munit:variables>
+			</munit:set-event>
+			<munit-tools:mock-when
+				doc:name="Mock : apikit:router"
+				doc:id="8594f225-62f2-4497-b6fb-fe089cabdbfe"
+				processor="apikit:router">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="b2b-process-api-spec-config"
+						attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return>
+					<munit-tools:error typeId="APIKIT:NOT_FOUND" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when
+				doc:name="Mock when Send Email"
+				doc:id="ac860af8-558c-4209-93a7-184c2e52f734" processor="email:send">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<flow-ref doc:name="Flow-ref to b2b-process-api-spec-main"
+				doc:id="6ad88e26-6384-46b9-b844-a7f72681bcb0"
+				name="b2b-process-api-spec-main" />
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-that
+				doc:name="Assert that" doc:id="74ae83cd-1c61-44dc-8e44-3a78aaf9fbce"
+				expression="#[payload]" is="#[MunitTools::notNullValue()]" />
+			<munit-tools:verify-call
+				doc:name="LOG INFO: End Flow"
+				doc:id="d17b3384-267a-4a7a-84fa-e769bc749c52" processor="logger">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="51a6cf79-4d66-409a-a1da-910a0e61c867"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="poAck-outbound-scheduled-flowTest" doc:id="94e32997-155c-46a0-a288-be8d39e61c46" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="333b6b0a-037b-46a0-8b35-1222fc4826c3" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="674cd290-af17-4b28-908e-52b31dc6bd39" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to poAck-outbound-scheduled-flow" doc:id="15904e22-85a2-4b66-9af0-1786e0ea5bce" name="poAck-outbound-scheduled-flow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="LOG INFO: End Flow" doc:id="3ae89050-9b81-4069-adca-c26d51f51ecd" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="2e80fac5-e113-46be-97b1-7842dc2085c6" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

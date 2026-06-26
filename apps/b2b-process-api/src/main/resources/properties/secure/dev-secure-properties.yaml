@@ -1,0 +1,21 @@
+# Dev Secure Configuration
+
+email:
+  password: "![BSIHrxauyp4OUmWUL5rqC8t+9UPK6S4tI2On9RSmzJo=]"
+ 
+https:
+  keystore:
+    keypass: "![PBUn8Z4M8PzkYOUGWbxIXw==]"
+    storepass: "![PBUn8Z4M8PzkYOUGWbxIXw==]]"
+    
+apm.api:
+  accessToken:
+    clientId: "![ur29gLlL7AbUGKzWwvP0RhBIr64zCsuKM3jeIwJ/RCzMuYTFkMPezpTnuW0fFF1n]"
+    clientSecret: "![jDhRwIMfEEksXan7+bsVlBTMbCeQcVU5pg5W6l1Gz/lfwjI3dsuI2aTw64rjS2Qc]"
+    grantType: "![BccxcWJvRMmuwMHahTutSmR7tYJRkqSik1YIwShPLmQ]"
+
+# Azure Configuration
+azure:
+ sastoken: "![xsc8nLgpfcC9TgP4B8nAyIQFFV0I9SqV7CoLnyefCLSx6sxxhlTpwmikMarR3I5IbRu4zeG9HwbnRvPJTUpIfobLArXo+m20AU6MIE+XiUUU3Sk7QnfNrUKZu/bW4ofrecuOL9T1dyrdHe0hFMLjqEtgB6E0Mi1DAfy3yVINsxOoAcasQ/1LU6tzHCWF0lvJpWLXplqpZqwPQpUdO39Ujg==]"
+     
+ 

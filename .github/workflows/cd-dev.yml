@@ -1,0 +1,245 @@
+name: cd-dev
+
+on:
+  pull_request:
+    types: closed
+    branches:
+      - "dev"
+
+jobs:
+  changes:
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      apps: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect Changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            b2b-payload-storage-api: 'apps/b2b-payload-storage-api/**'
+            b2b-process-api: 'apps/b2b-process-api/**'
+            b2b-p21-sys-api: 'apps/b2b-p21-sys-api/**'
+            
+
+  check-release:
+    if: ${{ fromJson(needs.changes.outputs.apps)[0] != null }}
+    needs: changes
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        app: ${{ fromJson(needs.changes.outputs.apps) }}
+    steps:
+      - name: Setup Node for Anypoint CLI v4
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Anypoint CLI v4
+        shell: bash
+        run: |
+           npm install -g anypoint-cli-v4
+
+      - name: Configure Anypoint CLI v4
+        env:
+          ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_EXCHANGE_CLIENT_ID }}
+          ANYPOINT_CLIENT_SECRET: ${{secrets.ANYPOINT_EXCHANGE_CLIENT_SECRET }}
+        run: |
+          anypoint-cli-v4 conf client_id "${{ env.ANYPOINT_CLIENT_ID }}"
+          anypoint-cli-v4 conf client_secret "${{ env.ANYPOINT_CLIENT_SECRET }}"
+
+      - name: Setup Maven Environment
+        uses: s4u/setup-maven-action@v1.19.0
+        with:
+          java-version: 17
+          maven-version: 3.9.6
+          settings-servers: |
+            [{
+              "id": "MuleRepository",
+              "username": "${{ secrets.NEXUS_USERNAME }}",
+              "password": "${{ secrets.NEXUS_PASSWORD }}"
+            },
+            {
+              "id": "anypoint-exchange-private",
+              "username": "~~~Client~~~",
+              "password": "${{ secrets.ANYPOINT_EXCHANGE_CLIENT_ID }}~?~${{ secrets.ANYPOINT_EXCHANGE_CLIENT_SECRET }}"
+            },
+            {
+              "id": "anypoint-exchange-public",
+              "username": "~~~Client~~~",
+              "password": "${{ secrets.ANYPOINT_EXCHANGE_CLIENT_ID }}~?~${{ secrets.ANYPOINT_EXCHANGE_CLIENT_SECRET }}"
+            }]
+          settings-repositories: |
+            [{
+              "id":"mule-public",
+              "name": "Mulesoft Public Repository",
+              "url":"https://repository.mulesoft.org/nexus/content/repositories/public",
+              "layout": "default"
+             },
+             {
+              "id":"MuleRepository",
+              "name": "Mulesoft EE Repository",
+              "url":"https://repository.mulesoft.org/nexus-ee/content/repositories/releases-ee/",
+              "layout": "default",
+              "snapshots": {
+                "enabled": true
+              },
+              "releases": {
+                "enabled": true
+              }
+             },
+             {
+              "id":"anypoint-exchange-private",
+              "name": "FCG Mulesoft Repository",
+              "url": "https://maven.anypoint.mulesoft.com/api/v3/organizations/d239ff40-5b13-47be-9bb0-a029a64dac2c/maven"
+             },
+             {
+              "id":"anypoint-exchange-public",
+              "name": "Anypoint Exchange",
+              "url": "https://maven.anypoint.mulesoft.com/api/v3/maven"
+             } ]
+          settings-pluginRepositories: |
+            [{
+              "id":"mule-public",
+              "name": "Mulesoft Public Repository",
+              "url":"https://repository.mulesoft.org/nexus/content/repositories/public"
+             }]
+
+      - name: Determine Version Number for ${{ matrix.app }}
+        id: app
+        working-directory: ./apps/${{ matrix.app }}
+        run: echo "version=$(mvn -q help:evaluate -Dexpression=project.version -q -DforceStdout)" >> "$GITHUB_OUTPUT"
+
+      - name: Determine If ${{ matrix.app }}-v${{ steps.app.outputs.version }} Release Exists in GitHub
+        id: check_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+        shell: bash
+        run: |
+           if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release '$TAG' already exists in $REPO. Failing this job."
+            exit 1
+           else
+            echo "exists=false" >> "GITHUB_OUTPUT"
+            echo "No Release named '$TAG' found. Continuing."
+           fi
+
+      - name: Build ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+        id: build-release
+        if: ${{steps.check_release.outputs.exists == false }}
+        working-directory: ./apps/${{ matrix.app }}
+        run: mvn clean package -DskipMunitTests
+
+      - name: Create Github Release for ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+        if: ${{steps.check_release.outputs.exists == false }}
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          tag_name: ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+          files: ./apps/${{ matrix.app }}/target/${{ matrix.app }}-app-${{ steps.app.outputs.version }}-mule-application.jar
+          target_commitish: ${{ github.ref_name }}
+
+      - name: Upload ${{ matrix.app }}-v${{ steps.app.outputs.version }} to Anypoint Exchange
+        shell: bash
+        working-directory: ./apps/${{ matrix.app }}
+        env:
+          MAVEN_GROUP_ID: ${{ secrets.ANYPOINT_EXCHANGE_GROUP_ID }}
+          MAVEN_ARTIFACT_ID: ${{ matrix.app }}-app
+          MAVEN_VERSION_ID: ${{ steps.app.outputs.version }}
+          APP_NAME: ${{ matrix.app }}
+        run: |
+          anypoint-cli-v4 exchange:asset:upload \
+          "${{ env.MAVEN_GROUP_ID }}/${{ env.MAVEN_ARTIFACT_ID }}/${{ env.MAVEN_VERSION_ID }}" \
+          --organization "Flow Control Group" \
+          --environment "NonProd" \
+          --files '{"mule-application.jar": "target/${{ env.APP_NAME }}-app-${{ env.MAVEN_VERSION_ID }}-mule-application.jar"}' \
+          --type='app' \
+          --name='${{ env.APP_NAME }}'
+
+      - name: Determine If ${{ matrix.app }} Exists in CloudHub 2.0
+        id: ch2_0_app
+        shell: bash
+        env:
+          APP_NAME: ${{ matrix.app }}-dev
+        run: |
+          CH_2_APP_ID=$(anypoint-cli-v4 runtime-mgr:application:list \
+          --organization "Flow Control Group" \
+          --environment "NonProd" \
+          --output "json" \
+          | jq --arg name "${{ env.APP_NAME }}" '.[] | select(.name == $name) | .id')
+
+          if [ -n "$CH_2_APP_ID" ]; then
+            echo "${{ env.APP_NAME }} exists in CloudHub 2.0"
+            echo "appId=$CH_2_APP_ID" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "${{ env.APP_NAME }} DOES NOT exist in CloudHub 2.0"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update ${{ matrix.app }} in CloudHub 2.0
+        if: steps.ch2_0_app.outputs.exists == 'true'
+        shell: bash
+        env:
+          CLOUDHUB2_APP_ID: ${{ steps.ch2_0_app.outputs.appId }}
+          ANYPOINT_EXCHANGE_GROUP_ID: ${{ secrets.ANYPOINT_EXCHANGE_GROUP_ID }}
+          APP_NAME: ${{ matrix.app }}-app
+          APP_VERSION: ${{ steps.app.outputs.version }}
+          MULE_KEY: ${{ secrets.MULE_KEY }}
+          ANYPOINT_PLATFORM_CLIENT_ID: ${{ secrets.ANYPOINT_PLATFORM_CLIENT_ID }}
+          ANYPOINT_PLATFORM_CLIENT_SECRET: ${{ secrets.ANYPOINT_PLATFORM_CLIENT_SECRET }}
+        run: |
+          anypoint-cli-v4 runtime-mgr:application:modify \
+          "${{ env.CLOUDHUB2_APP_ID }}" \
+          --organization "Flow Control Group" \
+          --environment "NonProd" \
+          --groupId "${{ env.ANYPOINT_EXCHANGE_GROUP_ID }}" \
+          --artifactId "${{ env.APP_NAME }}" \
+          --assetVersion "${{ env.APP_VERSION }}" \
+          --objectStoreV2 \
+          --lastMileSecurity \
+          --property "mule.env:dev" \
+          --secureProperty "mule.key:${{ env.MULE_KEY }}" \
+          --secureProperty "anypoint.platform.client_id:${{ env.ANYPOINT_PLATFORM_CLIENT_ID }}" \
+          --secureProperty "anypoint.platform.client_secret:${{ env.ANYPOINT_PLATFORM_CLIENT_SECRET }}"
+
+
+      - name: Deploy ${{ matrix.app }} to CloudHub 2.0
+        if: steps.ch2_0_app.outputs.exists == 'false'
+        shell: bash
+        env:
+          APP_DEPLOY_NAME: ${{ matrix.app }}-dev
+          CLOUDHUB2_SPACE_UUID: ${{ secrets.CLOUDHUB2_SPACE_UUID }}
+          RUNTIME_VERSION: 4.9.0
+          APP_NAME: ${{ matrix.app }}-app
+          APP_VERSION: ${{ steps.app.outputs.version }}
+          ANYPOINT_EXCHANGE_GROUP_ID: ${{ secrets.ANYPOINT_EXCHANGE_GROUP_ID }}
+          MULE_KEY: ${{ secrets.MULE_KEY }}
+          ANYPOINT_PLATFORM_CLIENT_ID: ${{ secrets.ANYPOINT_PLATFORM_CLIENT_ID }}
+          ANYPOINT_PLATFORM_CLIENT_SECRET: ${{ secrets.ANYPOINT_PLATFORM_CLIENT_SECRET }}
+        run: |
+          anypoint-cli-v4 runtime-mgr:application:deploy \
+            "${{ env.APP_DEPLOY_NAME }}" "${{ env.CLOUDHUB2_SPACE_UUID }}" "${{ env.RUNTIME_VERSION }}" "${{ env.APP_NAME }}" \
+            --assetVersion "${{ env.APP_VERSION }}" \
+            --groupId "${{ env.ANYPOINT_EXCHANGE_GROUP_ID }}" \
+            --organization "Flow Control Group" \
+            --environment "NonProd" \
+            --replicas 1 \
+            --replicaSize "0.1" \
+            --releaseChannel LTS \
+            --objectStoreV2 \
+            --lastMileSecurity \
+            --property "mule.env:dev" \
+            --secureProperty "mule.key:${{ env.MULE_KEY }}" \
+            --secureProperty "anypoint.platform.client_id:${{ env.ANYPOINT_PLATFORM_CLIENT_ID }}" \
+            --secureProperty "anypoint.platform.client_secret:${{ env.ANYPOINT_PLATFORM_CLIENT_SECRET }}"

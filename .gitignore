@@ -1,0 +1,15 @@
+.vscode/settings.json
+.classpath
+.metadata/
+.mule/
+.project
+**/properties/*local*properties*
+**/target
+*.prefs
+*.md
+*.wev
+*.html
+*.css
+*.svg
+*.js
+apps/b2b-process-api/reports/assets/styles/fonts/muleicons.ttf

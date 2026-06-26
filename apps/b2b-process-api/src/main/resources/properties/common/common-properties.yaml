@@ -1,0 +1,88 @@
+#Common Properties
+
+# SMTP Email Properties
+email:
+  host: "smtp.office365.com"
+  port: "587"
+  username: "mulesoftalerts@fluidflow.onmicrosoft.com"
+  connectionTimeout: "60"
+  readTimeout: "60"
+  writeTimeout: "60"
+  reconnection:
+    attempts: "3"
+    frequency: "2000"
+
+common: 
+    error: 
+        handler: 
+            debug: 
+                logs: ""
+                
+explicitcodes: "502,504,413"  
+
+untilsuccessful:
+  maxRetries: "5"
+  interval: "5000"
+  
+# Listener Properties
+https:
+  host: "0.0.0.0"
+  port: "8082"
+  timeout:
+    connection-idle: "600000"
+  connectionIdleTimeOut: "30000"
+  responseBufferSize: "1024"
+  responseTimeout: "40000"
+  basePath: "/api/*"
+  private:
+    port: "8094"
+  keystore:
+    path: "keystore.jks"
+    alias: "fcg-mule-cert"
+
+#Object Store Configuration
+objectstore:
+  token:
+    entryTTL: "30"
+    expirationInterval: "29"
+    maxEntries: "2"
+    
+# Partners
+partner:
+  inbound:
+    "1631404318T": "FESTO"
+    "COUPA": "ADM Coupa"
+  outbound:
+    "234093": "FESTO"
+    "COUPA": "ADM Coupa"
+    
+#Scheduler Configuration
+scheduler:
+  outbound:
+    purchaseOrder:
+      frequency: "0 0 */3 * * ?"
+      timeZone: "America/Chicago"
+  alertNotification:
+    frequency: "0 0 */3 * * ?"
+    timeZone: "America/Chicago"
+   
+#Logger 
+logger:
+  debug:
+    category: "com.mycompany.b2b.edi"
+    
+#Sender Id
+vantage:
+  ack:
+    senderId: "117414135T"
+     
+edi:
+  default:
+    item:
+      id: "NON-STOCK"
+    company:
+      id: "KFT"
+
+#Maxconcurrency
+maxConcurrency:
+ attempt: "5"

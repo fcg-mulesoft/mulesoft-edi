@@ -1,0 +1,33 @@
+# Common Configuration
+# Listener Properties
+https:
+  host: "0.0.0.0"
+  port: "8082"
+  timeout:
+    connection-idle: "600000"
+  connectionIdleTimeOut: "30000"
+  responseBufferSize: "1024"
+  responseTimeout: "40000"
+  basePath: "/api/v1/*"
+  private:
+    port: "8092"
+  keystore:
+    path: "keystore.jks"
+    alias: "fcg-mule-cert"
+    
+# SMTP Email Properties
+email:
+  host: "smtp.office365.com"
+  port: "587"
+  username: "mulesoftalerts@fluidflow.onmicrosoft.com"
+  connectionTimeout: "60"
+  readTimeout: "60"
+  writeTimeout: "60"
+  reconnection:
+    attempts: "3"
+    frequency: "2000"
+
+#Logger 
+logger:
+  debug:
+    category: "com.mycompany.b2b.edi"

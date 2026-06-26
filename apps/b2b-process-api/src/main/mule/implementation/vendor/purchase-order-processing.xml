@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+	<sub-flow name="purchase-order-processing-subflow" doc:id="640ba365-afbb-47cd-ad3a-f1f9e2520b4d" >
+		<logger level="INFO" doc:name="LOG INFO : START" doc:id="af724099-b954-4c4a-8cfc-b2526f72d195" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;START&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
+		<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="bdeed774-a4a3-4569-b917-29cf8ba3124b">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_httpOperationgetPurchaseOrder.dwl" variableName="httpOperation" />
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="523d4c38-1e8a-48be-9e54-4029a2e0b282" name="common-http-request-subflow" target="purchaseOrderData"/>
+		<ee:transform doc:name="View to CDM transformation" doc:id="53d4d6eb-0f9f-4e3c-a0f6-c2d7ce094e59" >
+			<ee:message >
+				<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_cdmMapping.dwl" />
+			</ee:message>
+		</ee:transform>
+				<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="e0d56ebc-9b4f-44a8-b148-3c5fa85a8d53" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}"/>
+		<parallel-foreach doc:name="Parallel For Each : Iteration over POs" doc:id="7986e00b-9d90-458d-bd84-f219e3092d6d" collection="#[payload]" maxConcurrency="${maxConcurrency.attempt}">
+			<try doc:name="Try" doc:id="5d9023da-464b-4fa6-9479-6099a6346eea" >
+				<json:validate-schema doc:name="Validate 850 FESTO Json schema" doc:id="ffe1bc4d-7bca-4c2e-b8bb-347da0ef2d36" schema="schema/PO_OUTBOUND_JSON_SCHEMA.json"/>
+				<ee:transform doc:name="var: httpOperation- post APM" doc:id="c1ad95c5-2b3b-4684-ab25-0dce143b0f90" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_httpOperationApmRequest.dwl" variableName="httpOperation" />
+					</ee:variables>
+				</ee:transform>
+				<logger level="DEBUG" doc:name="Log DEBUG: APM Request" doc:id="fde1be55-2797-4f1d-8f69-3e5da1254d14" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow start&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]" category="${logger.debug.category}"/>
+				<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="0417706a-08ea-43db-90b2-792ae0237d69" name="common-http-request-subflow" target="transmissionId" targetValue="#[attributes.headers.'x-apm-trx-id']"/>
+				<logger level="DEBUG" doc:name="LOG DEBUG: APM Response" doc:id="140c0f2b-2db6-4950-8de5-741747dc0d24" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;APM flow ended&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	transmissionId: vars.transmissionId&#10;}]" category="${logger.debug.category}"/>
+				<ee:transform doc:name="Transaction api payload  transformation" doc:id="aa57eb78-9a2e-42e7-a837-24af5dfac952" >
+					<ee:message >
+						<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_accumulatedSuccessResponse.dwl" />
+					</ee:message>
+				</ee:transform>
+				<error-handler >
+					<on-error-continue enableNotifications="false" logException="false" doc:name="On Error Continue" doc:id="61f08e41-8482-4bcf-97bc-bf42fc519db0" type="ANY">
+						<ee:transform doc:name="var : httpStatus" doc:id="b98ab224-5536-465b-b2a8-a9bdae070bbd" >
+							<ee:message >
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/json
+---
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:BAD_REQUEST") (400) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_FOUND") (404) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:METHOD_NOT_ALLOWED") (405) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_ACCEPTABLE") (406) else
+if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:UNSUPPORTED_MEDIA_TYPE") (415) else (500)]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<ee:transform doc:name="Preparing error payload for transaction api" doc:id="d7f437fe-619b-4dbd-bee5-3d75bc7f9c9d">
+							<ee:message>
+								<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_accumulatedFailedResponse.dwl" />
+							</ee:message>
+						</ee:transform>
+						<logger level="INFO" doc:name="LOG INFO : Error" doc:id="1bb47f79-ca27-43c2-ba90-0b811febda8f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Errored PO",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poSummary: payload&#10;}]' />
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</parallel-foreach>
+						<logger level="DEBUG" doc:name="LOG DEBUG:  PO Status" doc:id="194628f8-dbd5-4291-8353-19f5fc40b0a1" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process completed",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poSummary: payload&#10;}]' category="${logger.debug.category}"/>
+		<ee:transform doc:name="Prepare payload for transaction API" doc:id="060f9eac-4190-48e6-93f5-d92fcb735172" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="parllelForEachResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_erroredPOs.dwl" variableName="erroredPOs" />
+				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_transactionRequestPayload.dwl" variableName="transactionRequestPayload" />
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="var: httpOperation-post Transaction api" doc:id="2befd336-0a59-43f8-9148-d9d8d5594758">
+				<ee:message>
+				</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_httpOperationPostTransaction.dwl" variableName="httpOperation" />
+			</ee:variables>
+			</ee:transform>
+		<try doc:name="Try" doc:id="cc03ad5f-3328-4572-ba14-2e60914b9af5" >
+			<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="b245c1de-a43f-423a-a4a3-20608dfc7294" name="common-http-request-subflow" />
+			<choice doc:name="is Flag Updation Successful?" doc:id="5e8205b6-080d-4e4a-a9c9-f0b9c5b0c5b7" >
+				<when expression='#[(payload.TransactionSetResult.Results.Transactions.Transaction.Status) == "Failed"]' >
+					<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="668854ca-ea90-4afd-abfe-bda298eac9fd" type="CUSTOM:P21_FAILED" description='#[payload.Messages joinBy ","]' />
+				</when>
+				<otherwise >
+					<logger level="DEBUG" doc:name="LOG INFO : Flag Updated" doc:id="3c3edaa3-eae0-43b1-a25d-c45434800d61" message='#[%dw 2.0&#10;output application/json&#10;var t = payload.TransactionSetResult.Results.Transactions.*Transaction---&#10;{&#10;	event: "Flag updation was Successful in P21",&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;    successFlagPO: &#10;		t filter ($.Status == "Passed") &#10;		  map $.DataElements.DataElement.Rows.Row.Edits.Edit.Value,&#10;}]' />
+				</otherwise>
+			</choice>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="3f7d5e70-5db7-4e4b-b948-a4c804d65cc7" >
+					<choice doc:name="Choice for Error Type " doc:id="5b44c818-9a6d-462d-a0e9-783daa564b89" >
+						<when expression='#[output json --- error.errorType.identifier == "RETRY_EXHAUSTED"]'>
+							<ee:transform doc:name="Preparing Email Template for P21 connectivity issues, var : subject" doc:id="40e59ebb-8f85-49e5-9f85-93f685fa0523">
+						<ee:message>
+									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_connectivityError.dwl" />
+						</ee:message>
+								<ee:variables >
+									<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_connectivityErrorSubject.dwl" variableName="subject" />
+								</ee:variables>
+					</ee:transform>
+							<logger level="INFO" doc:name="Log INFO : Error" doc:id="d8a5d389-2324-4176-815d-8799be95f9ac" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Connectivity Error in P21",&#10;	error: error.errorType.identifier,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]'/>
+							<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="3a905e98-5c05-4b0c-9655-fb32fc138a29" name="send-email-subflow" />
+						</when>
+						<otherwise >
+							<ee:transform doc:name="Prepare Error response for p21 flag updation issues, var : subject" doc:id="ff949245-ccb8-49be-94c6-25a6142e1e4a" >
+								<ee:message >
+									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_flagUpdationError.dwl" />
+								</ee:message>
+								<ee:variables >
+								</ee:variables>
+							</ee:transform>
+							<ee:transform doc:name="Prepare Template Email, var : subject" doc:id="863fb8fc-6022-4053-9c88-7261f377aef4">
+								<ee:message>
+									<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_flagUpdationErrorPrepareEmailTemplate.dwl" />
+								</ee:message>
+								<ee:variables >
+									<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_flagUpdationErrorSubject.dwl" variableName="subject" />
+								</ee:variables>
+							</ee:transform>
+							<logger level="INFO" doc:name="Log INFO : Error" doc:id="378e3784-8c9b-4590-b5a8-7a9df6845025" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Flag Updation Error in P21",&#10;	error: error.errorType.identifier,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId&#10;}]' />
+							<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="ee9213db-758d-4a03-a945-17c15268b1ae" name="send-email-subflow" />
+						</otherwise>
+					</choice>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<foreach doc:name="For Each: Iteration Over Errored POs" doc:id="f71b33b6-24c0-4dba-863e-4d0e9a803a1b" collection="#[vars.erroredPOs]">
+			<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="2375996c-8946-4ca9-991c-58263985c68a" >
+				<ee:message >
+					<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_validationError.dwl" />
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable resource="dwl/purchase-order-processing-subflow/v_validationErrorSubject.dwl" variableName="subject" />
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="send-email-subflow" doc:id="f2c8b03a-b7db-436e-82b5-8aeb49ded849" name="send-email-subflow"/>
+		</foreach>
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="4cd72f03-2915-4d5f-89e2-e4b76f6a3981" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;END&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
+	</sub-flow>
+</mule>

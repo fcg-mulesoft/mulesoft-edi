@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="common-http-request-suite.xml" />
+	<munit:test name="common-http-request-subflow-test" doc:id="3cac9a47-d094-46da-bbb0-0a2c6d8cc478" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Common HTTP Request " doc:id="786113c4-34c2-4fbf-bb0e-9408b840f105" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="d4276718-e20e-45f3-9599-f2e2138594ca" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/xml --- readUrl('classpath://commonhttprequestsubflowtest\mock_payload.dwl')]" mediaType="application/xml" encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://commonhttprequestsubflowtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://commonhttprequestsubflowtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="httpOperation" value="#[output application/json --- readUrl('classpath://commonhttprequestsubflowtest\mock_variable_1.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="accessToken" value="#[output text/plain --- readUrl('classpath://commonhttprequestsubflowtest\mock_variable_2.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="6400bbc6-e0f0-4228-b508-e80e1f5a3bbd" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://commonhttprequestsubflowtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://commonhttprequestsubflowtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://commonhttprequestsubflowtest\set-event_variable_.dwl')]" />
+					<munit:variable key="httpOperation" value="#[output application/json --- readUrl('classpath://commonhttprequestsubflowtest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="accessToken" value="#[output text/plain --- readUrl('classpath://commonhttprequestsubflowtest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="text/plain" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to common-http-request-subflow" doc:id="75a883a8-4945-42a5-8d83-976521005e86" name="common-http-request-subflow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="0d9f7256-8fb3-4687-8d0b-133b65f03c4c" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import commonhttprequestsubflowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

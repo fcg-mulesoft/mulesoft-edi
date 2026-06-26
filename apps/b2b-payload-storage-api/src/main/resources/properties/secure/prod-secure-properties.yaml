@@ -1,0 +1,14 @@
+# Prod Configuration
+
+https:
+  keystore:
+    keypass: "![pkxKBdQGF3QeAOp3OsCpjg==]"
+    storepass: "![pkxKBdQGF3QeAOp3OsCpjg==]"
+
+# Azure Configuration
+azure:
+ sastoken: "![hsBGXT95fc/ILsvLMj0fH9TNygyfmNqtHiA6yYHwn83Z1WrrRUFzRg7AMx71z6aQwio7QvWUGlLK15hTUYHlAyDmza+uDXGnVdxSqI+4re0v0jlKEYzz1vlDXjOhiSstNcXxKSEkeQNTZYHmD/6JxTVXiELPeg5IPTy+zpZpFSSuoQ470TYHglhd9LxtXt83los09XLy8ZhhB6xlZHT/Bw==]"
+ 
+# SMTP Configuration
+email:
+  password: "![yARA7CTFDm1RB656w4BiSsDG29F7MxpbHvdCQy8NJHg=]"
