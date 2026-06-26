@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <flow name="b2b-payload-storage-api-spec-main" doc:id="b81d4213-96a5-4a70-bb38-3618e27c38a0">
+        <http:listener config-ref="b2b-payload-storage-api-spec-httpListenerConfig" path="/api/*" doc:name="b2b-payload-storage-api-spec-main">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <set-variable value="#[correlationId]" doc:name="var: correlationId" doc:id="6e094709-3d9d-4b71-99fb-da3da1ad7e01" variableName="correlationId"/>
+		<apikit:router config-ref="b2b-payload-storage-api-spec-config" />
+		<error-handler ref="global-common-error-handler" />
+    </flow>
+    <flow name="get:\healthCheck:b2b-payload-storage-api-spec-config" doc:id="ed2f66ff-8cf5-466f-923d-c356b25cb678">
+		<flow-ref doc:name="health-check-sub-flow" doc:id="d66684a6-d3bf-49d6-9d42-1403b608ea71" name="health-check-sub-flow"/>
+    </flow>
+    <flow name="get:\organizations\(orgId)\environments\(envId)\contents\(contentRecordId):b2b-payload-storage-api-spec-config" doc:id="36363eec-62a4-4df1-9ce4-1895c09c374e">
+		<flow-ref doc:name="get-content-sub-flow" doc:id="4e3f9a75-6af2-4e7c-8a90-5a3880423a02" name="get-content-sub-flow"/>
+    </flow>
+    <flow name="post:\organizations\(orgId)\environments\(envId)\contents:application\json:b2b-payload-storage-api-spec-config" doc:id="f99bc1f8-71d9-4e42-acee-03c00ae2043c">
+		<flow-ref doc:name="post-content-sub-flow" doc:id="36ce8bca-6c83-485d-8f32-29c984ce8c35" name="post-content-sub-flow"/>
+    </flow>
+    <flow name="post:\organizations\(orgId)\environments\(envId)\contents:application\xml:b2b-payload-storage-api-spec-config" doc:id="30e47c70-f580-42d5-94b2-9e53453ad478">
+		<flow-ref doc:name="post-content-sub-flow" doc:id="0d8a30ab-6c8e-4abf-b455-27dc4cf7997b" name="post-content-sub-flow"/>
+    </flow>
+    <flow name="post:\organizations\(orgId)\environments\(envId)\contents:text\plain:b2b-payload-storage-api-spec-config" doc:id="149421a5-f7cc-4eba-9b03-924423a3d47d">
+		<flow-ref doc:name="post-content-sub-flow" doc:id="69e165c8-528a-4e27-a789-a49b51d1b355" name="post-content-sub-flow"/>
+    </flow>
+</mule>

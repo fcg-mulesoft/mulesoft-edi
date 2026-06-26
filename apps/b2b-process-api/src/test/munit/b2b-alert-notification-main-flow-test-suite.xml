@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="b2b-alert-notification-main-flow-test-suite.xml" />
+	<munit:test name="b2b-alert-notification-main-subflowTest" doc:id="bd36d807-12fd-4c7f-8f0d-7e8ab185d929" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Flow-ref to retrieve-access-token-sub-flow" doc:id="1f2a7622-4233-4cdc-98da-abfca2bf4f9b" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="57584837-2dad-40e5-9426-cea38cb6887a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[{&#10;	"access_token":"1234"&#10;}]' />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="retrieve-all lastRun" doc:id="0c7ea5af-ed6d-433c-b096-37c1bb529634" processor="os:retrieve-all">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="197d87d8-6a57-4464-aba5-3f912e5c1102" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[{}]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Flow-ref to apm-error-report-sub-flow" doc:id="a1b69410-6eca-4850-bad9-5c61880ddf0a" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f1180b74-485a-4947-9586-c52e3114cffe" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to b2b-alert-notification-main-subflow" doc:id="86d8513b-c57e-4065-b32e-b6ea95dc5760" name="b2b-alert-notification-main-subflow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="LOG INFO : END" doc:id="7f7bd222-25ac-496a-8d82-c10b95eb8676" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="975c02e9-def0-4f1a-9abc-2bf7eead4a4e" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
