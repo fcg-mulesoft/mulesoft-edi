@@ -142,7 +142,7 @@ jobs:
         run: |
           CH_2_APP_ID=$(anypoint-cli-v4 runtime-mgr:application:list \
           --organization "Flow Control Group" \
-          --environment "Production" \
+          --environment "PROD" \
           --output "json" \
           | jq --arg name "${{ env.APP_NAME }}" '.[] | select(.name == $name) | .id')
 
@@ -170,7 +170,7 @@ jobs:
           anypoint-cli-v4 runtime-mgr:application:modify \
           "${{ env.CLOUDHUB2_APP_ID }}" \
           --organization "Flow Control Group" \
-          --environment "Production" \
+          --environment "PROD" \
           --groupId "${{ env.ANYPOINT_EXCHANGE_GROUP_ID }}" \
           --artifactId "${{ env.APP_NAME }}" \
           --assetVersion "${{ env.APP_VERSION }}" \
@@ -201,7 +201,7 @@ jobs:
             --assetVersion "${{ env.APP_VERSION }}" \
             --groupId "${{ env.ANYPOINT_EXCHANGE_GROUP_ID }}" \
             --organization "Flow Control Group" \
-            --environment "Production" \
+            --environment "PROD" \
             --replicas 1 \
             --replicaSize "0.1" \
             --releaseChannel LTS \
