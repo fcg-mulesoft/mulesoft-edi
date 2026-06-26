@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 	<artifactId>b2b-p21-sys-api-app</artifactId>
-	<version>1.0.15</version>
+	<version>1.0.16</version>
 	<packaging>mule-application</packaging>
 	<name>b2b-p21-sys-api-app</name>
 	<parent>
@@ -18,7 +18,6 @@
 		<mule.maven.plugin.version>4.7.0</mule.maven.plugin.version>
 		<munit.version>3.7.0</munit.version>
 	</properties>
-
 	<build>
 		<plugins>
 			<plugin>
