@@ -56,7 +56,8 @@ var targetSystem =
 
 var flowDirection =
     if (lower(sourceSystem) == "apm") "INBOUND"
-    else                              "OUTBOUND"
+    else if (lower(sourceSystem) == "coupa" and lower(targetSystem) == "p21") "INBOUND"
+    else "OUTBOUND"
 
 var categoryNs = if (suppressed != null and suppNs != "") suppNs else errNs
 var categoryId = if (suppressed != null and suppId != "") suppId else errId
@@ -396,14 +397,9 @@ var errorDescFull =
 var corrId =
     if (isValidationFlow) safe(cdmHeader.transmissionId, uuid())
     else (errResp.correlationId default correlationId default uuid())
-
-var companyNo = vars.purchaseOrderData.value.company_no[0] default ""
-var companyName = 
-    if (companyNo == "1" or companyNo == "01") "King Filtration"
-    else if (companyNo == "2" or companyNo == "02") "Flow Control Group"
-    else safe(vars.purchaseOrderData.value.company_name[0], 
-              safe(cdmHeader.companyName, "King Filtration"))
-
+    
+var companyName = safe(vars.purchaseOrderData.value.company_no[0] default "" as String,
+					safe(if(lower(sourceSystem) == "coupa") "King Filtration" else "", "N/A"))
 var data = {
     flowDirection:   flowDirection,
     documentType:    safe(integration."integration-type",
