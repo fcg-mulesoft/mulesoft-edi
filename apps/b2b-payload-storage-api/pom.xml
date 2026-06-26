@@ -4,10 +4,9 @@
 
 	<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 	<artifactId>b2b-payload-storage-api-app</artifactId>
-	<version>1.0.10</version>
+	<version>1.0.11</version>
 	<packaging>mule-application</packaging>
 	<name>b2b-payload-storage-api-app</name>
-	
 	<parent>
 		<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 		<artifactId>integration-parent-pom</artifactId>
