@@ -16,7 +16,7 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/azure-storage http://www.mulesoft.org/schema/mule/azure-storage/current/mule-azure-storage.xsd
 http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
 		<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="00ad5797-37c6-43f9-aa2b-0b7f69628685" doc:description="Common HTTP Request Configuration&#10;" basePath="#[vars.httpOperation.basePath]">
-		<http:request-connection host="#[vars.httpOperation.host]" port="#[vars.httpOperation.port]" protocol="HTTPS">
+		<http:request-connection host="#[vars.httpOperation.host]" port="#[vars.httpOperation.port]" protocol="HTTPS" connectionIdleTimeout="120000">
 			<tls:context >
 				<tls:trust-store insecure="true" />
 			</tls:context>
