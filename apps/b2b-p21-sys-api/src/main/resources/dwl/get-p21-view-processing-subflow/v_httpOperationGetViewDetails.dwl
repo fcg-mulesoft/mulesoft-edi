@@ -13,7 +13,6 @@ var companyId = attributes.queryParams.companyId default "TPA"
 var startTime = attributes.queryParams.startTime default ""
 var endTime = attributes.queryParams.endTime default ""
 var partnerName = attributes.queryParams.partnerName default ""
-
 var salesOrderValidationConfig =
     if ( validationMode == "xref" ) {
 	view: "fcg_edi_xref_vw",
@@ -127,8 +126,7 @@ var routingConfig = {
 		total: {
 			view: Mule::p('viewNames.purchaseOrderInvoiceOutbound'),
 			queryParams: {
-				"\$filter": "date_last_modified ge  " ++ date_last_modified
-			}
+				"\$filter": "date_last_modified ge  " ++ date_last_modified			}
 		},
 		outbound: {
 			view: Mule::p('viewNames.coupaOrderOutbound'),
@@ -138,26 +136,17 @@ var routingConfig = {
 		},
 		validation: {
 			view: Mule::p('viewNames.purchaseOrderInvoiceOutbound'),
-			 queryParams: {
-			 "\$filter":
-                (
-                    [
-                        "date_last_modified ge " ++ startTime,
+			queryParams: {
+				"\$filter": (["date_last_modified ge " ++ startTime,
                         "date_last_modified le " ++ endTime,
-                        if (!isEmpty(businesskey))
-                            "(" ++ ((businesskey map ("invoice_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+                        if ( !isEmpty(businesskey) ) "(" ++ ((businesskey map ("invoice_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
                         else
                             null,
-                        if (!isEmpty(partnerName))
-                            "trading_partner_name eq '" ++ partnerName ++ "'"
+                        if ( !isEmpty(partnerName) ) "trading_partner_name eq '" ++ partnerName ++ "'"
                         else
-                            null
-                    ]
-                    filter ($ != null)
-                ) joinBy " and "
+                            null] filter ($ != null)) joinBy " and "
+			}
 		}
-		}
-		
 	},
 	salesOrderShipment: {
 		total: {
@@ -169,22 +158,14 @@ var routingConfig = {
 		outbound: {
 			view: Mule::p('viewNames.purchaseOrderShipmentOutbound'),
 			queryParams: {
-				 "\$filter":
-                (
-                    [
-                        "date_last_modified ge " ++ startTime,
+				"\$filter": (["date_last_modified ge " ++ startTime,
                         "date_last_modified le " ++ endTime,
-                        if (!isEmpty(businesskey))
-                            "(" ++ ((businesskey map ("pick_ticket_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+                        if ( !isEmpty(businesskey) ) "(" ++ ((businesskey map ("pick_ticket_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
                         else
                             null,
-                        if (!isEmpty(partnerName))
-                            "trading_partner_name eq '" ++ partnerName ++ "'"
+                        if ( !isEmpty(partnerName) ) "trading_partner_name eq '" ++ partnerName ++ "'"
                         else
-                            null
-                    ]
-                    filter ($ != null)
-                ) joinBy " and "
+                            null] filter ($ != null)) joinBy " and "
 			}
 		}
 	},

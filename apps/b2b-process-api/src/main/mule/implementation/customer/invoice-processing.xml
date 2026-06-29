@@ -89,7 +89,7 @@ var modifiedTime =
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderInvoice'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.total'),
-		"lastModified": "2026-01-25T15:25:33.403-04:00" //modifiedTime
+		"lastModified": "2026-06-25T15:25:33.403-04:00" //modifiedTime
 	},
 	"uriParams": {
 	},
@@ -114,8 +114,8 @@ var invoiceItems = vars.invoiceData.value groupBy ($.invoice_no ++ "_" ++ $.orde
 invoiceItems pluck ((items, invoiceNo) -> {
 	b2bMessage: {
 		header: {
-			senderId: items[0].TP_edi_isa05_id,
-			receiverId: "",
+			senderId: Mule::p(lower(items[0].trading_partner_name) ++ ".ack.senderId"),
+			receiverId: items[0].TP_edi_isa05_id ++ "T",
 			invoiceNumber: items[0].BIG02_InvNo,
 			invoiceDate: items[0].BIG01_InvDate,
 			purchaseOrderNumber: items[0].BIG04_PurchaseOrderNo,
