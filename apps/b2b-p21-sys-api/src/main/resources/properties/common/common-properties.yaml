@@ -8,7 +8,7 @@ http:
   readTimeout: "30000"
   port: "8082"
   private:
-    port: "8051"
+    port: "8091"
   path:
     listener: "/api/*"
   
