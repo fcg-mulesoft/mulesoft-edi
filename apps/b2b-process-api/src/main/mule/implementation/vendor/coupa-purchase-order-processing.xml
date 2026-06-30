@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
 	<sub-flow name="inbound-coupa-po-processing-subflow" doc:id="0f3b0ec8-ab83-4254-a92f-ce1b7e4e5fca" >
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="f3eaae67-8060-4585-9b21-8949893def16" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	//flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	//transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	sourceSystem: "Coupa",&#10;	targetSystem: "P21"&#10;}]'/>
 		<choice doc:name="Choice" doc:id="33daa089-b78c-4f89-a758-88319a3d5d8b" >
 			<when expression="#[isEmpty(vars.initialPayload.Order.edixRefId) or isEmpty(vars.initialPayload.Order.PoNo)]">
-				<set-variable value="#[output application/java&#10;---&#10;Mule::p('email.toRecipient') ++ &quot;,admorders@kingfiltration.com&quot;]" doc:name="Recipient List" doc:id="b2813e86-db6b-4898-aac0-384ef91f91cc" variableName="recipientList" />
+				<!-- [STUDIO:"Recipient List"]<set-variable value="#[output application/java&#10;&#45;&#45;-&#10;Mule::p('email.toRecipient') ++ &quot;,mulesoft_devteam@flowcontrolgroup.com&quot;&#93;" doc:name="Recipient List" doc:id="b2813e86-db6b-4898-aac0-384ef91f91cc" variableName="recipientList" /> [STUDIO] -->
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="02261f0a-ec38-4558-9583-a3fa3b85e1e0" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Missing PO Number or EDI X Ref Id in request" />
 			</when>
 			<otherwise >
@@ -23,7 +24,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<choice doc:name="isValid Purchase Order?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
 			<when expression="#[sizeOf(vars.poSearchResponse.value) == 0]">
 						<logger level="INFO" doc:name="PO Search Response" doc:id="64f3d493-cefe-48ce-bff2-a8c18ecc6ce4" message="PO Search Response is #[vars.poSearchResponse]" />
-						<set-variable value="#[output application/java&#10;---&#10;Mule::p('email.toRecipient') ++ &quot;,admorders@kingfiltration.com&quot;]" doc:name="Recipient List" doc:id="e5862529-69fc-4fd8-988c-6eff65dddb4d" variableName="recipientList" />
+						<!-- [STUDIO:"Recipient List"]<set-variable value="#[output application/java&#10;&#45;&#45;-&#10;Mule::p('email.toRecipient') ++ &quot;,mulesoft_devteam@flowcontrolgroup.com&quot;&#93;" doc:name="Recipient List" doc:id="e5862529-69fc-4fd8-988c-6eff65dddb4d" variableName="recipientList" /> [STUDIO] -->
 						<set-variable value='#[output application/json&#10;---&#10;vars.initialPayload]' doc:name="Attachments" doc:id="7eb8ca71-6483-4f67-a86f-17f257c2426d" variableName="attachments"/>
 						<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="4a6405a4-8f2a-48d2-b977-faa97f576756" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. Company Id and EDI XRef Id combination is not Available in P21 System."/>
 			</when>
@@ -75,6 +76,158 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="LOG INFO : CoupaPurrchaseOrderCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Coupa Purchase Order Creation Successful. Order Number is " ++ (payload.Order.OrderNo default "NA")&#10;}]' />
+										<ee:transform doc:name="var : errorResponse, systemInformation" doc:id="e4f2185c-ca35-4daa-8aee-a418157c7772">
+											<ee:message />
+											<ee:variables>
+												<ee:set-variable variableName="systemInformation"><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+{
+	"source": vars.integration.source,
+	"target": vars.integration.target,
+	"env": capitalize(p('mule.env')),	
+	"integration-type": vars.integration."integration-type"
+	
+}]]></ee:set-variable>
+												<ee:set-variable variableName="successResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationId": (correlationId default uuid()),
+	"statusCode": vars.httpStatus,
+	"statusMessage": "PO was created succesfully",
+	"description": "Sucessfully creared P21 PO. – reference P21 Purchase Order Number : " ++ (payload.Order.OrderNo default "NA"),
+	"timestamp": (((now() >> "UTC")  as String {
+		format : "yyyy/MM/dd HH:mm:ss"
+	}) ++ " UTC"),
+	notificationRequired: true
+}]]></ee:set-variable>
+											</ee:variables>
+										</ee:transform>
+										<!-- [STUDIO:"Preparing Email Template, var : subject"]<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="6270b53c-ceb7-4a21-afb1-9f20d087464b" >
+											<ee:message >
+												<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
+											</ee:message>
+											<ee:variables >
+												<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
+											</ee:variables>
+										</ee:transform> [STUDIO] -->
+										<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="7280a116-a7fe-4fe5-aba1-ebb2fba078e1">
+											<ee:message>
+												<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output text/plain
+
+fun safe(v, d="N/A") =
+    if (v == null or (v is String and trim(v) == "")) d else v
+
+var successResp = vars.successResponse default {}
+var sysInfo     = vars.systemInformation default {}
+var integration = vars.integration default vars.initialVariables default {}
+
+var cdm       = (vars.initialPayload default [])[0].b2bMessage default {}
+var cdmHeader = cdm.header default {}
+
+var sourceSystem =
+    if (upper(sysInfo.source default "") == "COUPA") "ADM Coupa"
+    else safe(sysInfo.source, "P21")
+
+var targetSystem = safe(sysInfo.target, "P21")
+
+var flowDirection =
+    if (lower(sourceSystem) == "apm") "INBOUND"
+    else if ((lower(sourceSystem) contains "coupa") and lower(targetSystem) == "p21") "INBOUND"
+    else "OUTBOUND"
+
+var msgPoNumber = safe(cdmHeader.poNumber default "" as String,
+                    safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, 
+                        safe(vars.initialPayload.Order.PoNo default "" as String, "N/A")
+                    ))
+
+var senderKey = safe(cdmHeader.senderId, safe(sysInfo.source, "N/A")) as String
+
+var msgVendorId =
+    if (p('partner.inbound.' ++ senderKey) != null) p('partner.inbound.' ++ senderKey)
+    else if (p('partner.outbound.' ++ senderKey) != null) p('partner.outbound.' ++ senderKey)
+    else "N/A"
+
+var companyName = safe(vars.purchaseOrderData.value.company_no[0] default "" as String,
+                    safe(if(lower(sourceSystem) contains "coupa") "King Filtration" else "", "N/A"))
+
+// Extract P21 Order Number from successResponse description or payload
+var p21OrderNumber = payload.Order.OrderNo 
+                     default vars.initialPayload.Order.OrderNo 
+                     default "N/A"
+
+var data = {
+    flowDirection:   flowDirection,
+    documentType:    safe(sysInfo."integration-type", safe(cdmHeader.documentType, "API")),
+    appName:         p('api.name') default "Mule Application",
+    transactionType: safe(sysInfo."integration-type", safe(cdmHeader.documentType, "API")),
+    environment:     sysInfo.env default upper(p('mule.env')),
+    route:           sourceSystem ++ " → Mule → " ++ targetSystem,
+    successTitle:    "Transaction Processed Successfully",
+    bannerColor:     "#10b981",
+    status:          "SUCCESS",
+    statusCode:      successResp.statusCode default vars.httpStatus default 200,
+    statusMessage:   successResp.statusMessage default "PO was created successfully",
+    message:         successResp.description 
+                     default ("Purchase Order " ++ msgPoNumber 
+                              ++ " (Vendor: " ++ msgVendorId ++ ") has been successfully processed"
+                              ++ " on the " ++ sourceSystem ++ " → " ++ targetSystem ++ " route."
+                              ++ (if (p21OrderNumber != "N/A") " P21 Order Number: " ++ p21OrderNumber else "")),
+    vendorName:      msgVendorId,
+    businessKey:     "PO " ++ msgPoNumber,
+    p21OrderNumber:  p21OrderNumber,
+    transmissionId:  vars.initialPayload[0].b2bMessage.header.transmissionId 
+                     default vars.initialPayload.Order.TransmissionId 
+                     default "N/A",
+    companyName:     companyName,
+    keyLabel:        "Correlation ID",
+    key:             successResp.correlationId default correlationId default uuid(),
+    timestamp:       successResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})
+}
+
+var template =
+    readUrl("classpath://templates/success-template.html", "text/plain")
+---
+template replace /\$\{(\w+)\}/ with ((m) ->
+    (data[m[1]] as String) default ""
+)]]></ee:set-payload>
+											</ee:message>
+											<ee:variables >
+												<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
+output application/json
+fun safe(v, d="N/A") =
+    if (v == null or (v is String and trim(v) == "")) d else v
+ 
+var senderKey    = vars.initialPayload[0].b2bMessage.header.senderId default " " as String
+var msgVendorId  = if(senderKey != null) (p('partner.inbound.' ++ senderKey) default p('partner.outbound.' ++ senderKey) default null) else null
+ 
+var env          = p('mule.env')          default null
+var apiName      = p('api.name')          default null
+var intType      = vars.integration."integration-type"
+                     default vars.initialVariables."integration-type"
+                     default null
+var companyNo    = vars.purchaseOrderData.value.company_no[0] default null
+var poNumber     = safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, 
+                    	safe(vars.initialPayload.Order.PoNo default "" as String,"N/A")
+                    )
+ 
+fun present(v) = v != null and (v as String) != ""
+ 
+var segments = [
+    if (present(env))       upper(env)            else null,
+    "FCG ERROR ALERT",
+    if (present(intType))   intType               else null,
+    if (present(poNumber)) ("PO(s) " ++ poNumber) as String   else null
+] filter present($)
+---
+segments joinBy " | "]]></ee:set-variable>
+											</ee:variables>
+										</ee:transform>
+										<flow-ref doc:name="send-email-subflow" doc:id="c09e96d0-879c-4ebf-a337-378bb3fee223" name="send-email-subflow" />
 			</otherwise>
 		</choice>
 							</otherwise>
@@ -121,10 +274,10 @@ import * from dw::core::Strings
 								<flow-ref doc:name="send-email-subflow" doc:id="c201e9a3-b1ac-495b-a729-58fd677c053d" name="send-email-subflow" />
 							</when>
 							<otherwise >
-								<logger level="INFO" doc:name="LOG INFO : Item Id Empty Email Not Required" doc:id="19a39168-5f2e-48c1-8eae-0c08156216f4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "No Need to Send Item Id Empty Email for Order Number is " ++ (payload.Order.OrderNo default "NA")&#10;}]' />
+								<logger level="INFO" doc:name="LOG INFO : Item Id Empty Email Not Required" doc:id="19a39168-5f2e-48c1-8eae-0c08156216f4" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  flow: Mule::p('api.name') default &quot;unknown&quot;,&#10;  application: Mule::p('api.name') default &quot;unknown&quot;,&#10;  environment: Mule::p(&quot;mule.env&quot;),&#10;  timestamp: now(),&#10;  correlationId: vars.integration.correlationId default correlationId default &quot;&quot;,&#10;  transmissionId: vars.initialPayload.Order.TransmissionId default &quot;&quot;,&#10;  &quot;message&quot;: &quot;No Need to Send Item Id Empty Email for Order Number is &quot; ++ (vars.initialPayload.Order.OrderNo default &quot;NA&quot;)&#10;}]" />
 							</otherwise>
 						</choice>
-						<logger level="INFO" doc:name="LOG INFO : END" doc:id="7a218d2e-888d-442d-8952-b5cdd14450e9" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
+						<logger level="INFO" doc:name="LOG INFO : END" doc:id="7a218d2e-888d-442d-8952-b5cdd14450e9" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;END&quot;,&#10;	flow:  Mule::p('api.name') default &quot;unknown&quot;,&#10;	application: Mule::p('api.name') default &quot;unknown&quot;,&#10;	environment: Mule::p(&quot;mule.env&quot;),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload.Order.TransmissionId default &quot;&quot;,&#10;	//payloadSizeBytes: sizeOf(write(payload, &quot;application/json&quot;)),&#10;	sourceSystem: &quot;APM - Anypoint Partner Manager&quot;,&#10;	targetSystem: &quot;P21&quot;&#10;}]" />
 			</otherwise>
 		</choice>
 			</otherwise>
