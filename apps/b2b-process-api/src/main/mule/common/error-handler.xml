@@ -94,8 +94,8 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="3cf5f931-ffa2-4a04-823b-486876f1f766" millisBetweenRetries="6000">
 			<try doc:name="Try" doc:id="bd7c772f-cff0-440d-8e15-46f6126b90ce">
 						<choice doc:name="If transmissionId Exists?" doc:id="f04ebe2c-417b-44f2-9be1-860b1a8e5ddd" >
-					<when expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId) or !isEmpty(vars.initialPayload.Order.TransmissionId)]">
-						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="2a3b6006-e755-49e4-988c-672685733d40" idExpression="#[if (vars.initialPayload.Order?) &#10;  vars.initialPayload.Order.TransmissionId &#10;else &#10;  vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
+					<when expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId)]">
+						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="2a3b6006-e755-49e4-988c-672685733d40" idExpression="#[vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
 					</when>
 				</choice>
 				<email:send doc:name="Send Email" doc:id="1edb59e0-deeb-40f0-b34a-e6ffa2b089d8" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)]" config-ref="Email_SMTP">
