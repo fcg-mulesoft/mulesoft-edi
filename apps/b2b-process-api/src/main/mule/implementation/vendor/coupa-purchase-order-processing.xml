@@ -219,7 +219,7 @@ fun present(v) = v != null and (v as String) != ""
  
 var segments = [
     if (present(env))       upper(env)            else null,
-    "FCG ERROR ALERT",
+    "FCG SUCCESS ALERT",
     if (present(intType))   intType               else null,
     if (present(poNumber)) ("PO(s) " ++ poNumber) as String   else null
 ] filter present($)
