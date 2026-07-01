@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-	<flow name="b2b-process-api-spec-main" doc:id="61ca2ba4-6c49-4bb9-8cd1-ad6bd561f615">
+    <flow name="b2b-process-api-spec-main" doc:id="61ca2ba4-6c49-4bb9-8cd1-ad6bd561f615">
         <http:listener path="${https.basePath}" doc:name="b2b-process-api-spec-main" config-ref="HTTP_Listener_Configuration">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
@@ -14,17 +14,20 @@
             <ee:message />
             <ee:variables>
                 <ee:set-variable variableName="integration"><![CDATA[%dw 2.0
+import * from dw::core::Strings
 output application/json
+var initialPayload = if(!isEmpty(payload)) (payload[0].b2bMessage.header.transmissionId default "") else ""
+var direction = if(attributes.method == "POST") "Inbound " else "Outbound "
 ---
 {
 	"source" : "APM" ,
 	"target" : "P21",
-	"integration-type" : "Inbound " ++ attributes.queryParams."type" ++ " " ++ payload[0]."b2bMessage"."header"."documentType" default payload,
+	"integration-type" : direction ++ attributes.queryParams."type" ++ " " ++ (initialPayload[0]."b2bMessage"."header"."documentType") default  direction ++ capitalize(attributes.queryParams."transactionType"),
 	"correlationId": correlationId,
 	"timestamp": now() as String {
 		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
 	},
-	"transmissionId" : payload[0].b2bMessage.header.transmissionId default ""
+	"transmissionId" : initialPayload[0].b2bMessage.header.transmissionId default ""
 }]]></ee:set-variable>
                 <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
 output application/json
@@ -32,32 +35,10 @@ output application/json
 payload]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <apikit:router config-ref="b2b-process-api-spec-config"/>
+        <apikit:router config-ref="b2b-process-api-spec-config" />
         <error-handler ref="global-common-error-handler" />
     </flow>
-    <flow name="b2b-process-api-specFlow" doc:id="85d99892-8f5e-4185-a101-db9b9a68a4bf" >
-		<http:listener doc:name="Listener" doc:id="8628aeef-8c69-460c-8a24-7716390d9988" config-ref="HTTP_Listener_Configuration" path="/test"/>
-		<ee:transform doc:name="var : integration, initialPayload" doc:id="3faa7298-e98c-48a4-a805-c0cf5942b545">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="integration"><![CDATA[%dw 2.0
-output application/json
----
-{
-	"source" : "APM" ,
-	"target" : "P21",
-	"integration-type" : "Inbound " ++ attributes.queryParams."type" ++ " " ++ payload[0]."b2bMessage"."header"."documentType" default payload,
-	"correlationId": correlationId,
-	"timestamp": now() as String {
-		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
-	},
-	"transmissionId" : payload[0].b2bMessage.header.transmissionId default ""
-}]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<flow-ref doc:name="Flow Reference" doc:id="17fd7b8b-5620-426e-a695-7d615eb36685" name="outbound-invoice-processing-subflow"/>
-	</flow>
-	<flow name="get:\healthCheck:b2b-process-api-spec-config">
+    <flow name="get:\healthCheck:b2b-process-api-spec-config">
         <ee:transform doc:name="Prepare healthCheck Response">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
@@ -77,12 +58,11 @@ output application/json
     <flow name="post:\inboundTransactions:application\json:b2b-process-api-spec-config" doc:id="e445073a-6ac5-4ba8-acea-c05aec807d6a">
         <flow-ref doc:name="Flow Reference To Inbound Transaction Processing Sub Flow" doc:id="885af747-f4ce-47cd-bc6f-ea61768d6175" name="#[&quot;inbound-&quot; ++ attributes.queryParams.&quot;type&quot; ++ &quot;-processing-subflow&quot;]" />
     </flow>
-     <flow name="post:\coupainboundTransactions:application\xml:b2b-process-api-spec-config" doc:id="9f7fbd0f-8145-4965-b56b-3dd9a0ec6062">
-        <ee:transform doc:name="Transform Message" doc:id="7b7aa26b-3fa6-4fbb-985b-86648e592f16" >
-			<ee:message >
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="integration" ><![CDATA[%dw 2.0
+    <flow name="post:\coupainboundTransactions:application\xml:b2b-process-api-spec-config" doc:id="9f7fbd0f-8145-4965-b56b-3dd9a0ec6062">
+        <ee:transform doc:name="Transform Message" doc:id="7b7aa26b-3fa6-4fbb-985b-86648e592f16">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="integration"><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -94,9 +74,9 @@ output application/json
 		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
 	}
 }]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<flow-ref doc:name="Flow Reference To Coupa Inbound Transaction Processing Sub Flow" doc:id="b63e5733-d383-4cb9-a8f2-bda5ac0f894a" name="inbound-coupa-po-processing-subflow" />
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="Flow Reference To Coupa Inbound Transaction Processing Sub Flow" doc:id="b63e5733-d383-4cb9-a8f2-bda5ac0f894a" name="inbound-coupa-po-processing-subflow" />
     </flow>
     <flow name="post:\p21\invoices\adhoc:application\json:b2b-process-api-spec-config" doc:id="996146fc-e607-4d90-894f-6d3b224ec887">
         <flow-ref doc:name="Flow Reference To P21 Adhoc Invoice Sub Flow" doc:id="fa69f29b-30b0-40c7-8456-96b2211a7b4b" name="p21-adhoc-invoice-post" />
@@ -110,7 +90,7 @@ output application/json
                 <cron expression="${scheduler.outbound.purchaseOrder.frequency}" timeZone="${scheduler.outbound.purchaseOrder.timeZone}" />
             </scheduling-strategy>
         </scheduler>
-		<ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32">
+        <ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32">
             <ee:message />
             <ee:variables>
                 <ee:set-variable variableName="initialVariables"><![CDATA[%dw 2.0
@@ -187,15 +167,15 @@ output application/json
         <logger level="INFO" doc:name="LOG INFO : END" doc:id="2e80fac5-e113-46be-97b1-7842dc2085c6" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;END&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
     </flow>
     <flow name="invoice-outbound-scheduled-flow" doc:id="2a7b7b9f-cf7e-431e-999d-cf8872021a14" maxConcurrency="1">
-		<scheduler doc:name="EVERY 3 HOURS" doc:id="ef808efe-deeb-4357-92de-72d98f602488" >
-			<scheduling-strategy >
-				<fixed-frequency startDelay="1" timeUnit="HOURS" frequency="1"/>
-			</scheduling-strategy>
-		</scheduler>
-		<ee:transform doc:name="var: initialVariables" doc:id="985988e7-898d-4713-8619-9f43b3c0ee54" >
-			<ee:message />
-			<ee:variables >
-				<ee:set-variable variableName="initialVariables" ><![CDATA[%dw 2.0
+        <scheduler doc:name="EVERY 3 HOURS" doc:id="ef808efe-deeb-4357-92de-72d98f602488">
+            <scheduling-strategy>
+                <fixed-frequency startDelay="1" timeUnit="HOURS" frequency="1" />
+            </scheduling-strategy>
+        </scheduler>
+        <ee:transform doc:name="var: initialVariables" doc:id="985988e7-898d-4713-8619-9f43b3c0ee54">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="initialVariables"><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -206,22 +186,22 @@ output application/json
 	timestamp: now(),
 	status: "STARTED"
 }]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO : START" doc:id="bc4c39bb-4a7a-40c9-a4b2-c9a655f17868" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-		<flow-ref doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="234c0477-eac1-41f3-89ac-659d35113b13" name="outbound-invoice-processing-subflow" />
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="ce6f1ad5-30ee-4e4e-b877-f6786d87d3ea" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-	</flow>
-	<flow name="shipment-outbound-scheduled-flow" doc:id="a73526f3-22ef-4be8-bb6a-b13c75e82454" maxConcurrency="1" >
-		<scheduler doc:name="EVERY 3 HOURS" doc:id="d4e29f4a-0d3b-4a7f-9bc3-7997d68496ac" >
-			<scheduling-strategy >
-				<fixed-frequency frequency="1" startDelay="1" timeUnit="HOURS" />
-			</scheduling-strategy>
-		</scheduler>
-		<ee:transform doc:name="var: initialVariables" doc:id="9f91056e-77d4-47aa-9a33-cee4ae839557" >
-			<ee:message />
-			<ee:variables >
-				<ee:set-variable variableName="initialVariables" ><![CDATA[%dw 2.0
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="LOG INFO : START" doc:id="bc4c39bb-4a7a-40c9-a4b2-c9a655f17868" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;START&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: vars.initialVariables.correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
+        <flow-ref doc:name="Flow Reference To outbound-poAck-processing-subflow" doc:id="234c0477-eac1-41f3-89ac-659d35113b13" name="outbound-invoice-processing-subflow" />
+        <logger level="INFO" doc:name="LOG INFO : END" doc:id="ce6f1ad5-30ee-4e4e-b877-f6786d87d3ea" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;END&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
+    </flow>
+    <flow name="shipment-outbound-scheduled-flow" doc:id="a73526f3-22ef-4be8-bb6a-b13c75e82454" maxConcurrency="1">
+        <scheduler doc:name="EVERY 3 HOURS" doc:id="d4e29f4a-0d3b-4a7f-9bc3-7997d68496ac">
+            <scheduling-strategy>
+                <fixed-frequency frequency="1" startDelay="1" timeUnit="HOURS" />
+            </scheduling-strategy>
+        </scheduler>
+        <ee:transform doc:name="var: initialVariables" doc:id="9f91056e-77d4-47aa-9a33-cee4ae839557">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="initialVariables"><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -232,10 +212,49 @@ output application/json
 	timestamp: now(),
 	status: "STARTED"
 }]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="LOG INFO : START" doc:id="0b7e3d52-0980-49ec-973f-4d25a0f7a4e4" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;START&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: vars.initialVariables.correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
+        <flow-ref doc:name="Flow Reference To outbound-shipment-processing-subflow" doc:id="3c5eba7e-e8e0-40e5-aac9-ffae5ec2e541" name="outbound-shipment-processing-subflow" />
+        <logger level="INFO" doc:name="LOG INFO : END" doc:id="349d2194-54f1-4bc9-83f6-0d655646605d" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;END&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
+    </flow>
+    <flow name="get:\outboundTransaction:b2b-process-api-spec-config">
+        <ee:transform doc:name="var : requestParams" doc:id="25c62a69-6bcb-4a13-b572-bf4772e4079a">
+            <ee:message>
+            </ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="requestParams" ><![CDATA[%dw 2.0
+output application/json
+var transactionType= attributes.queryParams.transactionType
+---
+{
+	endTime:attributes.queryParams.endTime,
+	startTime:attributes.queryParams.startTime,
+	partnerName:attributes.queryParams.partnerName,
+	businessKey:attributes.queryParams.businessKey,
+	transactionType:
+		if (lower(transactionType)=="asn" or lower(transactionType)=="invoice")
+		lower(transactionType)
+		else
+		null
+}]]></ee:set-variable>
+			</ee:variables>
+        </ee:transform>
+		<ee:transform doc:name="var : flowName" doc:id="9c034f76-c0d0-43f5-a17a-1d9d24dab6e4" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="flowName" ><![CDATA[%dw 2.0
+output application/java
+---
+
+	if(vars.requestParams.transactionType=="asn")"outbound-shipment-processing-subflow"
+	else if(vars.requestParams.transactionType=="invoice") "outbound-invoice-processing-subflow"
+	else ""
+	
+]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO : START" doc:id="0b7e3d52-0980-49ec-973f-4d25a0f7a4e4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-		<flow-ref doc:name="Flow Reference To outbound-shipment-processing-subflow" doc:id="3c5eba7e-e8e0-40e5-aac9-ffae5ec2e541" name="outbound-shipment-processing-subflow" />
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="349d2194-54f1-4bc9-83f6-0d655646605d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "END",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
-	</flow>
+		<flow-ref doc:name="Flow Reference to outbound-transactionType-processing-subflow" doc:id="d374c032-6d08-4f88-86ea-eb63cff19768" name="#[vars.flowName]" />
+    </flow>
 </mule>

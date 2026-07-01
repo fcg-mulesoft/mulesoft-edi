@@ -25,14 +25,14 @@ import toBase64 from dw::core::Binaries
     "basePath": Mule::p('b2b-p21-sys-api.basePath'),
     "path": Mule::p('b2b-p21-sys-api.view.path'),
     "headers": {
-        "x-correlation-id": vars.initialVariables.correlationId
+        "x-correlation-id": correlationId
     },
     "queryParams":
         {
-            "transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderInvoice'),
+            "transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderShipment'),
             "purpose": Mule::p('b2b-p21-sys-api.purpose.outbound'),
-            "startTime": attributes.queryParams.startTime,
-            "endTime": attributes.queryParams.endTime
+            "startTime": (((attributes.queryParams.startTime) as DateTime) >> "UTC") as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"},
+            "endTime": (((attributes.queryParams.endTime) as DateTime) >> "UTC") as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}
         }
         ++ (
             if (!isEmpty(attributes.queryParams.partnerName default ""))
@@ -349,9 +349,13 @@ map (entry) -> {
 ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage" >
-			<os:value ><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
+		<choice doc:name="Choice" doc:id="bfbf7614-46f7-477a-bae1-a8dd0bdbcf07" >
+			<when expression="#[isEmpty(vars.requestParams)]">
+				<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage">
+			<os:value><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
 		</os:store>
+			</when>
+		</choice>
 		<foreach doc:name="For Each: Iteration Over Errored Shipments" doc:id="a11e454f-0915-4f9b-9475-7db5ffbccb8e" collection="#[vars.errorShipments]" >
 			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="8751591f-6282-4b98-a7fb-a71f800e81b4" >
 				<ee:message >
