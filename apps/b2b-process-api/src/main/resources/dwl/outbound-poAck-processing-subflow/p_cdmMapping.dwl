@@ -1,14 +1,22 @@
 %dw 2.0
 output application/json
  
-var groupedOrders = vars.ackData.value groupBy $.BAK03_CustPO
+var groupedOrders =
+    (vars.ackData.value default [])
+        groupBy ($.BAK03_CustPO default "UNKNOWN_PO")
  
 ---
 groupedOrders pluck ((orderItems, orderNo) -> {
     b2bMessage: {
         header: {
-			receiverId: orderItems[0].TP_edi_isa05_id ++ "T",
-            senderId: Mule::p(lower(orderItems[0].trading_partner_name) ++ ".ack.senderId") ,
+            receiverId: ((orderItems[0].TP_edi_isa05_id default "") as String) ++ "T",
+ 
+            senderId:
+                Mule::p(
+                    lower((orderItems[0].trading_partner_name default "") as String)
+                    ++ ".ack.senderId"
+                ),
+ 
             acknowledgmentPurposeCode: orderItems[0].BAK01_Purpose,
             acknowledgmentType: orderItems[0].BAK02_AckType,
             purchaseOrderNumber: orderItems[0].BAK03_CustPO,
@@ -16,25 +24,29 @@ groupedOrders pluck ((orderItems, orderNo) -> {
             acknowledgementdate: orderItems[0].BAK09_po_ack_date,
             sellerOrderNumber: orderItems[0].BAK06_ReferenceNo,
  
-            references: [
-                {
-                    qualifier: orderItems[0].REF01_InternalID_Qual,
-                    referenceNumber: orderItems[0].REF02_InternalID
-                }
-            ] filter (
-                !isEmpty($.qualifier default "") and
-                !isEmpty($.referenceNumber default "")
-            ),
+            references:
+                [
+                    {
+                        qualifier: orderItems[0].REF01_InternalID_Qual,
+                        referenceNumber: orderItems[0].REF02_InternalID
+                    }
+                ]
+                filter (
+                    !isEmpty($.qualifier default "") and
+                    !isEmpty($.referenceNumber default "")
+                ),
  
-            dates: [
-                {
-                    qualifier: orderItems[0].DTM01_EstimatedShip_Qual,
-                    date: orderItems[0].DTM02_Date
-                }
-            ] filter (
-                !isEmpty($.qualifier default "") and
-                !isEmpty($.date default "")
-            ),
+            dates:
+                [
+                    {
+                        qualifier: orderItems[0].DTM01_EstimatedShip_Qual,
+                        date: orderItems[0].DTM02_Date
+                    }
+                ]
+                filter (
+                    !isEmpty($.qualifier default "") and
+                    !isEmpty($.date default "")
+                ),
  
             partyInformation: [
                 {
@@ -81,47 +93,54 @@ groupedOrders pluck ((orderItems, orderNo) -> {
         },
  
         detail: {
-            lineItems: orderItems map (item) -> (
-                {
-                    lineNo: item.PO1_01_LineID,
-                    qty: item.PO1_02_Qty,
-                    uom: item.PO1_03_UOM,
-                    unitPrice: item.PO1_04_Price,
-                    priceQualifier: item.PO1_05_PriceQual,
-                    buyerPartQualifier: item.PO1_06_BuyerPartQual,
-                    buyerPartNo: item.PO1_07_BuyerPart,
-                    vendorPartQualifier: item.PO1_08_VendorPartQual,
-                    vendorPartNo: item.PO1_09_VendorPart,
- 
-                    acknowledgments: [
+            lineItems:
+                orderItems map (item) ->
+                    (
                         {
-                            statusCode: item.ACK01_Status,
-                            quantity: item.ACK02_Qty,
-                            uom: item.ACK03_UOM,
-                            dateQualifier: item.ACK04_DateQual,
-                            date: item.ACK05_Date
+                            lineNo: item.PO1_01_LineID,
+                            qty: item.PO1_02_Qty,
+                            uom: item.PO1_03_UOM,
+                            unitPrice: item.PO1_04_Price,
+                            priceQualifier: item.PO1_05_PriceQual,
+                            buyerPartQualifier: item.PO1_06_BuyerPartQual,
+                            buyerPartNo: item.PO1_07_BuyerPart,
+                            vendorPartQualifier: item.PO1_08_VendorPartQual,
+                            vendorPartNo: item.PO1_09_VendorPart,
+ 
+                            acknowledgments: [
+                                {
+                                    statusCode: item.ACK01_Status,
+                                    quantity: item.ACK02_Qty,
+                                    uom: item.ACK03_UOM,
+                                    dateQualifier: item.ACK04_DateQual,
+                                    date: item.ACK05_Date
+                                }
+                            ]
                         }
-                    ]
-                }
-                ++
-                (
-                    if (!isEmpty(trim(item.PID05_Description default "")))
-                    {
-                        productDescriptions: [
+                        ++
+                        (
+                            if (!isEmpty(trim((item.PID05_Description default "") as String)))
                             {
-                                descriptionType: item.PID01_Type,
-                                description: trim(item.PID05_Description)
+                                productDescriptions: [
+                                    {
+                                        descriptionType: item.PID01_Type,
+                                        description: trim((item.PID05_Description default "") as String)
+                                    }
+                                ]
                             }
-                        ]
-                    }
-                    else {}
-                )
-            )
+                            else {}
+                        )
+                    )
         },
  
         summary: {
             totalLineItems: sizeOf(orderItems),
-            totalAcknowledgedQuantity: sum(orderItems.*ACK02_Qty default [])
+ 
+            totalAcknowledgedQuantity:
+                sum(
+                    (orderItems.*ACK02_Qty default [])
+                        map (($ default 0) as Number)
+                )
         }
     }
 })

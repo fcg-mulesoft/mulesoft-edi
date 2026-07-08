@@ -29,14 +29,10 @@
           "additionalProperties": false,
           "properties": {
             "senderId": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 80
+              "type": "string"
             },
             "receiverId": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 80
+              "type": "string"
             },
             "acknowledgmentPurposeCode": {
               "type": "string",
@@ -66,8 +62,7 @@
             },
             "purchaseOrderNumber": {
               "type": "string",
-              "minLength": 1,
-              "maxLength": 22
+              "minLength": 1
             },
             "purchaseOrderDate": {
               "type": "string",
@@ -78,9 +73,7 @@
               "pattern": "^[0-9]{8}$"
             },
             "sellerOrderNumber": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 80
+              "type": "string"
             },
             "references": {
               "type": "array",
@@ -93,14 +86,10 @@
                 "additionalProperties": false,
                 "properties": {
                   "qualifier": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 3
+                    "type": "string"
                   },
                   "referenceNumber": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80
+                    "type": "string"
                   }
                 }
               }
@@ -116,9 +105,7 @@
                 "additionalProperties": false,
                 "properties": {
                   "qualifier": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 3
+                    "type": "string"
                   },
                   "date": {
                     "type": "string",
@@ -149,9 +136,7 @@
                     ]
                   },
                   "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 60
+                    "type": "string"
                   },
                   "idQualifier": {
                     "type": "string",
@@ -160,26 +145,19 @@
                     ]
                   },
                   "idCode": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80
+                    "type": "string"
                   },
                   "address1": {
-                    "type": "string",
-                    "maxLength": 55
+                    "type": "string"
                   },
                   "city": {
-                    "type": "string",
-                    "maxLength": 30
+                    "type": "string"
                   },
                   "state": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 2
+                    "type": "string"
                   },
                   "postalCode": {
-                    "type": "string",
-                    "maxLength": 15
+                    "type": "string"
                   }
                 },
                 "allOf": [
@@ -267,40 +245,30 @@
                     "minimum": 0
                   },
                   "uom": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 2
+                    "type": "string"
                   },
                   "unitPrice": {
                     "type": "number",
                     "minimum": 0
                   },
                   "priceQualifier": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 2
+                    "type": "string"
+
                   },
                   "buyerPartQualifier": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 2
+                    "type": "string"
                   },
                   "buyerPartNo": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80
+                    "type": "string"
                   },
                   "vendorPartQualifier": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 2
+                    "type": "string"
                   },
                   "vendorPartNo": {
                     "type": [
                       "string",
                       "null"
-                    ],
-                    "maxLength": 80
+                    ]
                   },
                   "productDescriptions": {
                     "type": "array",
@@ -319,9 +287,7 @@
                           ]
                         },
                         "description": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 80
+                          "type": "string"
                         }
                       }
                     }
@@ -351,14 +317,10 @@
                           "minimum": 0
                         },
                         "uom": {
-                          "type": "string",
-                          "minLength": 2,
-                          "maxLength": 2
+                          "type": "string"
                         },
                         "dateQualifier": {
-                          "type": "string",
-                          "minLength": 3,
-                          "maxLength": 3
+                          "type": "string"
                         },
                         "date": {
                           "type": "string",

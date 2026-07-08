@@ -174,7 +174,9 @@ import toBase64 from dw::core::Binaries
 						<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
 output application/json
 ---
-Mule::p("partner.inbound." ++ vars.initialPayload[0].b2bMessage.header.senderId)]]></ee:set-variable>
+[(p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
+    default [(p('partner.outbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
+    default []]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="180d4597-2c63-41f6-b4e0-0a9b61bc7b35" name="send-email-subflow"/>
