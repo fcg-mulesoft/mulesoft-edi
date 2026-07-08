@@ -28,7 +28,7 @@ var direction = if(attributes.method == "POST") "Inbound " else "Outbound "
 	"timestamp": now() as String {
 		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
 	},
-	"transmissionId" : initialPayload[0].b2bMessage.header.transmissionId default ""
+	"transmissionId" : initialPayload.b2bMessage.header.transmissionId default ""
 }]]></ee:set-variable>
                 <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
 output application/json
