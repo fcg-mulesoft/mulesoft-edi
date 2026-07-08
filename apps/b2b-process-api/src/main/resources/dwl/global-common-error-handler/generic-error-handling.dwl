@@ -44,9 +44,11 @@ var suppressed = if (isValidationFlow) null else (rawSup)
 var suppNs     = if (isValidationFlow) "" else rawSupNs
 var suppId     = if (isValidationFlow) "" else rawSupId
 
+var rawSource = safe(integration.source, "P21")
 var sourceSystem =
     if (isValidationFlow) "APM"
-    else safe(integration.source, "P21")
+    else if (upper(rawSource) == "COUPA") "ADM Coupa"
+    else rawSource
 
 var targetSystem =
     if (isValidationFlow) "P21"
@@ -54,7 +56,8 @@ var targetSystem =
 
 var flowDirection =
     if (lower(sourceSystem) == "apm") "INBOUND"
-    else                              "OUTBOUND"
+    else if ((lower(sourceSystem) contains "coupa") and lower(targetSystem) == "p21") "INBOUND"
+    else "OUTBOUND"
 
 var categoryNs = if (suppressed != null and suppNs != "") suppNs else errNs
 var categoryId = if (suppressed != null and suppId != "") suppId else errId
@@ -108,6 +111,8 @@ var errorCategory =
     else if (categoryId == "ROUTING"                or categoryId == "COMPOSITE_ROUTING"
           or categoryId == "FLOW_NOT_FOUND")
         "ROUTING"
+    else if (categoryId == "VALIDATION_FAILED")
+        "VALIDATION"
     else
         "GENERIC"
 
@@ -135,7 +140,9 @@ var bannerColor =
 var ve = vars.isValid.validationErrors default {}
 
 var msgPoNumber = safe(cdmHeader.poNumber default "" as String,
-                    safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, "N/A"))
+                    safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, 
+                    	safe(vars.initialPayload.Order.PoNo default "" as String,"N/A")
+                    ))
 
 var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as String
 
@@ -238,6 +245,12 @@ var errorResolution =
             ++ "\n  2. Verify that the Content-Type matches the actual format (e.g. JSON, XML)."
             ++ "\n  3. Check for special characters, encoding problems, or truncated content."
             ++ "\n  4. Correct the source data in " ++ sourceSystem ++ " and resubmit."
+        else if (categoryId == "VALIDATION_FAILED")
+            "The information received does not match what is expected in the system."
+            ++ "\n  1. Review the file or data that was sent and check for incorrect or missing values."
+            ++ "\n  2. Compare the sent data against the expected format and correct any mismatches."
+            ++ "\n  3. Resend the corrected file once all values have been verified."
+            ++ "\n\n  If you are unsure which values are incorrect, contact your EDI coordinator for guidance."
         else
             "The data sent did not pass the required checks before it could be processed."
             ++ "\n  1. Review the error details below to identify which field or value caused the issue."
@@ -384,7 +397,9 @@ var errorDescFull =
 var corrId =
     if (isValidationFlow) safe(cdmHeader.transmissionId, uuid())
     else (errResp.correlationId default correlationId default uuid())
-
+    
+var companyName = safe(vars.purchaseOrderData.value.company_no[0] default "" as String,
+					safe(if(lower(sourceSystem) contains "coupa") "King Filtration" else "", "N/A"))
 var data = {
     flowDirection:   flowDirection,
     documentType:    safe(integration."integration-type",
@@ -451,7 +466,7 @@ var data = {
     businessKey: "PO " ++ msgPoNumber,
     transmissionId:   if (isValidationFlow) safe(cdmHeader.transmissionId)
                       else (vars.initialPayload[0].b2bMessage.header.transmissionId default "N/A"),
-    companyName: (vars.purchaseOrderData.value.company_no[0] default "N/A"),
+    companyName: companyName,
     keyLabel:        "Correlation ID",
     key:             correlationId default uuid(),
     timestamp:        errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})

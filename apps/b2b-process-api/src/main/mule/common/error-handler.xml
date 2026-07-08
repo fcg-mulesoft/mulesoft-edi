@@ -36,7 +36,7 @@ output application/json
     default []]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<flow-ref doc:name="send-email-subflow" doc:id="7e864436-5ddc-425c-bf59-6c7fdca79205" name="send-email-subflow" />
+			<flow-ref doc:name="send-email-subflow" doc:id="7e864436-5ddc-425c-bf59-6c7fdca79205" name="send-email-subflow"/>
 			<set-payload value="#[vars.errorResponse]" doc:name="Set Payload : Response" doc:id="625e87af-ab15-4102-8983-89ca716bd3fe" />
 			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="73163ab8-3614-4bbf-8510-0e8a9073bd9e" message="#[vars.errorResponse]" category="com.apikit.errors" />
 		</on-error-propagate>
@@ -70,7 +70,7 @@ output application/json
 }]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<flow-ref doc:name="send-email-subflow" doc:id="144558c7-be6f-49eb-98e4-9caa6759d351" name="send-email-subflow" />
+			<flow-ref doc:name="send-email-subflow" doc:id="144558c7-be6f-49eb-98e4-9caa6759d351" name="send-email-subflow"/>
 			<set-payload value="#[vars.errorResponse]" doc:name="Set Payload : Response" doc:id="5672a066-16ba-4471-8f94-eb012128e6c2" />
 			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="27ab5599-dbb2-421e-979f-6588da106524" message="#[vars.errorResponse]" category="com.validation.errors" />
 		</on-error-propagate>
@@ -103,15 +103,15 @@ output application/json
     default []]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<flow-ref doc:name="send-email-subflow" doc:id="8fd93da9-3e91-4035-8982-cb383a55b653" name="send-email-subflow" />
+			<flow-ref doc:name="send-email-subflow" doc:id="8fd93da9-3e91-4035-8982-cb383a55b653" name="send-email-subflow"/>
 			<set-payload value="#[vars.errorResponse]" doc:name="Set Payload : Response" doc:id="0390dd71-edff-45a7-a939-f8474b412637" />
 			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="89f50ea4-a10b-4545-a8f5-6dabc5d74d1e" message="#[vars.errorResponse]" category="com.generic.errors" />
 		</on-error-propagate>
 	</error-handler>
-	<sub-flow name="send-email-subflow" doc:id="bb5f38c4-af63-4c8e-9f45-75a1361f4932" >
-		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="a2e7fd31-6339-4cd9-b6c5-4a5f53d547c3" message="Start: Email Alert" />
-		<flow-ref doc:name="Flow Reference To get-email-view-subflow" doc:id="86810691-d6cf-4bce-a9de-552c668d8ef7" name="get-email-view-subflow" target="emailView" />
-		<ee:transform doc:name="var : emailList" doc:id="1af8eb63-3c31-4b05-97fd-3a06334ac05c" >
+	<sub-flow name="send-email-subflow" doc:id="7906133c-0dfd-4e3f-b42b-2f6ac4cb25ca" >
+		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="62b77774-e85f-42c1-96a3-dc641aea7618" message="Start: Email Alert" />
+		<flow-ref doc:name="Flow Reference To get-email-view-subflow" doc:id="599a38c5-46cb-46ce-bf1a-cdb677170dcd" name="get-email-view-subflow" target="emailView" />
+		<ee:transform doc:name="var : emailList" doc:id="a7f87568-dbaf-475a-a629-86790f33003e" >
 			<ee:message />
 			<ee:variables >
 				<ee:set-variable variableName="emailList" ><![CDATA[%dw 2.0
@@ -156,24 +156,27 @@ var viewRecords =
  ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="f351731c-a4e3-43cf-ba09-c67b2a80eb69" millisBetweenRetries="6000" >
-			<try doc:name="Try" doc:id="d4f777ff-8a5e-45e1-867b-d294c268f813" >
-				<choice doc:name="If transmissionId Exists?" doc:id="3f9ce635-e367-4b01-930a-a3b23f80795b" >
-					<when expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId)]" >
-						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="3315a843-1f2b-40a2-966d-6e8d25ad981f" idExpression="#[vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
+		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="89130f15-6658-4f98-bb97-72a3b35123dc" millisBetweenRetries="6000" >
+			<try doc:name="Try" doc:id="2b8c4eb1-4645-4a22-9dfa-137ed789de64" >
+				<choice doc:name="If transmissionId Exists?" doc:id="ac259689-f859-44c3-a6bd-3491ce7b4a5e" >
+					<when expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId) or !isEmpty(vars.initialPayload.Order.TransmissionId)]" >
+						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="3fc2766d-e7a9-47a2-a006-f9c477f36885" idExpression="#[if (vars.initialPayload.Order?) &#10;  vars.initialPayload.Order.TransmissionId &#10;else &#10;  vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
 					</when>
 				</choice>
-				<email:send doc:name="Send Email" doc:id="a68cd7fb-b878-4ce2-8355-31a5d941fd50" config-ref="Email_SMTP" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[vars.emailList.&quot;to&quot; ++ (Mule::p('email.toRecipient') splitBy (&quot;,&quot;)) ++ ((vars.ediXrefResponse.email_address) filter $!=null)]" >
+				<email:send doc:name="Send Email" doc:id="94f86c8b-49de-48fc-9ba9-843c3ed795aa" config-ref="Email_SMTP" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)]" >
 					<reconnect />
 					<email:body contentType="text/html" />
+					<email:attachments ><![CDATA[#[{
+	("coupa-request.json":vars.attachments default {})if(vars.emailContent != null),
+}]]]></email:attachments>
 				</email:send>
 				<error-handler >
-					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="075d8785-265b-403c-9a7e-8388a777f2b0" type="DUPLICATE_MESSAGE" >
-						<logger level="INFO" doc:name="LOG INFO : Duplicate Error - Skipping Email" doc:id="82417a66-a9b9-4acb-aeef-b5695e968fea" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	timestamp: now(),&#10;	message: "Duplicate Error - Skipping Email"&#10;}]' />
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6e6e47d2-d1b0-4999-a0bd-7a9d9a4d2871" type="DUPLICATE_MESSAGE" >
+						<logger level="INFO" doc:name="LOG INFO : Duplicate Error - Skipping Email" doc:id="4caa8007-1e2f-48f9-a798-959f8fb4a288" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	timestamp: now(),&#10;	message: "Duplicate Error - Skipping Email"&#10;}]' />
 					</on-error-continue>
 				</error-handler>
 			</try>
 		</until-successful>
-		<logger level="DEBUG" doc:name="LOG DEBUG: After Email" doc:id="9747b797-85c2-4157-8b85-810d180ba3ee" message="End: Email Alert" />
+		<logger level="DEBUG" doc:name="LOG DEBUG: After Email" doc:id="a5243c3e-80de-4c7a-b80b-61b9d3343bee" message="End: Email Alert" />
 	</sub-flow>
-</mule>
+	</mule>

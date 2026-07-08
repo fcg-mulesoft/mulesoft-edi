@@ -11,7 +11,6 @@
 		<artifactId>integration-parent-pom</artifactId>
 		<version>1.0.5</version>
 	</parent>
-
 	<name>b2b-process-api-app</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -94,7 +93,6 @@
 			</plugin>
 		</plugins>
 	</build>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
@@ -193,7 +191,6 @@
 			<layout>default</layout>
 		</repository>
 	</repositories>
-
 	<pluginRepositories>
 		<pluginRepository>
 			<id>mulesoft-releases</id>

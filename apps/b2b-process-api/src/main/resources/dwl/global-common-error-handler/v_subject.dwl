@@ -1,5 +1,7 @@
 %dw 2.0
 output application/json
+fun safe(v, d="N/A") =
+    if (v == null or (v is String and trim(v) == "")) d else v
  
 var senderKey    = vars.initialPayload[0].b2bMessage.header.senderId default " " as String
 var msgVendorId  = if(senderKey != null) (p('partner.inbound.' ++ senderKey) default p('partner.outbound.' ++ senderKey) default null) else null
@@ -10,7 +12,9 @@ var intType      = vars.integration."integration-type"
                      default vars.initialVariables."integration-type"
                      default null
 var companyNo    = vars.purchaseOrderData.value.company_no[0] default null
-var poNumber     = vars.initialPayload[0].b2bMessage.header.poNumber default null
+var poNumber     = safe(vars.initialPayload[0].b2bMessage.header.poNumber default "" as String, 
+                    	safe(vars.initialPayload.Order.PoNo default "" as String,"N/A")
+                    )
  
 fun present(v) = v != null and (v as String) != ""
  
