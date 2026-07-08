@@ -29,7 +29,7 @@ import toBase64 from dw::core::Binaries
 		"validationMode" : Mule::p('b2b-p21-sys-api.validationMode.xref'),
 		"companyId": "TPA",
 		"ediRefId" : (payload[0].b2bMessage.header.partyInformation
-    filter ($.qualifier == "BY"))[0].identificationCode default ""
+    filter ($.qualifier == "ST"))[0].identificationCode default ""
 	},
 	"uriParams": {
 	},
