@@ -19,11 +19,12 @@ import * from dw::core::Strings
 output application/json
 var initialPayload = if(!isEmpty(payload)) (payload[0] default "") else ""
 var direction = if(attributes.method == "POST") "Inbound " else "Outbound "
+var integrationType = if (attributes."requestPath" == "/api/coupainboundTransactions") "Coupa" else ((attributes.queryParams."type" default "") ++ " ")
 ---
 {
 	"source" : "APM" ,
 	"target" : "P21",
-	"integration-type" : if (!isEmpty(initialPayload))(direction ++ attributes.queryParams."type" ++ " " ++ ((initialPayload."b2bMessage"."header"."documentType") default "")) else  (direction ++ capitalize(attributes.queryParams."transactionType")),
+	"integration-type" : if (!isEmpty(initialPayload))(direction ++ integrationType ++ ((initialPayload."b2bMessage"."header"."documentType") default "")) else  (direction ++ (capitalize(attributes.queryParams."transactionType") default "")),
 	"correlationId": correlationId,
 	"timestamp": now() as String {
 		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
