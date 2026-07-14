@@ -82,7 +82,7 @@ var lineComparisons =
 
                 headerLevelNote:
                     if (requiresP21Override)
-                        "Line " ++ poItem.lineNo ++
+//                        "Line " ++ poItem.lineNo ++
                         " | Item: " ++ ediItemId ++
                         " | EDI Price: " ++ (ediUnitPrice as String) ++
                         " | P21 Price: " ++ (p21UnitPrice as String)
