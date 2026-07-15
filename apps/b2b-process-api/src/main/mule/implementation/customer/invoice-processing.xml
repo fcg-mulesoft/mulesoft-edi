@@ -31,7 +31,7 @@ import toBase64 from dw::core::Binaries
     "queryParams":
         {
             "transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderInvoice'),
-            "purpose": Mule::p('b2b-p21-sys-api.purpose.outbound'),
+            "purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
             "startTime": (((attributes.queryParams.startTime) as DateTime) >> "UTC") as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"},
             "endTime": (((attributes.queryParams.endTime) as DateTime) >> "UTC") as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}
         }
