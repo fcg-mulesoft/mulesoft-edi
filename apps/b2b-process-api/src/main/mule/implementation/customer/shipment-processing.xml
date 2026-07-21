@@ -57,7 +57,7 @@ import toBase64 from dw::core::Binaries
 				</ee:transform>
 			</when>
 			<otherwise >
-				<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage" target="lastRunTimestamp">
+				<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="shipmentLastRunTimestamp" objectStore="Object_Store_Shipment_Vantage" target="lastRunTimestamp">
 			<os:default-value><![CDATA[#[now() - |PT24H|]]]></os:default-value>
 		</os:retrieve>
 				<ee:transform doc:name="var : httpOperation - get shipment Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2">
@@ -351,7 +351,7 @@ map (entry) -> {
 		</ee:transform>
 		<choice doc:name="Choice" doc:id="bfbf7614-46f7-477a-bae1-a8dd0bdbcf07" >
 			<when expression="#[isEmpty(vars.requestParams)]">
-				<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="lastRunTimestamp" objectStore="Object_Store_Invoice_Vantage">
+				<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="shipmentLastRunTimestamp" objectStore="Object_Store_Shipment_Vantage">
 			<os:value><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
 		</os:store>
 			</when>
