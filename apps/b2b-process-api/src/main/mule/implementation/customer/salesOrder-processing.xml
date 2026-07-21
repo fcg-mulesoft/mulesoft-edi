@@ -296,7 +296,9 @@ output application/json
     default []]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
-				<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="180d4597-2c63-41f6-b4e0-0a9b61bc7b35" name="send-email-subflow"/>
+				<async doc:name="Async" doc:id="16be9983-e5a5-4c7f-99b0-a1042ddd1152" >
+					<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="180d4597-2c63-41f6-b4e0-0a9b61bc7b35" name="send-email-subflow" />
+				</async>
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="LOG INFO :  Price Match Sccucess" doc:id="2efd245d-291e-4f13-9011-d52b0fee8308" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "PRICE_MATCH_SUCCESS",&#10;//	message : "All PO lines matched P21 pricing and items successfully. No CSR review required.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
