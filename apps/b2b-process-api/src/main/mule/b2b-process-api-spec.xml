@@ -11,7 +11,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
-        <ee:transform doc:name="var : integration, initialPayload" doc:id="f7c8a630-5842-43d9-bb3e-0ce2e274d0f4">
+        <ee:transform doc:name="var : integration, initialPayload, endpoint" doc:id="f7c8a630-5842-43d9-bb3e-0ce2e274d0f4">
             <ee:message />
             <ee:variables>
                 <ee:set-variable variableName="integration"><![CDATA[%dw 2.0
@@ -35,6 +35,7 @@ var integrationType = if (attributes."requestPath" == "/api/coupainboundTransact
 output application/json
 ---
 payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[attributes."requestPath"]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
         <apikit:router config-ref="b2b-process-api-spec-config" />
