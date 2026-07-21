@@ -163,7 +163,7 @@ var viewRecords =
 						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="3fc2766d-e7a9-47a2-a006-f9c477f36885" idExpression="#[if (vars.initialPayload.Order?) &#10;  vars.initialPayload.Order.TransmissionId &#10;else &#10;  vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
 					</when>
 				</choice>
-				<email:send doc:name="Send Email" doc:id="94f86c8b-49de-48fc-9ba9-843c3ed795aa" config-ref="Email_SMTP" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)]" >
+				<email:send doc:name="Send Email" doc:id="94f86c8b-49de-48fc-9ba9-843c3ed795aa" config-ref="Email_SMTP" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[(vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)) ++  (vars.emailList.&quot;to&quot;)]" >
 					<reconnect />
 					<email:body contentType="text/html" />
 					<email:attachments ><![CDATA[#[{
