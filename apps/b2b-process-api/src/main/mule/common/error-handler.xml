@@ -167,7 +167,17 @@ var viewRecords =
 					<reconnect />
 					<email:body contentType="text/html" />
 					<email:attachments ><![CDATA[#[{
-	("coupa-request.json":vars.attachments default {})if(vars.emailContent != null),
+    (if (vars.endpoint == "/api/inboundTransactions")
+        {
+            "input-payload.json": vars.initialPayload default {}
+        }
+     else if (vars.emailContent != null)
+        {
+            "coupa-request.json": vars.attachments default {}
+        }
+     else
+        {}
+    )
 }]]]></email:attachments>
 				</email:send>
 				<error-handler >
