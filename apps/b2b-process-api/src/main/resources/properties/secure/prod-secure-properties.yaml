@@ -1,1 +1,15 @@
 # Prod Secure Configuration
+
+email:
+  password: "![yARA7CTFDm1RB656w4BiSsDG29F7MxpbHvdCQy8NJHg=]"
+ 
+https:
+  keystore:
+    keypass: "![pkxKBdQGF3QeAOp3OsCpjg==]"
+    storepass: "![pkxKBdQGF3QeAOp3OsCpjg==]]"
+    
+apm.api:
+  accessToken:
+    clientId: "![O7nnHJUjzPz8cOydSSPJsQnXNlnIWN63G3fq/oHMugrKEkBJhAg2rU4ZHvgaolat]"
+    clientSecret: "![tMLai+zi7Z20fLGYrZxQsPhDn7CuLx+9IwsY11e/dyn3YZJawvaRgadpPFhrXmLG]"
+    grantType: "![yptchScYBV2tPk53cfWu4t6m74caJVQR41SyU+mZKLA=]" 
