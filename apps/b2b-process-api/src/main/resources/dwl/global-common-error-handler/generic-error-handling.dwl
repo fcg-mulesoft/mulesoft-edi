@@ -56,7 +56,7 @@ var targetSystem =
 
 var flowDirection =
     if (lower(sourceSystem) == "apm") "INBOUND"
-    else if (lower(sourceSystem) == "coupa" and lower(targetSystem) == "p21") "INBOUND"
+    else if ((lower(sourceSystem) contains "coupa") and lower(targetSystem) == "p21") "INBOUND"
     else "OUTBOUND"
 
 var categoryNs = if (suppressed != null and suppNs != "") suppNs else errNs
@@ -399,7 +399,7 @@ var corrId =
     else (errResp.correlationId default correlationId default uuid())
     
 var companyName = safe(vars.purchaseOrderData.value.company_no[0] default "" as String,
-					safe(if(lower(sourceSystem) == "coupa") "King Filtration" else "", "N/A"))
+					safe(if(lower(sourceSystem) contains "coupa") "King Filtration" else "", "N/A"))
 var data = {
     flowDirection:   flowDirection,
     documentType:    safe(integration."integration-type",
