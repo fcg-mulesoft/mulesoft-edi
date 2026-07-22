@@ -46,6 +46,13 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				scac: poItems[0].TD503_CarrierSCAC,
 				routing: poItems[0].TD505_Routing
 			}] filter ($.scac != null),
+			freightTerms: [{
+				freightTermsCode: poItems[0].FOB01,
+				freightTermsDescription: poItems[0].FOB03,
+				locationQualifier: poItems[0].FOB02
+			}] filter ($.freightTermsCode != null or
+        $.freightTermsDescription != null or
+        $.locationQualifier != null),
 			references: [{
 				qualifier: "ZZ",
 				description: poItems[0].N902_HDR_Note
