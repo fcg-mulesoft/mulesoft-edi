@@ -65,13 +65,6 @@ var comparison = items map (line) -> do {
         odata: matched.unit_price,
         match: isPriceMatch(toNumber(line.unitPrice), matched.unit_price)
       },
-      unit_quantity: {
-        original: invoicedQty,
-        odata: matched.unit_quantity,
-        match:
-          isEmpty(matched.unit_quantity) or
-          invoicedQty == matched.unit_quantity
-      },
       ship2_name: {
         original: shipTo.name,
         odata: p21Ship.ship2_name,
@@ -143,8 +136,7 @@ var itemErrors = (comparison map (line) -> do {
       else
         flatten([
           if (isMismatch(line.qty_ordered.match)) ["Quantity exceeds ordered amount"] else [],
-          if (isMismatch(line.unit_price.match)) ["Unit price mismatch"] else [],
-          if (isMismatch(line.unit_quantity.match)) ["Unit quantity mismatch"] else []
+          if (isMismatch(line.unit_price.match)) ["Unit price mismatch"] else []
         ])
     ---
     if (sizeOf(errs) > 0) {((line.supplier_part_no.original default line.lineNo) as String): errs} else {}

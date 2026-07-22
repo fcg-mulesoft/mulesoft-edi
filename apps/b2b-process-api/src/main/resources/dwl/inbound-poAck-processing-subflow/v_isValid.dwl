@@ -56,7 +56,6 @@ var comparison =
 		lineNo: lineNo,
 		buyerPart: buyerPart,
 		vendorPart: vendorPart,
-		// ✅ NEW VALIDATION FLAG
 		buyer_match: matchedByItem != null,
 		supplier_part_no: {
 			original: vendorPart,
@@ -99,7 +98,7 @@ var itemErrors =
 	(line.buyerPart): flatten([if ( isMismatch(line.buyer_match) ) ["Item ID mismatch"] else [],
       if ( isMismatch(line.supplier_part_no.match) ) ["Supplier part number mismatch"] else [],
       if ( isMismatch(line.qty_ordered.match) ) ["Quantity exceeds ordered amount"] else [],
-      if ( isMismatch(line.unit_price.match) ) ["Unit quantity exceeded"] else []])
+      if ( isMismatch(line.unit_price.match) ) ["Unit Price Mismatch"] else []])
 }) reduce ((item, acc = {
 }) -> acc ++ item) filterObject (sizeOf($) > 0)
 var firstMatched = (odataLines[0]) default {
