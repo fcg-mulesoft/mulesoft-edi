@@ -10,6 +10,7 @@ b2b-p21-sys-api:
   basePath: "/api/"
   port: "8092"
   transactionType:
+    emailNotification: "emailNotification"
     purchaseOrder: "purchaseOrder"
     purchaseOrderAck: "purchaseOrderAck"
     purchaseOrderInvoice: "purchaseOrderInvoice"
