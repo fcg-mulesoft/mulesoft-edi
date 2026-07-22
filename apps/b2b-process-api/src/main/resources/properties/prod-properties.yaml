@@ -1,30 +1,108 @@
 #PROD Environment Properties
-
+ 
+api:
+  name: "b2b-process-api-app"
+  id: "21040633"
+ 
 b2b-p21-sys-api:
-  host: 
-  basePath: "/api/v1/b2b-p21-sys-api"
-  port: 
+  timeout: "15000"
+  host: "b2b-p21-sys-api-prod-1qvskv.internal-08ymxx.usa-e1.cloudhub.io"
+  basePath: "/api/"
+  port: "8092"
+  transactionType:
+    emailNotification: "emailNotification"
+    purchaseOrder: "purchaseOrder"
+    purchaseOrderAck: "purchaseOrderAck"
+    purchaseOrderInvoice: "purchaseOrderInvoice"
+    purchaseOrderShipment: "purchaseOrderShipment"
+    salesOrder: "salesOrder"
+    salesOrderAck: "salesOrderAck"
+    salesOrderInvoice: "salesOrderInvoice"
+    salesOrderShipment: "salesOrderShipment"
+    partsPrice: "partsPrice"
+  purpose:
+    validation: "validation"
+    outbound: "outbound"
+    total: "total"
+  validationMode:
+    xref: "xref"
+    po: "po"
+    customerPart: "customerPart"
+  processingMode:
+    direct: "direct"
+  checkType: 
+    catalogPrice: "catalogPrice"
+    default: "default"
   view:
-    path: "/view"
-    method: "POST"
+    path: "/views"
+    method: "GET"
+    untilsuccessful:
+      maxRetries: "5"
+      interval: "5000"
   transaction:
-    path: "/transaction"
-    method: "POST"
-    
-email: 
-    read: 
-        timeout: "30"
-    conn: 
-        timeout: "30"
-    write:  
-        timeout: "30"
-    host: "smtp.office365.com"
-    port: "587"
-    user: ""
-    password: ""
-    sender: ""
-    receivers: ""
-    
+   path: "/transactions"
+   method: "POST"
+   untilsuccessful:
+     maxRetries: "5"
+     interval: "5000"
+   custom:
+     path: "/transactions/custom"
+b2b-inbound-partner-mgmt-api:
+  timeout: "150000"
+  host: "b2b-inbound-http-oqy2-1qvskv.08ymxx.usa-e1.cloudhub.io"
+  basePath: "/api/"
+  port: "443"
+  coupa-invoice:
+   path: "/JSON-json-to-xml-inbound-invoice-coupa"
+   method: "POST"
+   untilsuccessful:
+     maxRetries: "5"
+     interval: "5000"
+anypoint:
+  platform:
+   method: "POST"
+   host: "anypoint.mulesoft.com"
+   port: "443"
+   basePath: "/accounts/api"
+   path: "/v2/oauth2/token"
+   untilsuccessful:
+     maxRetries: "5"
+     interval: "5000"
+  apm:
+    url-prefix: "https://anypoint.mulesoft.com/partnermanager"
+    orgid: "d239ff40-5b13-47be-9bb0-a029a64dac2c"
+    envid: "cbc3bafc-9ceb-40a2-9b3e-5d75ef7361e2"
+    method: "GET"
+ 
+# APM Request Properties
+apm:
+  request:
+   method: "POST"
+   host: "b2b-inbound-http-oqy2-1qvskv.08ymxx.usa-e1.cloudhub.io"
+   port: "443"
+   basePath: "/api"
+   path: "/out-src-purchase-order"
+   invoice: "/out-src-invoice"
+   asn: "/out-src-shipment-notice"
+   poAck: "/out-src-poAck"
+   untilsuccessful:
+     maxRetries: "5"
+     interval: "5000"
+ 
 #Fcg sender Id
 fcg:
-  edi_id: "117414135T"
+  edi_id: "117414135P"
+ 
+# Partners
+partner:
+  inbound:
+   "1631404318": "FESTO"
+   "960163954IDX": "VANTAGE"
+   "default": "N/A"
+  outbound:
+   "960163954IDX": "VANTAGE"
+   "234093": "FESTO"
+   "default": "N/A"
+ 
+email:
+  toRecipient: "harshavardhan.reddy@caeliusconsulting.com,anshul.negi@caeliusconsulting.com,priyanshu.dhawan@caeliusconsulting.com,gopi.makutam@caeliusconsulting.com,bighnesh.sahoo@caeliusconsulting.com,Mulesoft_prod_support@flowcontrolgroup.com"
