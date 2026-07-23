@@ -3,6 +3,11 @@
 #p21 Configuration
 p21:
   request:
+    host: "p21-dev12api.flowcontrolgroup.com"
+    port: "3443"
+    method:
+      OData: "GET"
+      transaction: "POST"  
     basePath:
       Odata: "/odataservice/odata/view"
       transaction: "/uiserver0/api/v2"
