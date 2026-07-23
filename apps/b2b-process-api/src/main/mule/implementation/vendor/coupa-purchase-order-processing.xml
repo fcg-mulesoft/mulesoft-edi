@@ -76,7 +76,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="LOG INFO : CoupaPurrchaseOrderCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Coupa Purchase Order Creation Successful. Order Number is " ++ (payload.Order.OrderNo default "NA")&#10;}]' />
-										<ee:transform doc:name="var : errorResponse, systemInformation" doc:id="e4f2185c-ca35-4daa-8aee-a418157c7772">
+										<ee:transform doc:name="var : errorResponse, systemInformation, orderId" doc:id="e4f2185c-ca35-4daa-8aee-a418157c7772">
 											<ee:message />
 											<ee:variables>
 												<ee:set-variable variableName="systemInformation"><![CDATA[%dw 2.0
@@ -103,6 +103,10 @@ output application/json
 	}) ++ " UTC"),
 	notificationRequired: true
 }]]></ee:set-variable>
+												<ee:set-variable variableName="orderId" ><![CDATA[%dw 2.0
+output application/json
+---
+(payload.Order.OrderNo default "NA")]]></ee:set-variable>
 											</ee:variables>
 										</ee:transform>
 										<!-- [STUDIO:"Preparing Email Template, var : subject"]<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="6270b53c-ceb7-4a21-afb1-9f20d087464b" >
@@ -244,7 +248,7 @@ output application/json
 	"correlationId": (correlationId default uuid()),
 	"statusCode": vars.httpStatus,
 	"statusMessage": "CUSTOM:VALIDATION_FAILED",
-	"description": "Item IDs missing in Coupa request; proceeded with P21 PO creation – reference P21 Order Number : " ++ (payload.Order.OrderNo default "NA"),
+	"description": "Item IDs missing in Coupa request; proceeded with P21 PO creation – reference P21 Order Number : " ++ (vars.orderId),
 	"timestamp": (((now() >> "UTC")  as String {
 		format : "yyyy/MM/dd HH:mm:ss"
 	}) ++ " UTC"),
