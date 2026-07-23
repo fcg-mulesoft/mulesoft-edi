@@ -1,1 +1,27 @@
 #PROD Configuration
+
+#p21 Configuration
+p21:
+  request:
+    host: "FCG-P21PRD-10api.flowcontrolgroup.com"
+    port: "3443"
+    method:
+      OData: "GET"
+      transaction: "POST"  
+    basePath:
+      Odata: "/odataservice/odata/view"
+      transaction: "/uiserver0/api/v2"
+      sales: "/api/sales"
+      parts: "/api/inventory/v2/parts"
+    path:
+      transaction: "/transaction"
+      ediOrderView: "/fcg_edi_xref_vw"
+      coupaOrder: "/orders"
+      partsPrices: "/prices"
+      
+#Oauth configuration
+oauth:
+  request:
+    url: "https://FCG-P21PRD-10api.flowcontrolgroup.com:3443/api/security/token/?username=mulesoftint&password=1XxnyPs%40QH%5E1"
+    method: "POST"
+      

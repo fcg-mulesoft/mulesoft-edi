@@ -1,1 +1,8 @@
 #PROD Secure Configuration
+https:
+  keystore:
+    keypass: "![pkxKBdQGF3QeAOp3OsCpjg==]"
+    storepass: "![pkxKBdQGF3QeAOp3OsCpjg==]"
+    
+email:
+  password: "![yARA7CTFDm1RB656w4BiSsDG29F7MxpbHvdCQy8NJHg=]"

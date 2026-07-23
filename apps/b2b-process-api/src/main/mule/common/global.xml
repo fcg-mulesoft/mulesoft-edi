@@ -26,7 +26,7 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 	</http:request-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="4100daf7-05f0-4add-9d25-6dbd8ce83162" file="properties/${mule.env}-properties.yaml" doc:description="Environment Specific Property File&#10;"/>
 	<configuration-properties doc:name="Configuration properties" doc:id="4543f32f-4c89-4629-bd06-fa5baa83d5b5" doc:description="Common Properties File" file="properties\common\common-properties.yaml" />
-	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="97594968-ddbf-445c-9d93-c6a2bd3d5219" file="properties\secure\\${mule.env}-secure-properties.yaml" key="fcgMuleKey123456" doc:description="Secure Properties Config File"/>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="97594968-ddbf-445c-9d93-c6a2bd3d5219" file="properties\secure\\${mule.env}-secure-properties.yaml" key="${mule.key}" doc:description="Secure Properties Config File"/>
 	    <email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="26d31c0c-e7ef-4d56-849b-69a1dab31c1e">
         <email:smtp-connection host="${email.host}" port="${email.port}" user="${email.username}" password="${secure::email.password}" connectionTimeout="${email.connectionTimeout}" readTimeout="${email.readTimeout}" writeTimeout="${email.writeTimeout}">
             <reconnection />
@@ -36,9 +36,6 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
         </email:smtp-connection>
     </email:smtp-config>
 	<os:object-store name="Object_store" doc:name="Object store" doc:id="f2a38677-1eeb-47c2-8c6b-87a11cb44897" entryTtl="${objectstore.token.entryTTL}" entryTtlUnit="HOURS" expirationInterval="${objectstore.token.expirationInterval}" expirationIntervalUnit="HOURS" persistent="false" maxEntries="${objectstore.token.maxEntries}"/>
-	<azure-storage:config name="Azure_Storage_Config" doc:name="Azure Storage Config" doc:id="62dd0a7a-502d-4fe5-8e4f-eeda6573ac2b" >
-		<azure-storage:sas-token-azure-connection accountName="${azure.accountname}" sasToken="${secure::azure.sastoken}"/>
-	</azure-storage:config>
 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="de023e58-4c44-4b28-b57a-f2cb0bcd465b" flowRef="b2b-process-api-spec-main" />
 
     <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="847f670d-8d9f-4478-8c0b-92f5314af4db">
