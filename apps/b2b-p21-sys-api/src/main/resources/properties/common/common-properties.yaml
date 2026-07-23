@@ -39,7 +39,7 @@ objectstore:
 #P21 configuration
 p21:
   request:
-    host: "p21-dev12api.flowcontrolgroup.com"
+    host: "FCG-P21PRD-10api.flowcontrolgroup.com"
     port: "3443"
     method:
       OData: "GET"
