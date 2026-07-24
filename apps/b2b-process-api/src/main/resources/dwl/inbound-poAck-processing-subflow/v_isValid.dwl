@@ -2,7 +2,7 @@
 output application/json
 
 var DEBUG = false
-var ADDRESS_TOLERANCE = 90
+var ADDRESS_TOLERANCE = 50
 
 fun norm(v) =
     if (v is String)
@@ -70,7 +70,21 @@ fun cleanPO(v) =
         (v as String)
     else
         ""
+fun normalizeZip(zip) =
+    if (zip == null)
+        ""
+    else
+        do {
+            var z = ((zip as String) replace /[^0-9]/ with "")
+            ---
+            if (sizeOf(z) >= 5)
+                z[0 to 4]
+            else
+                z
+        }
 
+fun isZipMatch(a, b) =
+    normalizeZip(a) == normalizeZip(b)
 fun isPriceMatch(a, b) =
     abs(toNumber(a) - toNumber(b)) <= 0.01
 
@@ -86,7 +100,8 @@ var shipTo = {
     name: shipToRaw.name,
     address1: shipToRaw.address1,
     city: shipToRaw.city,
-    state: shipToRaw.state
+    state: shipToRaw.state,
+    postalCode: shipToRaw.postalCode
 }
 
 var comparison =
@@ -144,13 +159,15 @@ var comparison =
                         name: matched.ship2_name,
                         address1: matched.ship2_add1,
                         city: matched.ship2_city,
-                        state: matched.ship2_state
+                        state: matched.ship2_state,
+ 			postalCode: matched.ship2_zip
                     },
                     match: {
                         name: isMatch(shipTo.name, matched.ship2_name),
                         address1: isAddressMatch(shipTo.address1, matched.ship2_add1),
                         city: isMatch(shipTo.city, matched.ship2_city),
-                        state: isMatch(shipTo.state, matched.ship2_state)
+                        state: isMatch(shipTo.state, matched.ship2_state),
+postalCode: isZipMatch(shipTo.postalCode, matched.ship2_zip)
                     },
                     addressMatchPercentage: addressPercentage
                 }
@@ -180,6 +197,7 @@ var itemErrors =
                     ["Unit Price Mismatch"]
                 else
                     []
+	
             ])
     })
     reduce ((item, acc = {}) -> acc ++ item)
@@ -195,9 +213,7 @@ var shipToErrors =
             [],
 
         if (isMismatch(isAddressMatch(shipTo.address1, firstMatched.ship2_add1)))
-            [
-                "ShipTo Address1 mismatch" 
-            ]
+            ["ShipTo Address1 mismatch"]
         else
             [],
 
@@ -208,6 +224,11 @@ var shipToErrors =
 
         if (isMismatch(isMatch(shipTo.state, firstMatched.ship2_state)))
             ["ShipTo State mismatch"]
+        else
+            [],
+
+        if (isMismatch(isZipMatch(shipTo.postalCode, firstMatched.ship2_zip)))
+            ["Zip Code mismatch"]
         else
             []
     ])
