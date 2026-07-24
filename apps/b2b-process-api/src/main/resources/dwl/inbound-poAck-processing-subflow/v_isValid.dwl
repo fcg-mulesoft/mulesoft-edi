@@ -2,34 +2,74 @@
 output application/json
 
 var DEBUG = false
+var ADDRESS_TOLERANCE = 90
 
 fun norm(v) =
-    if (v is String) (upper(trim(v)) replace /[^A-Z0-9]/ with "")
-    else if (v is Number) (v as String)
-    else ""
+    if (v is String)
+        (upper(trim(v)) replace /[^A-Z0-9]/ with "")
+    else if (v is Number)
+        (v as String)
+    else
+        ""
 
 fun isMatch(a, b) = norm(a) == norm(b)
 
+fun normalizeAddress(address) =
+    if (address == null)
+        []
+    else
+        upper(trim((address as String))) splitBy /\s+/
+
+fun addressMatchPercentage(a, b) =
+    do {
+        var words1 = normalizeAddress(a)
+        var words2 = normalizeAddress(b)
+
+        var matchedWords =
+            sizeOf(
+                words1 filter (word) ->
+                    words2 contains word
+            )
+
+        var totalWords =
+            max([
+                sizeOf(words1),
+                sizeOf(words2)
+            ])
+
+        ---
+        if (totalWords == 0)
+            100
+        else
+            (matchedWords * 100.0) / totalWords
+    }
 
 fun isAddressMatch(a, b) =
-    upper(trim((a default "") as String)) ==
-    upper(trim((b default "") as String))
+    addressMatchPercentage(a, b) >= ADDRESS_TOLERANCE
 
 fun isMismatch(v) = !(v default false)
 
 fun first(v) =
-    if (v is Array and sizeOf(v) > 0) v[0]
-    else v
+    if (v is Array and sizeOf(v) > 0)
+        v[0]
+    else
+        v
 
 fun toNumber(v) =
-    if (v is Array) (v[0] default 0)
-    else (v default 0)
+    if (v is Array)
+        (v[0] default 0)
+    else
+        (v default 0)
 
 fun cleanPO(v) =
-    if (v is Array) cleanPO(v[0])
-    else if (v is String) (v replace "/" with "")
-    else if (v is Number) (v as String)
-    else ""
+    if (v is Array)
+        cleanPO(v[0])
+    else if (v is String)
+        (v replace "/" with "")
+    else if (v is Number)
+        (v as String)
+    else
+        ""
 
 fun isPriceMatch(a, b) =
     abs(toNumber(a) - toNumber(b)) <= 0.01
@@ -68,6 +108,9 @@ var comparison =
             var orderedQty = toNumber(line.quantityOrdered)
             var receivedQty = matched.qty_received default 0
             var allowedQty = matched.qty_ordered default 0
+
+            var addressPercentage =
+                addressMatchPercentage(shipTo.address1, matched.ship2_add1)
 
             ---
             {
@@ -108,7 +151,8 @@ var comparison =
                         address1: isAddressMatch(shipTo.address1, matched.ship2_add1),
                         city: isMatch(shipTo.city, matched.ship2_city),
                         state: isMatch(shipTo.state, matched.ship2_state)
-                    }
+                    },
+                    addressMatchPercentage: addressPercentage
                 }
             }
         }
@@ -117,10 +161,25 @@ var itemErrors =
     (comparison map (line) -> {
         (line.buyerPart):
             flatten([
-                if (isMismatch(line.buyer_match)) ["Item ID mismatch"] else [],
-                if (isMismatch(line.supplier_part_no.match)) ["Supplier part number mismatch"] else [],
-                if (isMismatch(line.qty_ordered.match)) ["Quantity exceeds ordered amount"] else [],
-                if (isMismatch(line.unit_price.match)) ["Unit Price Mismatch"] else []
+                if (isMismatch(line.buyer_match))
+                    ["Item ID mismatch"]
+                else
+                    [],
+
+                if (isMismatch(line.supplier_part_no.match))
+                    ["Supplier part number mismatch"]
+                else
+                    [],
+
+                if (isMismatch(line.qty_ordered.match))
+                    ["Quantity exceeds ordered amount"]
+                else
+                    [],
+
+                if (isMismatch(line.unit_price.match))
+                    ["Unit Price Mismatch"]
+                else
+                    []
             ])
     })
     reduce ((item, acc = {}) -> acc ++ item)
@@ -136,7 +195,9 @@ var shipToErrors =
             [],
 
         if (isMismatch(isAddressMatch(shipTo.address1, firstMatched.ship2_add1)))
-            ["ShipTo Address1 mismatch"]
+            [
+                "ShipTo Address1 mismatch" 
+            ]
         else
             [],
 
@@ -163,7 +224,8 @@ var errorCount =
         if (DEBUG)
             {
                 comparison: comparison,
-                errorCount: errorCount
+                errorCount: errorCount,
+                addressTolerance: ADDRESS_TOLERANCE
             }
         else
             null,
