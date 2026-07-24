@@ -1,38 +1,76 @@
 %dw 2.0
 output application/json
-
 var DEBUG = false
 var PRICE_TOLERANCE = 0.01
-
 fun norm(v) =
 (
   (upper(trim((v default "") as String))
      replace /^FES/ with "")
      replace /[^A-Z0-9]/ with ""
 )
-
 fun isMatch(a, b) = norm(a) == norm(b)
 fun isPriceMatch(a, b) = abs((a default 0) - (b default 0)) <= PRICE_TOLERANCE
+ 
+ 
+var ADDRESS_MATCH_TOLERANCE = 50
+ 
+fun normalizeZip(zip) =
+    if (isEmpty(zip default ""))
+        ""
+    else
+        ((((zip default "") as String) replace /[^0-9]/ with "")[0 to 4])
+ 
+fun isZipMatch(inboundZip, p21Zip) =
+    isEmpty(p21Zip default "") or normalizeZip(inboundZip) == normalizeZip(p21Zip)
+ 
+fun normalizeAddress(addr) =
+    if (addr == null) ""
+    else
+      upper((addr as String))
+        replace /\bAVE\b/ with "AVENUE"
+        replace /\bRD\b/ with "ROAD"
+        replace /\bST\b/ with "STREET"
+        replace /\bDR\b/ with "DRIVE"
+        replace /\bLN\b/ with "LANE"
+        replace /\bCT\b/ with "COURT"
+        replace /\bBLVD\b/ with "BOULEVARD"
+        replace /\bPKWY\b/ with "PARKWAY"
+        replace /\bE\b/ with "EAST"
+        replace /\bW\b/ with "WEST"
+        replace /\bN\b/ with "NORTH"
+        replace /\bS\b/ with "SOUTH"
+        replace /[^A-Z0-9 ]/ with ""
+ 
+fun addressWords(addr)= normalizeAddress(addr) splitBy /\s+/ filter ($!="")
+ 
+fun addressMatchPercentage(a,b)=do{
+var w1=addressWords(a)
+var w2=addressWords(b)
+var matched=sizeOf(w1 filter (x)-> w2 contains x)
+var total=max([sizeOf(w1),sizeOf(w2)])
+---
+if(total==0)100 else (matched*100.0)/total
+}
+ 
+fun isAddressMatch(a,b)=
+  isEmpty(b default "") or addressMatchPercentage(a,b)>=ADDRESS_MATCH_TOLERANCE
+ 
 fun isMismatch(v) = !(v default false)
 fun first(v) = if (v is Array and sizeOf(v) > 0) v[0] else v
 fun toNumber(v) = if (v is Array) (v[0] default 0) else ((v default 0) as Number)
-
 var invoice = vars.initialPayload[0].b2bMessage default {}
 var header = invoice.header default {}
 var summary = invoice.summary default {}
 var p21Items = vars.purchaseOrderData.value default []
 var shipTo = ((header.partyInformation default []) filter ($.qualifier == "ST"))[0] default {}
 var p21Ship = p21Items[0] default {}
-
 var p21Index = p21Items reduce ((item, acc = {}) ->
   acc
   ++ (if (!isEmpty(norm(item.customer_part_number default ""))) {(norm(item.customer_part_number)): item} else {})
   ++ (if (!isEmpty(norm(item.supplier_part_no default ""))) {(norm(item.supplier_part_no)): item} else {})
   ++ (if (!isEmpty(norm(item.item_id default ""))) {(norm(item.item_id)): item} else {})
 )
-
 var items = invoice.detail.invoice.itemDetails default []
-
 var comparison = items map (line) -> do {
     var lineNo = first(line.lineNo default line.assignedIdentification)
     var buyerPart = first(line.buyerPartNo)
@@ -73,7 +111,8 @@ var comparison = items map (line) -> do {
       ship2_add1: {
         original: shipTo.address1,
         odata: p21Ship.ship2_add1,
-        match: isEmpty(p21Ship.ship2_add1) or isMatch(shipTo.address1, p21Ship.ship2_add1)
+        match: isAddressMatch(shipTo.address1, p21Ship.ship2_add1),
+        matchPercentage: addressMatchPercentage(shipTo.address1, p21Ship.ship2_add1)
       },
       ship2_add2: {
         original: shipTo.address2,
@@ -98,7 +137,9 @@ var comparison = items map (line) -> do {
       ship2_zip: {
         original: shipTo.postalCode,
         odata: p21Ship.ship2_zip,
-        match: isEmpty(p21Ship.ship2_zip) or isMatch(shipTo.postalCode, p21Ship.ship2_zip)
+        match: isZipMatch(shipTo.postalCode, p21Ship.ship2_zip),
+        normalizedInbound: normalizeZip(shipTo.postalCode),
+        normalizedP21: normalizeZip(p21Ship.ship2_zip)
       },
       shipping_instruction: {
         original: header.shippingInstruction default "",
@@ -126,9 +167,7 @@ var comparison = items map (line) -> do {
       }
     }
 }
-
 var safeComp0 = comparison[0] default {}
-
 var itemErrors = (comparison map (line) -> do {
     var errs =
       if (isMismatch(line.supplier_part_no.match))
@@ -141,7 +180,6 @@ var itemErrors = (comparison map (line) -> do {
     ---
     if (sizeOf(errs) > 0) {((line.supplier_part_no.original default line.lineNo) as String): errs} else {}
 }) reduce ((item, acc = {}) -> acc ++ item)
-
 var shipToErrors = flatten([
   if (isMismatch(safeComp0.ship2_name.match)) ["ShipTo Name mismatch"] else [],
   if (isMismatch(safeComp0.ship2_add1.match)) ["ShipTo Address1 mismatch"] else [],
@@ -152,17 +190,13 @@ var shipToErrors = flatten([
   if (isMismatch(safeComp0.ship2_country.match)) ["ShipTo Country mismatch"] else [],
   if (isMismatch(safeComp0.shipping_instruction.match)) ["Shipping instruction mismatch"] else []
 ])
-
 var carrierErrors = flatten([
   if (isMismatch(safeComp0.carrier_id.match)) ["Carrier Code mismatch"] else []
 ])
-
 var externalPoErrors = flatten([
   if (isMismatch(safeComp0.external_po_no.match)) ["External PO number mismatch"] else []
 ])
-
 var warnings = []
-
 var errorCount =
   sizeOf(flatten(valuesOf(itemErrors)))
   + sizeOf(shipToErrors)
