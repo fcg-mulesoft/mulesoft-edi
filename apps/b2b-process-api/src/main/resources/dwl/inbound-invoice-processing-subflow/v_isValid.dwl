@@ -10,19 +10,14 @@ fun norm(v) =
 )
 fun isMatch(a, b) = norm(a) == norm(b)
 fun isPriceMatch(a, b) = abs((a default 0) - (b default 0)) <= PRICE_TOLERANCE
- 
- 
-var ADDRESS_MATCH_TOLERANCE = 50
- 
+
 fun normalizeZip(zip) =
     if (isEmpty(zip default ""))
         ""
     else
         ((((zip default "") as String) replace /[^0-9]/ with "")[0 to 4])
- 
 fun isZipMatch(inboundZip, p21Zip) =
     isEmpty(p21Zip default "") or normalizeZip(inboundZip) == normalizeZip(p21Zip)
- 
 fun normalizeAddress(addr) =
     if (addr == null) ""
     else
@@ -40,9 +35,7 @@ fun normalizeAddress(addr) =
         replace /\bN\b/ with "NORTH"
         replace /\bS\b/ with "SOUTH"
         replace /[^A-Z0-9 ]/ with ""
- 
 fun addressWords(addr)= normalizeAddress(addr) splitBy /\s+/ filter ($!="")
- 
 fun addressMatchPercentage(a,b)=do{
 var w1=addressWords(a)
 var w2=addressWords(b)
@@ -51,10 +44,7 @@ var total=max([sizeOf(w1),sizeOf(w2)])
 ---
 if(total==0)100 else (matched*100.0)/total
 }
- 
-fun isAddressMatch(a,b)=
-  isEmpty(b default "") or addressMatchPercentage(a,b)>=ADDRESS_MATCH_TOLERANCE
- 
+
 fun isMismatch(v) = !(v default false)
 fun first(v) = if (v is Array and sizeOf(v) > 0) v[0] else v
 fun toNumber(v) = if (v is Array) (v[0] default 0) else ((v default 0) as Number)
@@ -111,7 +101,7 @@ var comparison = items map (line) -> do {
       ship2_add1: {
         original: shipTo.address1,
         odata: p21Ship.ship2_add1,
-        match: isAddressMatch(shipTo.address1, p21Ship.ship2_add1),
+        percentage: addressMatchPercentage(shipTo.address1, p21Ship.ship2_add1),
         matchPercentage: addressMatchPercentage(shipTo.address1, p21Ship.ship2_add1)
       },
       ship2_add2: {
@@ -174,12 +164,13 @@ var itemErrors = (comparison map (line) -> do {
         ["Supplier part number not found in P21"]
       else
         flatten([
-          if (isMismatch(line.qty_ordered.match)) ["Quantity exceeds ordered amount"] else [],
+          if (isMismatch(line.qty_ordered.match)) ["Invoiced quantity exceeds received amount"] else [],
           if (isMismatch(line.unit_price.match)) ["Unit price mismatch"] else []
         ])
     ---
     if (sizeOf(errs) > 0) {((line.supplier_part_no.original default line.lineNo) as String): errs} else {}
 }) reduce ((item, acc = {}) -> acc ++ item)
+var shipToMatchPercentage = safeComp0.ship2_add1.percentage default safeComp0.ship2_add1.matchPercentage default null
 var shipToErrors = flatten([
   if (isMismatch(safeComp0.ship2_name.match)) ["ShipTo Name mismatch"] else [],
   if (isMismatch(safeComp0.ship2_add1.match)) ["ShipTo Address1 mismatch"] else [],
@@ -199,7 +190,6 @@ var externalPoErrors = flatten([
 var warnings = []
 var errorCount =
   sizeOf(flatten(valuesOf(itemErrors)))
-  + sizeOf(shipToErrors)
   + sizeOf(carrierErrors)
   + sizeOf(externalPoErrors)
 ---
@@ -212,6 +202,7 @@ if (DEBUG) {
   validationErrors: {
     itemErrors: itemErrors,
     shipToErrors: shipToErrors,
+    shipToMatchPercentage: shipToMatchPercentage,
     carrierErrors: carrierErrors,
     externalPoErrors: externalPoErrors
   },
@@ -220,7 +211,7 @@ if (DEBUG) {
   isValid: errorCount == 0,
   validationErrors: {
     itemErrors: itemErrors,
-    shipToErrors: shipToErrors,
+    shipToMatchPercentage: shipToMatchPercentage,
     carrierErrors: carrierErrors,
     externalPoErrors: externalPoErrors
   },
