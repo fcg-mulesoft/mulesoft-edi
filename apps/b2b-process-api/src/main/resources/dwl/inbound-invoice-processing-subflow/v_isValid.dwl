@@ -98,12 +98,13 @@ var comparison = items map (line) -> do {
         odata: p21Ship.ship2_name,
         match: isEmpty(p21Ship.ship2_name) or isMatch(shipTo.name, p21Ship.ship2_name)
       },
-      ship2_add1: {
-        original: shipTo.address1,
-        odata: p21Ship.ship2_add1,
-        percentage: addressMatchPercentage(shipTo.address1, p21Ship.ship2_add1),
-        matchPercentage: addressMatchPercentage(shipTo.address1, p21Ship.ship2_add1)
-      },
+		ship2_add1: {
+		    original: shipTo.address1,
+		    odata: p21Ship.ship2_add1,
+		    percentage: addressMatchPercentage(shipTo.address1, p21Ship.ship2_add1),
+		    matchPercentage: addressMatchPercentage(shipTo.address1, p21Ship.ship2_add1),
+		    match: addressMatchPercentage(shipTo.address1, p21Ship.ship2_add1) >= ((Mule::p('shipToValidation.lowerLimit')) as Number)
+		},
       ship2_add2: {
         original: shipTo.address2,
         odata: p21Ship.ship2_add2,
@@ -192,6 +193,7 @@ var errorCount =
   sizeOf(flatten(valuesOf(itemErrors)))
   + sizeOf(carrierErrors)
   + sizeOf(externalPoErrors)
+  + sizeOf(shipToErrors)
 ---
 if (DEBUG) {
   debug: {
@@ -212,6 +214,7 @@ if (DEBUG) {
   validationErrors: {
     itemErrors: itemErrors,
     shipToMatchPercentage: shipToMatchPercentage,
+    shipToErrors: shipToErrors,
     carrierErrors: carrierErrors,
     externalPoErrors: externalPoErrors
   },
