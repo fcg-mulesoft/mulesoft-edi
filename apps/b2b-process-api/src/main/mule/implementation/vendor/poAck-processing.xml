@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</ee:variables>
 		</ee:transform>
 		<choice doc:name="isValid Acknowledgement?" doc:id="e3f7370f-b5f0-4d00-9da3-365687c862be" >
-			<when expression="#[vars.isValid.isValid == false]">
+			<when expression="#[vars.isValid.isValid == false or (vars.isValid.validationErrors.shipToMatchPercentage &lt;= ((Mule::p('shipToValidation.lowerLimit')) as Number))]">
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="daf0a59e-db1f-43dd-81bd-7ca2863bb96b" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
 			</when>
 			<otherwise >
@@ -48,6 +48,109 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			<otherwise>
 				<logger level="INFO" doc:name="LOG INFO : AcknowledgementCreated" doc:id="dfb65b0e-9a88-4712-8441-4245b442d0ea" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Acknowledgement Creation Successful"&#10;}]' />
 			</otherwise>
+		</choice>
+		<choice doc:name="Send Shipment Address Warning Email?" doc:id="80fe114b-f586-4097-b0e6-92361c18488f">
+			<when expression="#[(vars.isValid.validationErrors.shipToMatchPercentage &gt;= ((Mule::p('shipToValidation.lowerLimit')) as Number) and vars.isValid.validationErrors.shipToMatchPercentage &lt;=((Mule::p('shipToValidation.upperLimit')) as Number))]">
+				<ee:transform doc:name="Prepare Warning Email Payload, var : subject" doc:id="007f19f2-eae1-4d1d-8f3a-1876534d8bd3">
+					<ee:message>
+						<ee:set-payload><![CDATA[
+%dw 2.0
+output text/plain
+
+fun safe(v,d="N/A") = if (v == null or (v is String and trim(v) == "")) d else v
+
+var integration = vars.integration default vars.initialVariables default {}
+var sysInfo = vars.systemInformation default {}
+var cdm = (vars.initialPayload default [])[0].b2bMessage default {}
+var header = cdm.header default {}
+
+var senderKey = header.senderId default ""
+var vendorId =
+    if (senderKey != "")
+        (p("partner.inbound." ++ senderKey)
+         default p("partner.outbound." ++ senderKey)
+         default "N/A")
+    else "N/A"
+
+var poNumber = safe(header.poNumber)
+var percentage =
+    vars.isValid.validationErrors.shipToMatchPercentage
+    default vars.isValid.validationErrors.shipToMatchPercentage
+    default null
+
+var data = {
+	matchPercentage: (percentage as Number) as String {format: "00.00"} ++ "%",
+    flowDirection: if(lower(safe(integration.source,"APM"))=="apm") "INBOUND" else "OUTBOUND",
+    documentType: safe(integration."integration-type", safe(header.documentType,"API")),
+    warningTitle: "Address Match Warning",
+    bannerColor: "#f59e0b",
+    warningType: "ADDRESS_MATCH_WARNING",
+    warningCategory: "VALIDATION",
+    status: "PROCESSED WITH WARNING",
+    companyName: vars.purchaseOrderData.value.company_no[0] default "N/A",
+    vendorName: vendorId,
+    route: safe(integration.source,"APM") ++ " → Mule → " ++ safe(integration.target,"P21"),
+    businessKey: "PO " ++ poNumber,
+    timestamp: now() as String {format:"yyyy-MM-dd HH:mm:ss"},
+    transmissionId: safe(header.transmissionId),
+    keyLabel: "Correlation ID",
+    key: correlationId default uuid(),
+    transactionType: safe(integration."integration-type", safe(header.documentType,"API")),
+    appName: p("api.name") default "Mule Application",
+    environment: upper(p("mule.env") default "DEV"),
+    message:
+        "Purchase Order " ++ poNumber ++ " was processed successfully with a warning.",
+    warningDescription:
+        "The Ship-To address matched "
+        ++ (((percentage as Number) as String {format: "00.00"} default "N/A") as String)
+        ++ "% with the corresponding address in P21."
+        ++ "\nThe transaction was processed because the configured warning threshold is between " ++ Mule::p('shipToValidation.lowerLimit') ++ "%" ++ "and" ++ Mule::p('shipToValidation.upperLimit') ++ "%.",
+    warningResolution:
+        "No action is required. Please review the Ship-To address if necessary."
+}
+
+var template = readUrl("classpath://templates/warning-template.html","text/plain")
+---
+template replace /\$\{(\w+)\}/ with ((m) -> (data[m[1]] as String) default "")
+]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="subject"><![CDATA[%dw 2.0
+output application/json
+ 
+var env = upper(p("mule.env") )
+ 
+var integrationType =
+    vars.integration."integration-type"
+        default vars.initialVariables."integration-type"
+        default "Transaction"
+ 
+var poNumber =
+    vars.initialPayload[0].b2bMessage.header.poNumber
+        default "N/A"
+ 
+var matchPercentage =
+    vars.validationResult.validationErrors.shipToMatchPercentage
+        default vars.isValid.validationErrors.shipToMatchPercentage
+        default null
+ 
+---
+[
+    env,
+    "FCG WARNING",
+    integrationType,
+    "PO " ++ poNumber,
+    if (matchPercentage != null)
+        "Address Match " ++ ((matchPercentage as Number) as String {format: "##.##"}) ++ "%"
+    else
+        null
+]
+    filter ($ != null and $ != "")
+    joinBy " | "]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="89bf83be-028c-43db-ad80-835b26fb4206" name="send-email-subflow" />
+			</when>
 		</choice>
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="74837d49-bd9d-4659-b4fc-a3df92894944" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
 	</sub-flow>

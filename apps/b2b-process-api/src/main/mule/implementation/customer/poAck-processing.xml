@@ -43,14 +43,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 						<ee:transform doc:name="var : httpStatus" doc:id="dcd9c726-ffd1-47f9-8df9-7695adf57dde" >
 							<ee:message />
 							<ee:variables >
-								<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
-output application/json
----
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:BAD_REQUEST") (400) else
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_FOUND") (404) else
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:METHOD_NOT_ALLOWED") (405) else
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:NOT_ACCEPTABLE") (406) else
-if((error.errorType.namespace ++ ":" ++ error.errorType.identifier) == "APIKIT:UNSUPPORTED_MEDIA_TYPE") (415) else (500)]]></ee:set-variable>
+								<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_httpStatusError.dwl" variableName="httpStatus" />
 							</ee:variables>
 						</ee:transform>
 						<ee:transform doc:name="Preparing error payload for transaction api" doc:id="155f39e3-e1f8-454d-adc3-ffb7efe6bbec" >
@@ -141,11 +134,7 @@ else null
 				</ee:message>
 				<ee:variables>
 					<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_validationErrorSubject.dwl" variableName="subject" />
-					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
-output application/json
----
-if(!isEmpty(payload.partnerId)) 
-[Mule::p("partner.outbound." ++ payload.partnerId)] else []]]></ee:set-variable>
+					<ee:set-variable resource="dwl/outbound-poAck-processing-subflow/v_vendorName.dwl" variableName="vendorName" />
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="1a71241c-8444-4d2a-8396-bfd66005cc4e" name="send-email-subflow" />

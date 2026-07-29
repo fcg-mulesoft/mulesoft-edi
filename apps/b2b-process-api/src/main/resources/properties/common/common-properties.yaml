@@ -86,3 +86,7 @@ edi:
 #Maxconcurrency
 maxConcurrency:
  attempt: "5"
+ 
+shipToValidation:
+  lowerLimit: "50"
+  upperLimit: "80"
