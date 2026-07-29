@@ -53,7 +53,7 @@ partner:
     "1631404318T": "FESTO"
     "COUPA": "ADM Coupa"
   outbound:
-    "234093": "FESTO"
+    "1631404318T": "FESTO"
     "COUPA": "ADM Coupa"
     
 #Scheduler Configuration
@@ -86,3 +86,7 @@ edi:
 #Maxconcurrency
 maxConcurrency:
  attempt: "5"
+ 
+shipToValidation:
+  lowerLimit: "50"
+  upperLimit: "80"

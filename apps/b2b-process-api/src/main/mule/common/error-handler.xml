@@ -156,17 +156,17 @@ var viewRecords =
  ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="89130f15-6658-4f98-bb97-72a3b35123dc" millisBetweenRetries="6000" >
-			<try doc:name="Try" doc:id="2b8c4eb1-4645-4a22-9dfa-137ed789de64" >
-				<choice doc:name="If transmissionId Exists?" doc:id="ac259689-f859-44c3-a6bd-3491ce7b4a5e" >
-					<when expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId) or !isEmpty(vars.initialPayload.Order.TransmissionId)]" >
+		<try doc:name="Try" doc:id="2b8c4eb1-4645-4a22-9dfa-137ed789de64">
+				<choice doc:name="If transmissionId Exists?" doc:id="ac259689-f859-44c3-a6bd-3491ce7b4a5e">
+					<when expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId) or !isEmpty(vars.initialPayload.Order.TransmissionId)]">
 						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="3fc2766d-e7a9-47a2-a006-f9c477f36885" idExpression="#[if (vars.initialPayload.Order?) &#10;  vars.initialPayload.Order.TransmissionId &#10;else &#10;  vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
 					</when>
 				</choice>
-				<email:send doc:name="Send Email" doc:id="94f86c8b-49de-48fc-9ba9-843c3ed795aa" config-ref="Email_SMTP" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[(vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)) ++  (vars.emailList.&quot;to&quot;)]" >
+				<until-successful maxRetries="5" doc:name="Until Successful" doc:id="89130f15-6658-4f98-bb97-72a3b35123dc" millisBetweenRetries="6000">
+				<email:send doc:name="Send Email" doc:id="94f86c8b-49de-48fc-9ba9-843c3ed795aa" config-ref="Email_SMTP" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[(vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)) ++  (vars.emailList.&quot;to&quot;)]">
 					<reconnect />
 					<email:body contentType="text/html" />
-					<email:attachments ><![CDATA[#[{
+					<email:attachments><![CDATA[#[{
     (if (vars.endpoint == "/api/inboundTransactions")
         {
             "input-payload.json": vars.initialPayload default {}
@@ -180,13 +180,13 @@ var viewRecords =
     )
 }]]]></email:attachments>
 				</email:send>
-				<error-handler >
-					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6e6e47d2-d1b0-4999-a0bd-7a9d9a4d2871" type="DUPLICATE_MESSAGE" >
+		</until-successful>
+				<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6e6e47d2-d1b0-4999-a0bd-7a9d9a4d2871" type="DUPLICATE_MESSAGE">
 						<logger level="INFO" doc:name="LOG INFO : Duplicate Error - Skipping Email" doc:id="4caa8007-1e2f-48f9-a798-959f8fb4a288" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	timestamp: now(),&#10;	message: "Duplicate Error - Skipping Email"&#10;}]' />
 					</on-error-continue>
 				</error-handler>
 			</try>
-		</until-successful>
 		<logger level="DEBUG" doc:name="LOG DEBUG: After Email" doc:id="a5243c3e-80de-4c7a-b80b-61b9d3343bee" message="End: Email Alert" />
 	</sub-flow>
 	</mule>
