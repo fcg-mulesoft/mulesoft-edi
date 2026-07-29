@@ -81,7 +81,7 @@ var percentage =
     default null
 
 var data = {
-	matchPercentage: percentage,
+	matchPercentage: (percentage as Number) as String {format: "00.00"} ++ "%",
     flowDirection: if(lower(safe(integration.source,"APM"))=="apm") "INBOUND" else "OUTBOUND",
     documentType: safe(integration."integration-type", safe(header.documentType,"API")),
     warningTitle: "Address Match Warning",
@@ -104,7 +104,7 @@ var data = {
         "Purchase Order " ++ poNumber ++ " was processed successfully with a warning.",
     warningDescription:
         "The Ship-To address matched "
-        ++ ((percentage default "N/A") as String)
+        ++ (((percentage as Number) as String {format: "00.00"} default "N/A") as String)
         ++ "% with the corresponding address in P21."
         ++ "\nThe transaction was processed because the configured warning threshold is between " ++ Mule::p('shipToValidation.lowerLimit') ++ "%" ++ "and" ++ Mule::p('shipToValidation.upperLimit') ++ "%.",
     warningResolution:
