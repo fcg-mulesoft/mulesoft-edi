@@ -12,6 +12,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			doc:id="e2d859e3-1feb-4e4c-bd5a-9ce9d6a72f1a"
 			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
 		<flow-ref doc:name="Flow Reference to get-oauth-token-subflow" doc:id="68a287ab-e416-4b22-bfe0-077d3e941c35" name="get-oauth-token-subflow" target="accessToken"/>
+		<logger level="DEBUG" doc:name="LOG INFO : P21 Payload" doc:id="1be4070f-5005-43df-967b-cc83365ea51e" message="#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;payload]"/>
 		<ee:transform doc:name="var : httpOperation" doc:id="4854b613-4b83-49d7-865f-cc9022b5ec46" >
 			<ee:message >
 				<ee:set-payload resource="dwl/post-p21-transaction-processing-subflow/p_httpOperationPostTransaction.dwl" />
