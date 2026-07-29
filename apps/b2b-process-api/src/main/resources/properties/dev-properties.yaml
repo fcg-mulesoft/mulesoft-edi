@@ -82,7 +82,7 @@ apm:
     host: "b2b-inbound-http-9yzw-zrx5fd.y7366p.usa-e1.cloudhub.io"
     port: "443"
     basePath: "/api"
-    path: "/out-src-purchase-order"
+    purchaseOrderpath: "/out-src-purchase-order"
     invoice: "/out-src-invoice"
     asn: "/out-src-shipment-notice"
     poAck: "/out-src-poAck"

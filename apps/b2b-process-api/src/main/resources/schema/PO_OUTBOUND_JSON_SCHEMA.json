@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["B2BMessage"],
+  "required": ["b2bMessage"],
   "properties": {
     "B2BMessage": {
       "type": "object",
-      "required": ["Header", "detail", "Summary"],
+      "required": ["header", "detail", "summary"],
       "properties": {
         "Header": {
           "type": "object",

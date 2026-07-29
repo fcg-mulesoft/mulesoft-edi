@@ -3,7 +3,7 @@ output application/json
 ---
 {
 	status: "SUCCESS",
-	poNumber: payload.B2BMessage.Header.purchaseOrderNumber,
-	partnerId: payload.B2BMessage.Header.receiverId default "Partner Id Not Found",
+	poNumber: payload.b2bMessage.header.purchaseOrderNumber,
+	partnerId: payload.b2bMessage.header.receiverId default "Partner Id Not Found",
 	transmissionId: vars.transmissionId
 }

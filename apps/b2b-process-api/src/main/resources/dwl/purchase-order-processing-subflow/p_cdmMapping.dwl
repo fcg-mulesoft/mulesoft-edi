@@ -4,8 +4,8 @@ var groupedPOs = vars.purchaseOrderData.value groupBy $.po_no
 var senderId = Mule::p('fcg.edi_id')
 ---
 groupedPOs pluck ((poItems, poNumber) -> {
-	B2BMessage: {
-		Header: {
+	b2bMessage: {
+		header: {
 			senderId: senderId default "117414135T",
 			receiverId: poItems[0].TP_edi_isa05_id,
 			purchaseOrderNumber: poNumber,
@@ -156,7 +156,7 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				}]
 			}
 		},
-		Summary: {
+		summary: {
 			totalLineItems: sizeOf(poItems),
 			totalQuantity: sum(poItems.*PO1_02_QtyOrdered default [])
 		}
