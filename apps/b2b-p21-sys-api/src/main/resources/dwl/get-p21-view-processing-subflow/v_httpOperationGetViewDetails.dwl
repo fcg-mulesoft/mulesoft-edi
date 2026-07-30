@@ -26,7 +26,7 @@ var salesOrderValidationConfig =
 }
     else if ( validationMode == "customerPart" ) {
 	view: "p21_view_customer_part_number",
-	filter: "customer_id eq " ++ customerId ++ " and (" ++ ((businesskey map ("their_item_id eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+	filter: "customer_id eq " ++ customerId ++ " and (" ++ ((businesskey map ("their_item_id eq '" ++ $ ++ "' or our_item_id eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
 }
     else
         {
@@ -39,7 +39,7 @@ var routingConfig = {
 			view: Mule::p('viewNames.coupaPurchaseOrderPartsValidtion'),
 			queryParams: {
 				"\$filter": (businesskey flatMap ((item) ->
-                    (item splitBy "|" filter ($ != "")) map ("their_item_id eq '" ++ $ ++ "'"))) joinBy " or "
+                     (item splitBy "|" filter ($ != "")) flatMap ((part) -> ["their_item_id eq '" ++ part ++ "'", "our_item_id eq '" ++ part ++ "'"]))) joinBy " or "
 			}
 		},
 		outbound: {
