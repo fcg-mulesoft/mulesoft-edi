@@ -154,8 +154,10 @@ initialPayload flatMap (order) -> order.b2bMessage.detail.itemDetails map (item)
     "their_item_id": item.buyersPartNumber,
     "lineNo" : item.lineNo,
     "company_id": vars.ediXrefResponse.company_id[0],
-    "customer_id": vars.ediXrefResponse.customer_id[0]
-  }]]></ee:set-variable>
+    "customer_id": vars.ediXrefResponse.customer_id[0],
+    "quantityOrdered" : item.quantityOrdered,
+   "UOM" : item.unitOfMeasurementCode
+   }]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 				<ee:transform doc:name="var : httpOperation" doc:id="40fd0588-da3f-405d-99d9-435142c5a254" >
@@ -237,8 +239,8 @@ var itemData= vars.initialPayload flatMap (order) ->
 							ItemId: "EDI DEFAULT ITEM",
 							ItemDesc: (detail.descriptions[0].description default "") ++ " " ++ (detail.manufacturersPartNumber default ""),
 							ExtendedDesc: detail.descriptions[0].description default "",
-							UnitQuantity: "0",
-							UnitOfMeasure: "EA",
+							UnitQuantity: detail.quantityOrdered,
+							UnitOfMeasure: detail.UOM,
 							UnitPrice: "0",
 							QtyOrdered: "0",
 							ExtendedPrice: "0",

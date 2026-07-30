@@ -13,3 +13,4 @@
 *.svg
 *.js
 apps/b2b-process-api/reports/assets/styles/fonts/muleicons.ttf
+*.html
