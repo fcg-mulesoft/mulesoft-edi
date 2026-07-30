@@ -3,8 +3,8 @@ output application/json
 ---
 {
 	status: "FAILED",
-	partnerId: payload.B2BMessage.Header.receiverId default "Partner Id Not Found",
-	poNumber: payload.B2BMessage.Header.purchaseOrderNumber default "UNKNOWN",
+	partnerId: payload.b2bMessage.header.receiverId default "Partner Id Not Found",
+	poNumber: payload.b2bMessage.header.purchaseOrderNumber default "UNKNOWN",
 	error: error.description,
 	statusCode: vars.httpStatus,
 	errorType: error.errorType."parentErrorType"."identifier",
