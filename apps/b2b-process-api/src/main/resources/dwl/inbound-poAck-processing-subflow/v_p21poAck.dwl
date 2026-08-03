@@ -12,7 +12,8 @@ else ""
         var txn = wrapper.b2bMessage
         var items = txn.detail.itemDetails default []
         var poNum = txn.header.poNumber default ""
-
+		var supplierAcknowledgement = txn.header.supplierAcknowledgement  default poNum
+		
         var matchedItems = (items map (item) -> {
                 item: item,
                 lineNo: item.lineNo,
@@ -30,13 +31,10 @@ else ""
                         Name: "po_no",
                         Value: poNum
                     },
-                    {
-                        Name: "external_po_no",
-                        Value: "/" ++ poNum
-                    },
+                    
                     {
                         Name: "ufc_po_hdr_ud_supplier_acknowledgement",
-                        Value: poNum
+                        Value: supplierAcknowledgement
                     }]
                 }]
             },
