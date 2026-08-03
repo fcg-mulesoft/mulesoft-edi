@@ -1,9 +1,8 @@
 %dw 2.0
 output application/json
-var groupedPOs = vars.purchaseOrderData.value groupBy $.po_no
 var senderId = Mule::p('fcg.edi_id')
 ---
-groupedPOs pluck ((poItems, poNumber) -> {
+(vars.purchaseOrderData.value groupBy $.po_no) pluck ((poItems, poNumber) -> {
 	b2bMessage: {
 		header: {
 			senderId: senderId default "117414135T",
@@ -34,11 +33,11 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				dateQualifier: "002",
 				date: poItems[0].DTM_002_DeliveryReq
 			},
-        {
+			{
 				dateQualifier: "004",
 				date: poItems[0].DTM_004_PO_Date
 			},
-        {
+			{
 				dateQualifier: "010",
 				date: poItems[0].DTM_010_Requested
 			}] filter ($.date != null),
@@ -51,19 +50,17 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				freightTermsDescription: poItems[0].FOB03,
 				locationQualifier: poItems[0].FOB02
 			}] filter ($.freightTermsCode != null or
-        $.freightTermsDescription != null or
-        $.locationQualifier != null),
+				$.freightTermsDescription != null or
+				$.locationQualifier != null),
 			references: [{
 				qualifier: "ZZ",
 				description: poItems[0].N902_HDR_Note
 			} ++
-          (if ( poItems[0].MSG01_Shipping_instruction != null ) {
-				messages: [{
-					messageText: poItems[0].MSG01_Shipping_instruction
-				}]
-			}
-            else {
-			})],
+				(if (poItems[0].MSG01_Shipping_instruction != null) {
+					messages: [{
+						messageText: poItems[0].MSG01_Shipping_instruction
+					}]
+				} else {})],
 			partyInformation: [{
 				qualifier: "BY",
 				name: poItems[0].N1_BY_Name,
@@ -75,7 +72,7 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				postalCode: poItems[0].N4_BY_Zip,
 				country: poItems[0].N4_BY_Country
 			},
-        {
+			{
 				qualifier: "BT",
 				name: poItems[0].N1_BY_Name,
 				idQualifier: "92",
@@ -86,7 +83,7 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				postalCode: poItems[0].N4_BY_Zip,
 				country: poItems[0].N4_BY_Country
 			},
-        {
+			{
 				qualifier: "ST",
 				name: poItems[0].N1_ST_Name,
 				idQualifier: "92",
@@ -99,16 +96,17 @@ groupedPOs pluck ((poItems, poNumber) -> {
 				references: [{
 					qualifier: "ST",
 					referenceNumber: (poItems[0].REF_ST_02_Location_Id as String)
-				},    ({
+				},
+				({
 					qualifier: "CO",
 					referenceNumber: (poItems[0].REF_CO_02_PO_Type as String)
-				}) if ((poItems[0].BEG02_POTypeCode as String) == "DS"),			
-   {
+				}) if ((poItems[0].BEG02_POTypeCode as String) == "DS"),
+				{
 					qualifier: "ZZ",
 					referenceNumber: (poItems[0].REF_ZZ_02_Vendor_Id as String)
 				}]
 			},
-        {
+			{
 				qualifier: "SU",
 				name: "",
 				idQualifier: "92",
@@ -121,44 +119,39 @@ groupedPOs pluck ((poItems, poNumber) -> {
 			}] filter ($.name != null or $.idCode != null)
 		},
 		detail: {
-			lineItems: poItems map (item) -> {
-				lineNo: item.line_no default "",
-				qtyOrdered: item.PO1_02_QtyOrdered default 0,
-				uom: item.PO1_03_UOM default "",
-				unitPrice: item.PO1_04_UnitPrice default 0,
+			lineItems: ((poItems groupBy $.line_no) pluck ((lineItems, lineNo) -> {
+				lineNo: lineNo default "",
+				qtyOrdered: lineItems[0].PO1_02_QtyOrdered default 0,
+				uom: lineItems[0].PO1_03_UOM default "",
+				unitPrice: lineItems[0].PO1_04_UnitPrice default 0,
 				priceQualifier: "PE",
 				vendorPartNumberQualifier: "VP",
-				vendorPartNo: item.supplier_part_no default "",
+				vendorPartNo: lineItems[0].supplier_part_no default "",
 				buyerPartNumberQualifier: "BP",
-				buyerPartNo: item.item_id default "",
-				productDescription: [if ( item.PID05_Description != null ) {
+				buyerPartNo: lineItems[0].item_id default "",
+				productDescription: [if (lineItems[0].PID05_Description != null) {
 					descriptionType: "F",
-					description: item.PID05_Description ++ if ( item.PID05_Extended_Desc != null ) (" " ++ item.PID05_Extended_Desc) else ""
-				}
-      else null,
- 
-      if ( item.PID05_LineConfig1 != null ) {
+					description: lineItems[0].PID05_Description ++ if (lineItems[0].PID05_Extended_Desc != null) (" " ++ lineItems[0].PID05_Extended_Desc) else ""
+				} else null,
+				if (lineItems[0].PID05_LineConfig1 != null) {
 					descriptionType: "config1",
-					description: item.PID05_LineConfig1
-				}
-      else null,
- 
-      if ( item.PID05_2nd_LineConfig2 != null ) {
+					description: lineItems[0].PID05_LineConfig1
+				} else null,
+				if (lineItems[0].PID05_2nd_LineConfig2 != null) {
 					descriptionType: "config2",
-					description: item.PID05_2nd_LineConfig2
-				}
-      else null] filter ($ != null),
-				schedules: [{
-					quantity: item.PO1_02_QtyOrdered,
-					uom: item.PO1_03_UOM,
+					description: lineItems[0].PID05_2nd_LineConfig2
+				} else null] filter ($ != null),
+				schedules: lineItems map (schedItem) -> {
+					quantity: schedItem.PO1_02_QtyOrdered,
+					uom: schedItem.PO1_03_UOM,
 					dateQualifier: "002",
-					scheduledDate: item.DTM_002_DeliveryReq
-				}]
-			}
-		},
-		summary: {
-			totalLineItems: sizeOf(poItems),
-			totalQuantity: sum(poItems.*PO1_02_QtyOrdered default [])
+					scheduledDate: schedItem.DTM_002_DeliveryReq
+				}
+			})) orderBy ((item) -> item.lineNo as Number default 0)
 		}
+	},
+	summary: {
+		totalLineItems: sizeOf(poItems groupBy $.line_no),
+		totalQuantity: sum(poItems.*PO1_02_QtyOrdered default [])
 	}
-})
+}) orderBy ((po) -> po.b2bMessage.header.purchaseOrderNumber as Number default 0)
