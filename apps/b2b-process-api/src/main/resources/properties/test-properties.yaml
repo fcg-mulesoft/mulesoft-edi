@@ -1,4 +1,4 @@
-#DEV Environment Properties
+#TEST Environment Properties
 
 api:
   name: "b2b-process-api-app"
@@ -24,6 +24,8 @@ b2b-p21-sys-api:
     validation: "validation"
     outbound: "outbound"
     total: "total"
+  validationMode:
+    xref: "xref"
     po: "po"
     customerPart: "customerPart"
   processingMode:
@@ -97,7 +99,7 @@ azure:
 #Fcg sender Id
 fcg:
   edi_id: "117414135T"
-  
+ 
 # Partners
 partner:
   inbound:
@@ -106,8 +108,8 @@ partner:
     "default": "N/A"
   outbound:
     "960163954IDXT": "VANTAGE"
-    "234093": "FESTO"
+    "1631404318T": "FESTO"
     "default": "N/A"
-    
+
 email:
   toRecipient: "harshavardhan.reddy@caeliusconsulting.com,anshul.negi@caeliusconsulting.com,priyanshu.dhawan@caeliusconsulting.com,gopi.makutam@caeliusconsulting.com,bighnesh.sahoo@caeliusconsulting.com,Mulesoft_nonprod_support@flowcontrolgroup.com"
