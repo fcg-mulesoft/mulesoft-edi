@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<ee:set-variable resource="dwl/inbound-poAck-processing-subflow/v_isValid.dwl" variableName="isValid" />
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="isValid " doc:id="8c796a9e-1077-4a08-9d42-75f0ec66b479" message='#[output json---{&#10;	"viewData" : vars.isValid,&#10;	"TxnType" : "855"&#10;}]'/>
+		<logger level="INFO" doc:name="isValid" doc:id="8c796a9e-1077-4a08-9d42-75f0ec66b479" message='#[output json---{&#10;	"viewData" : vars.isValid,&#10;	"TxnType" : "855"&#10;}]'/>
 		<choice doc:name="isValid Acknowledgement?" doc:id="e3f7370f-b5f0-4d00-9da3-365687c862be" >
 			<when expression="#[vars.isValid.isValid == false or (vars.isValid.validationErrors.shipToMatchPercentage &lt;= ((Mule::p('shipToValidation.lowerLimit')) as Number))]">
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="daf0a59e-db1f-43dd-81bd-7ca2863bb96b" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />

@@ -90,7 +90,7 @@ output application/json
     <flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292">
             <scheduling-strategy>
-                <cron expression="${scheduler.outbound.purchaseOrder.frequency}" timeZone="${scheduler.outbound.purchaseOrder.timeZone}" />
+				<fixed-frequency frequency="${scheduler.outbound.purchaseOrder.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32">
@@ -119,7 +119,7 @@ output application/json
     <flow name="b2b-alert-notification-apm-flow" doc:id="150e108b-c71a-4397-8bfb-25faf78f9fb0">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="84722158-e1cc-446a-88d8-928188b6be87">
             <scheduling-strategy>
-                <cron expression="${scheduler.alertNotification.frequency}" timeZone="${scheduler.alertNotification.timeZone}" />
+				<fixed-frequency frequency="${scheduler.alertNotification.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="7e4fe777-4fbb-4083-831b-50deef3f20bd">
@@ -190,7 +190,7 @@ output application/json
 	 <flow name="poAck-outbound-scheduled-flow" doc:id="c56a91e5-1d46-4698-8c65-fe2418b3ebfa" maxConcurrency="1">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="eea15be8-70e2-4e7c-a48a-9045276f296f">
             <scheduling-strategy>
-                <cron expression="${scheduler.outbound.purchaseOrder.frequency}" timeZone="${scheduler.outbound.purchaseOrder.timeZone}" />
+				<fixed-frequency frequency="${scheduler.outbound.purchaseOrder.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="9efd3e2c-ec93-4ffa-a301-b19deaeef91e">
@@ -219,7 +219,7 @@ output application/json
     <flow name="invoice-outbound-scheduled-flow" doc:id="2a7b7b9f-cf7e-431e-999d-cf8872021a14" maxConcurrency="1">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="ef808efe-deeb-4357-92de-72d98f602488">
             <scheduling-strategy>
-                <fixed-frequency startDelay="1" timeUnit="HOURS" frequency="1" />
+                <fixed-frequency timeUnit="HOURS" frequency="1" startDelay="1"/>
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="985988e7-898d-4713-8619-9f43b3c0ee54">
