@@ -3,13 +3,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 	<artifactId>b2b-p21-sys-api-app</artifactId>
-	<version>1.0.23</version>
+	<version>1.0.24</version>
 	<packaging>mule-application</packaging>
 	<name>b2b-p21-sys-api-app</name>
 	<parent>
 		<groupId>d239ff40-5b13-47be-9bb0-a029a64dac2c</groupId>
 		<artifactId>integration-parent-pom</artifactId>
-		<version>1.0.6</version>
+		<version>1.0.5</version>
 	</parent>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
