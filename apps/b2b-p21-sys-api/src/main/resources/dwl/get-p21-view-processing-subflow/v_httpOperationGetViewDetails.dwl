@@ -58,6 +58,7 @@ var routingConfig = {
         total: {
             view: Mule::p('viewNames.purchaseOrderOutbound'),
             queryParams: {
+            	"\$orderby" : "po_no asc,line_no asc"
             }
         }
     },
