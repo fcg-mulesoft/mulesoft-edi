@@ -14,12 +14,13 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="523d4c38-1e8a-48be-9e54-4029a2e0b282" name="common-http-request-subflow" target="purchaseOrderData"/>
+		<logger level="INFO" doc:name="LOG DEBUG:  View Data" doc:id="1005c3c5-2958-45ee-aacc-38227bc23a96" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "View response",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	viewPayload: vars.purchaseOrderData&#10;}]' category="${logger.debug.category}" />
 		<ee:transform doc:name="View to CDM transformation" doc:id="53d4d6eb-0f9f-4e3c-a0f6-c2d7ce094e59" >
 			<ee:message >
 				<ee:set-payload resource="dwl/purchase-order-processing-subflow/p_cdmMapping.dwl" />
 			</ee:message>
 		</ee:transform>
-				<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="e0d56ebc-9b4f-44a8-b148-3c5fa85a8d53" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}"/>
+				<logger level="INFO" doc:name="LOG DEBUG:  Parallel for each" doc:id="e0d56ebc-9b4f-44a8-b148-3c5fa85a8d53" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}"/>
 		<parallel-foreach doc:name="Parallel For Each : Iteration over POs" doc:id="7986e00b-9d90-458d-bd84-f219e3092d6d" collection="#[payload]" maxConcurrency="${maxConcurrency.attempt}">
 			<try doc:name="Try" doc:id="5d9023da-464b-4fa6-9479-6099a6346eea" >
 				<json:validate-schema doc:name="Validate 850 FESTO Json schema" doc:id="ffe1bc4d-7bca-4c2e-b8bb-347da0ef2d36" schema="schema/PO_OUTBOUND_JSON_SCHEMA.json"/>

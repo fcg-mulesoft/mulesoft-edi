@@ -14,6 +14,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="fe068a4b-652e-4c31-a9e9-4aac018cbed3" name="common-http-request-subflow" target="purchaseOrderData"/>
+		<logger level="INFO" doc:name="LOG INFO : P21 View Data" doc:id="6be8d4ce-9b7c-40e6-8a9a-d1d44551958b" message='#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;{&#10;	"Message": "P21 View",&#10;	"Payload": vars.purchaseOrderData&#10;}]'/>
 		<ee:transform doc:name="var : isValid" doc:id="866e5918-c2cb-45fd-b79c-fddd23c0c465" >
 			<ee:message >
 			</ee:message>
@@ -43,6 +44,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" />
+		<logger level="INFO" doc:name="LOG INFO : P21 Response Payload" doc:id="b58c0223-9472-440d-bae4-b40e566691d1" message='#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;{&#10;	"Message": "P21 Response Payload After Invoice Creation",&#10;	"Payload": payload&#10;}]'/>
 		<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b" >
 			<when expression='#[payload."TransactionSetResult"."Summary"."Failed" != "0"]'>
 				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="cf33fd6d-514a-40df-8113-45bedd343499" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"]'/>
