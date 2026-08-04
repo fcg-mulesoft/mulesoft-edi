@@ -6,7 +6,7 @@ var inputPayload = vars.initialPayload[0].b2bMessage
 var customerItemData = vars.customerItemValidationResponse
 var header = inputPayload.header
 var orderLines = inputPayload.detail.itemDetails
-var salesPricing = vars.salesPricingResponse.ArrayOfItemPrice.*ItemPrice
+var salesPricing = vars.salesPricing.ArrayOfItemPrice.*ItemPrice
 var salesOrderLookUpData = vars.ediXrefResponse[0]
 var validationData = vars.isValid
 

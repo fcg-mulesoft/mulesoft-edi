@@ -2,9 +2,17 @@
 import trim from dw::core::Strings
 output application/xml skipNullOn="everywhere"
 
-var itemIDSearch =
+var theirItemIds =
     (vars.partsPriceResponse.value.their_item_id default [])
-        map (v) -> trim((v default "") as String)
+        map (v) -> lower(trim((v default "") as String))
+        filter ($ != "")
+
+var ourItemIds =
+    (vars.partsPriceResponse.value.our_item_id default [])
+        map (v) -> lower(trim((v default "") as String))
+        filter ($ != "")
+
+var itemIDSearch = (theirItemIds ++ ourItemIds) distinctBy $
 
 var defaultItemId = Mule::p('edi.default.item.id')
 
@@ -34,9 +42,20 @@ fun headerLineText(line) =
 
 fun isMatched(line) =
     do {
-        var id = lineItemId(line)
+        var id = lower(lineItemId(line))
         ---
         (id != "") and (itemIDSearch contains id)
+    }
+
+fun getOurItemId(line) =
+    do {
+        var id = lower(lineItemId(line))
+        var matchedRecord = (vars.partsPriceResponse.value filter (
+            lower(trim(($.their_item_id default "") as String)) == id or 
+            lower(trim(($.our_item_id default "") as String)) == id
+        ))[0]
+        ---
+        matchedRecord.our_item_id default lineItemId(line)
     }
 
 fun isValidLine(line) = 

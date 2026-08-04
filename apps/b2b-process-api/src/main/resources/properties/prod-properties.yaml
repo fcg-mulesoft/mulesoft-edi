@@ -81,7 +81,7 @@ apm:
    host: "b2b-inbound-http-oqy2-1qvskv.08ymxx.usa-e1.cloudhub.io"
    port: "443"
    basePath: "/api"
-   path: "/out-src-purchase-order"
+   purchaseOrderpath: "/out-src-purchase-order"
    invoice: "/out-src-invoice"
    asn: "/out-src-shipment-notice"
    poAck: "/out-src-poAck"
@@ -101,7 +101,7 @@ partner:
    "default": "N/A"
   outbound:
    "960163954IDX": "VANTAGE"
-   "234093": "FESTO"
+   "1631404318": "FESTO"
    "default": "N/A"
  
 email:
