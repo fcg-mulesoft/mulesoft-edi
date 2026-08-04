@@ -42,6 +42,17 @@ fun isMatched(line) =
 fun isValidLine(line) = 
     line != null and !isEmpty(line)
 
+fun getCostDate(line) =
+    do {
+        var id = lower(lineItemId(line))
+        var matchedRecord = (vars.partsPriceResponse.value filter (lower($.their_item_id default "") == id))[0]
+        ---
+        matchedRecord.cost_date default ""
+    }
+
+fun getOurItemId(theirItemId) =
+    (vars.partsPriceResponse.value filter ($.their_item_id == theirItemId))[0].our_item_id default theirItemId
+
 var rawLines = vars.initialPayload.Order.Lines.*OrderLine default []
 var linesArr = if (rawLines is Array) rawLines else [rawLines]
 var validLinesArr = linesArr filter (line) -> isValidLine(line)
@@ -82,19 +93,34 @@ var headerNoteText =
         {
           OrderLine:
             validLinesArr map (line) ->
-              if (isMatched(line))
-                line mapObject ((value, key) -> if (isEmpty(value)) {} else if (key as String == "ItemId") {(key): (vars.partsPriceResponse.value filter ($.their_item_id == value))[0].our_item_id} else {(key): value})
-              else
-                ((line - "ItemId" - "Notes") mapObject ((value, key) -> if (isEmpty(value)) {} else {(key): value})) ++ {
-                  ItemId: defaultItemId,
-                  Notes: {
-                    OrderLineNote: {
-                      Topic: "EDI_LINE1",
-                      Note: lineNoteText(line),
-                      NotepadClassId: "ITEMS"
+              (
+                if (isMatched(line))
+                  ((line - "UserDefinedFields") mapObject ((value, key) -> 
+                    if (isEmpty(value)) {} 
+                    else if (key as String == "ItemId") {(key): getOurItemId(value)} 
+                    else {(key): value}
+                  ))
+                else
+                  (((line - "ItemId" - "Notes" - "UserDefinedFields") mapObject ((value, key) -> 
+                    if (isEmpty(value)) {} 
+                    else {(key): value}
+                  )) ++ {
+                    ItemId: defaultItemId,
+                    Notes: {
+                      OrderLineNote: {
+                        Topic: "EDI_LINE1",
+                        Note: lineNoteText(line),
+                        NotepadClassId: "ITEMS"
+                      }
                     }
-                  }
+                  })
+              )
+              ++
+              {
+                UserDefinedFields: {
+                  LocCostDate: getCostDate(line)
                 }
+              }
         }
       else
         null
