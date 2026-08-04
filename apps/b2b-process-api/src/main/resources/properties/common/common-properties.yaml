@@ -60,10 +60,10 @@ partner:
 scheduler:
   outbound:
     purchaseOrder:
-      frequency: "0 0 */3 * * ?"
+      frequency: "15"
       timeZone: "America/Chicago"
   alertNotification:
-    frequency: "0 0 */3 * * ?"
+    frequency: "15"
     timeZone: "America/Chicago"
    
 #Logger 
