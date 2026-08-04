@@ -99,7 +99,7 @@ var senderId = Mule::p('fcg.edi_id')
 				},
 				({
 					qualifier: "CO",
-					referenceNumber: (poItems[0].REF_CO_02_PO_Type as String)
+					referenceNumber: (poItems[0].external_po_no)
 				}) if ((poItems[0].BEG02_POTypeCode as String) == "DS"),
 				{
 					qualifier: "ZZ",
