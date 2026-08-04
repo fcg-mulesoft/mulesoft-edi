@@ -1,15 +1,16 @@
 %dw 2.0
 output application/json
 import toBase64 from dw::core::Binaries
-var objectStorePayload = payload
+var objectStorePayload = vars.invoiceTimeStamp
 var modifiedTime =
-    if ( isEmpty(objectStorePayload) ) ((now() - |PT168H|) as String {
-	format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
-})
+    if (isEmpty(objectStorePayload))
+        (((now() - |PT168H|) >> "UTC") as String {
+            format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+        })
     else
-        ((objectStorePayload as DateTime) as String {
-	format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
-})
+        (((objectStorePayload as DateTime) >> "UTC") as String {
+            format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+        })
 ---
 {
 	"method": Mule::p('b2b-p21-sys-api.view.method'),
@@ -23,7 +24,7 @@ var modifiedTime =
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrderInvoice'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.total'),
-		"lastModified": "2026-06-25T15:25:33.403-04:00" //modifiedTime
+		"lastModified": modifiedTime
 	},
 	"uriParams": {
 	},
