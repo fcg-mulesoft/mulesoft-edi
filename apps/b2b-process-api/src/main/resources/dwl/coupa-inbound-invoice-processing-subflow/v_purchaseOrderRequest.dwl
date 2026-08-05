@@ -47,7 +47,7 @@ fun isMatched(line) =
         (id != "") and (itemIDSearch contains id)
     }
 
-fun getOurItemId(line) =
+fun getOurItemIdFromLine(line) =
     do {
         var id = lower(lineItemId(line))
         var matchedRecord = (vars.partsPriceResponse.value filter (
@@ -65,12 +65,24 @@ fun getCostDate(line) =
     do {
         var id = lower(lineItemId(line))
         var matchedRecord = (vars.partsPriceResponse.value filter (lower($.their_item_id default "") == id))[0]
+        var costDate = matchedRecord.cost_date
         ---
-        matchedRecord.cost_date default ""
+        if (isEmpty(costDate)) 
+            null 
+        else 
+            (costDate as DateTime default costDate as Date) as String {format: "yyyy-MM-dd'T'HH:mm:ss"}
     }
 
-fun getOurItemId(theirItemId) =
-    (vars.partsPriceResponse.value filter ($.their_item_id == theirItemId))[0].our_item_id default theirItemId
+fun lookupOurItemId(theirItemId) =
+    do {
+        var id = lower(trim((theirItemId default "") as String))
+        var matchedRecord = (vars.partsPriceResponse.value filter (
+            lower(trim(($.their_item_id default "") as String)) == id or
+            lower(trim(($.our_item_id default "") as String)) == id
+        ))[0]
+        ---
+        matchedRecord.our_item_id default theirItemId
+    }
 
 var rawLines = vars.initialPayload.Order.Lines.*OrderLine default []
 var linesArr = if (rawLines is Array) rawLines else [rawLines]
@@ -116,7 +128,7 @@ var headerNoteText =
                 if (isMatched(line))
                   ((line - "UserDefinedFields") mapObject ((value, key) -> 
                     if (isEmpty(value)) {} 
-                    else if (key as String == "ItemId") {(key): getOurItemId(value)} 
+                    else if (key as String == "ItemId") {(key): lookupOurItemId(value)} 
                     else {(key): value}
                   ))
                 else
