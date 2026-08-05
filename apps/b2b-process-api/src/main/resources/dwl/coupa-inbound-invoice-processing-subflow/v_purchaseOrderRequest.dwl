@@ -61,16 +61,24 @@ fun getOurItemIdFromLine(line) =
 fun isValidLine(line) = 
     line != null and !isEmpty(line)
 
+fun formatCostDate(costDate) =
+    if (isEmpty(costDate)) 
+        ""
+    else if ((costDate as String) contains "T")
+        ((costDate as String) splitBy /[-+]\d{2}:\d{2}$/)[0] default (costDate as String)
+    else
+        costDate as String
+
 fun getCostDate(line) =
     do {
         var id = lower(lineItemId(line))
-        var matchedRecord = (vars.partsPriceResponse.value filter (lower($.their_item_id default "") == id))[0]
-        var costDate = matchedRecord.cost_date
+        var matchedRecord = (vars.partsPriceResponse.value filter (
+            lower(trim(($.their_item_id default "") as String)) == id or
+            lower(trim(($.our_item_id default "") as String)) == id
+        ))[0]
+        var costDate = matchedRecord.cost_date default ""
         ---
-        if (isEmpty(costDate)) 
-            null 
-        else 
-            (costDate as DateTime default costDate as Date) as String {format: "yyyy-MM-dd'T'HH:mm:ss"}
+        formatCostDate(costDate)
     }
 
 fun lookupOurItemId(theirItemId) =
@@ -147,11 +155,16 @@ var headerNoteText =
                   })
               )
               ++
-              {
-                UserDefinedFields: {
-                  LocCostDate: getCostDate(line)
-                }
-              }
+              (
+                if (!isEmpty(getCostDate(line)))
+                  {
+                    UserDefinedFields: {
+                      LocCostDate: getCostDate(line)
+                    }
+                  }
+                else
+                  {}
+              )
         }
       else
         null
