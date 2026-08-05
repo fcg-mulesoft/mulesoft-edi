@@ -9,7 +9,7 @@ var groupedOrders =
 groupedOrders pluck ((orderItems, orderNo) -> {
     b2bMessage: {
         header: {
-            receiverId: ((orderItems[0].TP_edi_isa05_id default "") as String),
+            receiverId: ((orderItems[0].TP_edi_isa05_id default "") as String) ++ (if(mule.env == "dev") "T" else "") ,
             senderId:
                 Mule::p(
                     lower((orderItems[0].trading_partner_name default "") as String)
