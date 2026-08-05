@@ -47,7 +47,7 @@ fun isMatched(line) =
         (id != "") and (itemIDSearch contains id)
     }
 
-fun getOurItemId(line) =
+fun getOurItemIdFromLine(line) =
     do {
         var id = lower(lineItemId(line))
         var matchedRecord = (vars.partsPriceResponse.value filter (
@@ -60,6 +60,37 @@ fun getOurItemId(line) =
 
 fun isValidLine(line) = 
     line != null and !isEmpty(line)
+
+fun formatCostDate(costDate) =
+    if (isEmpty(costDate)) 
+        ""
+    else if ((costDate as String) contains "T")
+        ((costDate as String) splitBy /[-+]\d{2}:\d{2}$/)[0] default (costDate as String)
+    else
+        costDate as String
+
+fun getCostDate(line) =
+    do {
+        var id = lower(lineItemId(line))
+        var matchedRecord = (vars.partsPriceResponse.value filter (
+            lower(trim(($.their_item_id default "") as String)) == id or
+            lower(trim(($.our_item_id default "") as String)) == id
+        ))[0]
+        var costDate = matchedRecord.cost_date default ""
+        ---
+        formatCostDate(costDate)
+    }
+
+fun lookupOurItemId(theirItemId) =
+    do {
+        var id = lower(trim((theirItemId default "") as String))
+        var matchedRecord = (vars.partsPriceResponse.value filter (
+            lower(trim(($.their_item_id default "") as String)) == id or
+            lower(trim(($.our_item_id default "") as String)) == id
+        ))[0]
+        ---
+        matchedRecord.our_item_id default theirItemId
+    }
 
 var rawLines = vars.initialPayload.Order.Lines.*OrderLine default []
 var linesArr = if (rawLines is Array) rawLines else [rawLines]
@@ -101,23 +132,39 @@ var headerNoteText =
         {
           OrderLine:
             validLinesArr map (line) ->
-              if (isMatched(line))
-                line mapObject ((value, key) -> 
-                  if (isEmpty(value)) {} 
-                  else if (key as String == "ItemId") {(key): getOurItemId(line)} 
-                  else {(key): value}
-                )
-              else
-                ((line - "ItemId" - "Notes") mapObject ((value, key) -> if (isEmpty(value)) {} else {(key): value})) ++ {
-                  ItemId: defaultItemId,
-                  Notes: {
-                    OrderLineNote: {
-                      Topic: "EDI_LINE1",
-                      Note: lineNoteText(line),
-                      NotepadClassId: "ITEMS"
+              (
+                if (isMatched(line))
+                  ((line - "UserDefinedFields") mapObject ((value, key) -> 
+                    if (isEmpty(value)) {} 
+                    else if (key as String == "ItemId") {(key): lookupOurItemId(value)} 
+                    else {(key): value}
+                  ))
+                else
+                  (((line - "ItemId" - "Notes" - "UserDefinedFields") mapObject ((value, key) -> 
+                    if (isEmpty(value)) {} 
+                    else {(key): value}
+                  )) ++ {
+                    ItemId: defaultItemId,
+                    Notes: {
+                      OrderLineNote: {
+                        Topic: "EDI_LINE1",
+                        Note: lineNoteText(line),
+                        NotepadClassId: "ITEMS"
+                      }
+                    }
+                  })
+              )
+              ++
+              (
+                if (!isEmpty(getCostDate(line)))
+                  {
+                    UserDefinedFields: {
+                      LocCostDate: getCostDate(line)
                     }
                   }
-                }
+                else
+                  {}
+              )
         }
       else
         null
