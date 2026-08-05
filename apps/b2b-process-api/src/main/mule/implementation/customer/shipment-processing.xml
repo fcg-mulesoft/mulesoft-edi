@@ -58,7 +58,7 @@ import toBase64 from dw::core::Binaries
 			</when>
 			<otherwise >
 				<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="shipmentLastRunTimestamp" objectStore="Object_Store_Shipment_Vantage" target="shippmentTimestamp">
-			<os:default-value><![CDATA[#[now() - |PT24H|]]]></os:default-value>
+			<os:default-value><![CDATA[#[now() - |PT30M|]]]></os:default-value>
 		</os:retrieve>
 				<ee:transform doc:name="var : httpOperation - get shipment Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2">
 			<ee:message />
