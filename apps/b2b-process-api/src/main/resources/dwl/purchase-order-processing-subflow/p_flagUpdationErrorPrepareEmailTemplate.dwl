@@ -20,10 +20,10 @@ var otherCount     = "0"
 var transactionRows =
     transactions map (t, idx) ->
         do {
-            var poNo   = safe(t.po_no as String, "N/A")
-            var vendorRaw = safe(t.vendor_id as String, "UNKNOWN")
+            var poNo   = safe((t.po_no default "") as String, "N/A")
+            var vendorRaw = safe((t.vendor_id default "") as String, "UNKNOWN")
             var vendor = resolvePartner(vendorRaw)
-            var msg    = safe(t.message as String, "No message")
+            var msg    = safe((t.message default "") as String, "No message")
             var status = "Failed"
             var rowBg  = "background:#fee2e2;color:#b91c1c;"
             ---
@@ -65,7 +65,7 @@ var poNumbers =
     (transactions map (t) -> safe(t.po_no as String, "N/A")) distinctBy $ joinBy ", "
 
 var vendorIds =
-    (transactions map (t) -> resolvePartner(safe(t.vendor_id as String, "N/A")))
+    (transactions map (t) -> resolvePartner(safe((t.vendor_id default "") as String, "N/A")))
     distinctBy $
     joinBy ", "
 

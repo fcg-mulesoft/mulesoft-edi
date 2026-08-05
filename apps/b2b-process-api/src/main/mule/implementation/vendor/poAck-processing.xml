@@ -14,12 +14,14 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="72d35b75-b960-46cc-866c-c1f7e698a1d4" name="common-http-request-subflow" target="purchaseOrderData" />
 
+		<logger level="INFO" doc:name="View Data" doc:id="ed54fe38-59a4-4f45-bb59-e140e1aa5fc4" message='#[output json---{&#10;	"viewData" : vars.purchaseOrderData.value,&#10;	"TxnType" : "855"&#10;}]'/>
 		<ee:transform doc:name="var : isValid" doc:id="79756a1f-388d-47ba-a1f1-1cd103af437b" >
 			<ee:message />
 			<ee:variables >
 				<ee:set-variable resource="dwl/inbound-poAck-processing-subflow/v_isValid.dwl" variableName="isValid" />
 			</ee:variables>
 		</ee:transform>
+		<logger level="INFO" doc:name="isValid" doc:id="8c796a9e-1077-4a08-9d42-75f0ec66b479" message='#[output json---{&#10;	"viewData" : vars.isValid,&#10;	"TxnType" : "855"&#10;}]'/>
 		<choice doc:name="isValid Acknowledgement?" doc:id="e3f7370f-b5f0-4d00-9da3-365687c862be" >
 			<when expression="#[vars.isValid.isValid == false or (vars.isValid.validationErrors.shipToMatchPercentage &lt;= ((Mule::p('shipToValidation.lowerLimit')) as Number))]">
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="daf0a59e-db1f-43dd-81bd-7ca2863bb96b" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
@@ -34,6 +36,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<ee:set-variable resource="dwl/inbound-poAck-processing-subflow/v_p21poAck.dwl" variableName="p21poAck" />
 			</ee:variables>
 		</ee:transform>
+		<logger level="INFO" doc:name="p21poAck Payload" doc:id="562fdf34-297e-45ed-b81a-afdd5694be6f" message='#[output json---{&#10;	"viewData" : vars.p21poAck,&#10;	"TxnType" : "855"&#10;}]'/>
 		<ee:transform doc:name="var : httpOperation - post Ack" doc:id="bf92619f-3e38-4c38-a78c-20732dfde9dd" >
 			<ee:message />
 			<ee:variables >
@@ -41,6 +44,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="727d7cdc-0466-4327-9b4f-b039a8cfb17c" name="common-http-request-subflow" />
+		<logger level="INFO" doc:name="TransactionSetResult" doc:id="9f91ec54-4727-495f-aef5-45311ce74c01" message='#[output json&#10;---{&#10;	"p21 poAck Res": payload&#10;}]'/>
 		<choice doc:name="is Successful?" doc:id="a6809f24-da33-41fa-a15b-1edcbe1c371d">
 			<when expression='#[payload."TransactionSetResult"."Summary"."Failed" != "0"]'>
 				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="bf20b71b-9b2e-4c07-97bb-a6a8a4449b2e" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"]' />
@@ -150,6 +154,175 @@ var matchPercentage =
 					</ee:variables>
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="89bf83be-028c-43db-ad80-835b26fb4206" name="send-email-subflow" />
+			</when>
+		</choice>
+		<flow-ref doc:name="Flow Reference To get-email-view-subflow" doc:id="aa6c6a69-7451-4f55-9c67-8136b769e235" name="get-email-view-subflow" target="emailView" />
+		<ee:transform doc:name="var : sendSuccessMail" doc:id="3d7ca4a8-ad65-4097-bfc1-6c9522f264bf" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="sendSuccessMail" ><![CDATA[%dw 2.0
+
+output application/json
+
+var vendorName = [(p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
+    default [(p('partner.outbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
+    default []
+ 
+var viewRecords =
+
+    (vars.emailView.value default [])
+
+        filter ((vendorName default []) contains $.trading_partner_name)
+ 
+---
+viewRecords."email_to_biz" contains "Y"
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="1b6323e1-ae42-4ba0-85f6-acb064c10650">
+			<when expression="#[vars.sendSuccessMail == true]">
+				<ee:transform doc:name="Prepare Success Email Payload, var : subject" doc:id="77763b41-cc37-4584-93ce-cab5e1104014">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+ 
+fun safe(v, d = "N/A") =
+    if (v == null or (v is String and trim(v) == "")) d else v
+ 
+var integration = vars.integration default vars.initialVariables default {}
+var sysInfo = vars.systemInformation default {}
+var cdm = (vars.initialPayload default [])[0].b2bMessage default {}
+var header = cdm.header default {}
+ 
+var senderKey = header.senderId default ""
+var vendorId =
+    if (senderKey != "")
+        (p("partner.inbound." ++ senderKey)
+            default p("partner.outbound." ++ senderKey)
+            default "N/A")
+    else
+        "N/A"
+ 
+var poNumber = safe(header.poNumber)
+  
+var data = {
+    flowDirection:
+        if (lower(safe(integration.source, "APM")) == "apm")
+            "INBOUND"
+        else
+            "OUTBOUND",
+ 
+    documentType:
+        safe(
+            integration."integration-type",
+            safe(header.documentType, "API")
+        ),
+ 
+    successTitle: "P21 Processing Completed",
+ 
+    bannerColor: "#16a34a",
+ 
+    status: "SUCCESS",
+ 
+    statusMessage:
+            "P21 Processing Completed Successfully",
+
+ 
+    companyName:
+        vars.purchaseOrderData.value.company_no[0]
+            default "N/A",
+ 
+    vendorName:
+        vendorId,
+ 
+    route:
+        safe(integration.source, "APM")
+        ++ " → Mule → "
+        ++ safe(integration.target, "P21"),
+ 
+    businessKey:
+        "PO " ++ poNumber,
+ 
+    timestamp:
+        now() as String {
+            format: "yyyy-MM-dd HH:mm:ss"
+        },
+ 
+    transmissionId:
+        safe(header.transmissionId),
+ 
+    keyLabel:
+        "Correlation ID",
+ 
+    key:
+        correlationId default uuid(),
+ 
+    transactionType:
+        safe(
+            integration."integration-type",
+            safe(header.documentType, "API")
+        ),
+ 
+    appName:
+        p("api.name")
+            default "Mule Application",
+ 
+    environment:
+        upper(p("mule.env") default "DEV"),
+ 
+    message:
+        "Acknowledgement for Purchase Order "
+        ++ poNumber
+        ++ " has been processed successfully in P21.",
+ 
+    p21OrderNumber:
+        poNumber,
+ 
+    statusCode: "200"
+}
+ 
+var template =
+    readUrl(
+        "classpath://templates/success-template.html",
+        "text/plain"
+    )
+ 
+---
+template replace /\$\{(\w+)\}/ with ((m) -> (data[m[1]] as String) default "")]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="subject"><![CDATA[%dw 2.0
+output text/plain
+ 
+var env = upper(p("mule.env") default "DEV")
+ 
+var integrationType =
+    vars.integration."integration-type"
+        default vars.initialVariables."integration-type"
+        default "Transaction"
+ 
+var poNumber =
+    vars.initialPayload[0].b2bMessage.header.poNumber
+        default "N/A"
+ 
+var vendorName =
+    (p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))
+    default (p('partner.outbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))
+    default "N/A"
+ 
+---
+[
+    env,
+    "FCG SUCCESS",
+    integrationType,
+    vendorName,
+    "PO " ++ poNumber
+]
+filter ($ != null and $ != "")
+joinBy " | "]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference to send-email-subflow" doc:id="1ed40e95-ff6f-49ce-92ba-d989877393c2" name="send-email-subflow" />
 			</when>
 		</choice>
 		<logger level="INFO" doc:name="LOG INFO : END" doc:id="74837d49-bd9d-4659-b4fc-a3df92894944" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: payload[0].b2bMessage.header.transmissionId default "",&#10;	//payloadSizeBytes: sizeOf(write(payload, "application/json")),&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />

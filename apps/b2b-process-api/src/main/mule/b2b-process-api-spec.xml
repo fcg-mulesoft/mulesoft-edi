@@ -15,21 +15,50 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
             <ee:message />
             <ee:variables>
                 <ee:set-variable variableName="integration"><![CDATA[%dw 2.0
+
 import * from dw::core::Strings
+
 output application/json
-var initialPayload = if(!isEmpty(payload)) (payload[0] default {}) else {}
-var direction = if(attributes.method == "POST") "Inbound " else "Outbound "
+
+var payloadStr = if (payload is Binary) (payload as String) else ""
+var isXml = (payloadStr startsWith "<?xml") or (payloadStr startsWith "<")
+
+var parsedPayload = if (!isEmpty(payload)) 
+    (if (payload is Binary) 
+      (if (isXml) read(payload, "application/xml") else read(payload, "application/json"))
+    else payload) 
+  else {}
+
+var initialPayload = if (!isEmpty(parsedPayload)) 
+    (if (parsedPayload is Array) (parsedPayload[0] default {}) else parsedPayload) 
+  else {}
+
+var direction = if (attributes.method == "POST") "Inbound " else "Outbound "
+
 var integrationType = if (attributes."requestPath" == "/api/coupainboundTransactions") "Coupa" else ((attributes.queryParams."type" default "") ++ " ")
+
+// Handle both XML and JSON structures
+var documentType = initialPayload.b2bMessage.header.documentType 
+    default initialPayload.Order.name 
+    default ""
+
+var transmissionId = initialPayload.b2bMessage.header.transmissionId 
+    default initialPayload.Order.edixRefId 
+    default ""
+
 ---
 {
-	"source" : "APM" ,
-	"target" : "P21",
-	"integration-type" : if (!isEmpty(initialPayload))(direction ++ integrationType ++ ((initialPayload."b2bMessage"."header"."documentType") default "")) else  (direction ++ (capitalize(attributes.queryParams."transactionType") default "")),
-	"correlationId": correlationId,
-	"timestamp": now() as String {
-		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
-	},
-	"transmissionId" : (initialPayload.b2bMessage.header.transmissionId default "")
+  "source": "APM",
+  "target": "P21",
+  "integration-type": if (!isEmpty(initialPayload)) 
+      (direction ++ integrationType ++ (documentType default "")) 
+    else 
+      (direction ++ (capitalize(attributes.queryParams."transactionType") default "")),
+  "correlationId": correlationId,
+  "timestamp": now() as String {
+    format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+  },
+  "transmissionId": transmissionId
 }]]></ee:set-variable>
                 <ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
 output application/json
@@ -90,7 +119,7 @@ output application/json
     <flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292">
             <scheduling-strategy>
-                <cron expression="${scheduler.outbound.purchaseOrder.frequency}" timeZone="${scheduler.outbound.purchaseOrder.timeZone}" />
+				<fixed-frequency frequency="${scheduler.outbound.purchaseOrder.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32">
@@ -119,7 +148,7 @@ output application/json
     <flow name="b2b-alert-notification-apm-flow" doc:id="150e108b-c71a-4397-8bfb-25faf78f9fb0">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="84722158-e1cc-446a-88d8-928188b6be87">
             <scheduling-strategy>
-                <cron expression="${scheduler.alertNotification.frequency}" timeZone="${scheduler.alertNotification.timeZone}" />
+				<fixed-frequency frequency="${scheduler.alertNotification.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="7e4fe777-4fbb-4083-831b-50deef3f20bd">
@@ -190,7 +219,7 @@ output application/json
 	 <flow name="poAck-outbound-scheduled-flow" doc:id="c56a91e5-1d46-4698-8c65-fe2418b3ebfa" maxConcurrency="1">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="eea15be8-70e2-4e7c-a48a-9045276f296f">
             <scheduling-strategy>
-                <cron expression="${scheduler.outbound.purchaseOrder.frequency}" timeZone="${scheduler.outbound.purchaseOrder.timeZone}" />
+				<fixed-frequency frequency="${scheduler.outbound.purchaseOrder.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="9efd3e2c-ec93-4ffa-a301-b19deaeef91e">
@@ -219,7 +248,7 @@ output application/json
     <flow name="invoice-outbound-scheduled-flow" doc:id="2a7b7b9f-cf7e-431e-999d-cf8872021a14" maxConcurrency="1">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="ef808efe-deeb-4357-92de-72d98f602488">
             <scheduling-strategy>
-                <fixed-frequency startDelay="1" timeUnit="HOURS" frequency="1" />
+                <fixed-frequency timeUnit="HOURS" frequency="1"/>
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="985988e7-898d-4713-8619-9f43b3c0ee54">
@@ -233,7 +262,9 @@ output application/json
 	"target": "APM",
 	"integration-type": "Outbound-810",
 	correlationId: correlationId default uuid(),
-	timestamp: now(),
+	timestamp: ((now() >> "UTC") as String {
+        format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+    }),
 	status: "STARTED"
 }]]></ee:set-variable>
             </ee:variables>
@@ -245,7 +276,7 @@ output application/json
     <flow name="shipment-outbound-scheduled-flow" doc:id="a73526f3-22ef-4be8-bb6a-b13c75e82454" maxConcurrency="1">
         <scheduler doc:name="EVERY 3 HOURS" doc:id="d4e29f4a-0d3b-4a7f-9bc3-7997d68496ac">
             <scheduling-strategy>
-                <fixed-frequency frequency="1" startDelay="1" timeUnit="HOURS" />
+                <fixed-frequency frequency="1" timeUnit="HOURS" />
             </scheduling-strategy>
         </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="9f91056e-77d4-47aa-9a33-cee4ae839557">
@@ -259,7 +290,9 @@ output application/json
 	"target": "APM",
 	"integration-type": "Outbound-856",
 	correlationId: correlationId default uuid(),
-	timestamp: now(),
+	timestamp: ((now() >> "UTC") as String {
+        format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+    }),
 	status: "STARTED"
 }]]></ee:set-variable>
             </ee:variables>
