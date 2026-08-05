@@ -109,8 +109,14 @@ var modifiedTime =
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
- 
-var groupedPayload = vars.shipmentData.value groupBy $.pick_ticket_no
+var filteredRecords =
+    (vars.shipmentData.value default [])
+        filter ((item) ->
+            (item.date_last_modified as DateTime) >= vars.httpOperation.queryParams.lastModified
+        )
+
+var groupedPayload =
+    filteredRecords groupBy $.pick_ticket_no
  
 ---
 groupedPayload pluck ((records, pickTicketNo) -> {
