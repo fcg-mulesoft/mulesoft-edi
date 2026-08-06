@@ -27,7 +27,7 @@ jobs:
   build-and-test:
     needs: changes
     if: ${{ fromJson(needs.changes.outputs.apps)[0] != null }}
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     strategy:
       matrix:
         app: ${{ fromJson(needs.changes.outputs.apps) }}
