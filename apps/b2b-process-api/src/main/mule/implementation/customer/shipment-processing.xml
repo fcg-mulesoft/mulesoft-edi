@@ -57,8 +57,11 @@ import toBase64 from dw::core::Binaries
 				</ee:transform>
 			</when>
 			<otherwise >
-				<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="shipmentLastRunTimestamp" objectStore="Object_Store_Shipment_Vantage" target="shippmentTimestamp">
-			<os:default-value><![CDATA[#[now() - |PT30M|]]]></os:default-value>
+				<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="shipmentLastRunTimestamp" target="shipmentTimestamp" objectStore="Outbound_Transction_Object_Store">
+			<os:default-value><![CDATA[#[%dw 2.0
+output application/json
+---
+(now() - |P1D|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
 		</os:retrieve>
 				<ee:transform doc:name="var : httpOperation - get shipment Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2">
 			<ee:message />
@@ -66,16 +69,7 @@ import toBase64 from dw::core::Binaries
 				<ee:set-variable variableName="httpOperation"><![CDATA[%dw 2.0
 output application/json
 import toBase64 from dw::core::Binaries
-var objectStorePayload = vars.shippmentTimestamp
-var modifiedTime =
-    if (isEmpty(objectStorePayload))
-        (((now() - |PT168H|) >> "UTC") as String {
-            format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-        })
-    else
-        (((objectStorePayload as DateTime) >> "UTC") as String {
-            format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-        })
+var modifiedTime = vars.shipmentTimestamp
 ---
 {
 	"method": Mule::p('b2b-p21-sys-api.view.method'),
@@ -358,7 +352,7 @@ map (entry) -> {
 		</ee:transform>
 		<choice doc:name="Choice" doc:id="bfbf7614-46f7-477a-bae1-a8dd0bdbcf07" >
 			<when expression="#[isEmpty(vars.requestParams)]">
-				<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="shipmentLastRunTimestamp" objectStore="Object_Store_Shipment_Vantage">
+				<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="shipmentLastRunTimestamp" objectStore="Outbound_Transction_Object_Store">
 			<os:value><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
 		</os:store>
 			</when>
