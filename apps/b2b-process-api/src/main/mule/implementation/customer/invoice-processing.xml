@@ -23,7 +23,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 					<os:default-value ><![CDATA[#[%dw 2.0
 output application/json
 ---
-(now() - |PT12H|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
+(now() - |P1D|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
 		</os:retrieve>
 				<ee:transform doc:name="var : httpOperation - get invoice Data" doc:id="ab0afd4b-e630-49be-b19c-8c64728df459">
 			<ee:message />

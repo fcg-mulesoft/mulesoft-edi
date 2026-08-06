@@ -139,6 +139,6 @@ else null
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="1a71241c-8444-4d2a-8396-bfd66005cc4e" name="send-email-subflow" />
 		</foreach>
-		<logger level="INFO" doc:name="LOG INFO : END" doc:id="7030904c-c1ba-4779-96cd-233691716bdb" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;END&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
+		<logger level="INFO" doc:name="LOG INFO : END" doc:id="7030904c-c1ba-4779-96cd-233691716bdb" message="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: &quot;END Flow&quot;,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: p('mule.env'),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	sourceSystem: &quot;P21&quot;,&#10;	targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#10;}]" />
 	</sub-flow>
 </mule>
