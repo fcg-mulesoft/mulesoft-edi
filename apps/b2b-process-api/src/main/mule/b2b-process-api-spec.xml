@@ -117,11 +117,11 @@ output application/json
         <flow-ref doc:name="Flow Reference To P21 Coupa Invoice WM Sync Sub Flow" doc:id="30e5642f-be37-4ed8-8709-c3a7d988d140" name="p21-coupa-invoice-processing-scheduler-flow" />
     </flow>
     <flow name="purchase-order-outbound-scheduled-flow" doc:id="5d8c397a-8f2c-487b-9509-915b30e2b826" maxConcurrency="1">
-        <!-- [STUDIO:"EVERY 3 HOURS"]<scheduler doc:name="EVERY 3 HOURS" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292">
+        <scheduler doc:name="EVERY 3 HOURS" doc:id="5322bca0-6141-4f0e-a75b-287efbd3b292">
             <scheduling-strategy>
 				<fixed-frequency frequency="${scheduler.outbound.purchaseOrder.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
-        </scheduler> [STUDIO] -->
+        </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="68989e9f-8bfe-4bf0-8a42-8017f3824f32">
             <ee:message />
             <ee:variables>
@@ -146,11 +146,11 @@ output application/json
         <error-handler ref="global-common-error-handler" />
     </flow>
     <flow name="b2b-alert-notification-apm-flow" doc:id="150e108b-c71a-4397-8bfb-25faf78f9fb0">
-        <!-- [STUDIO:"EVERY 3 HOURS"]<scheduler doc:name="EVERY 3 HOURS" doc:id="84722158-e1cc-446a-88d8-928188b6be87">
+        <scheduler doc:name="EVERY 3 HOURS" doc:id="84722158-e1cc-446a-88d8-928188b6be87">
             <scheduling-strategy>
 				<fixed-frequency frequency="${scheduler.alertNotification.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
-        </scheduler> [STUDIO] -->
+        </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="7e4fe777-4fbb-4083-831b-50deef3f20bd">
             <ee:message />
             <ee:variables>
@@ -171,11 +171,11 @@ output application/json
         <error-handler ref="global-common-error-handler" />
     </flow>
 	 <flow name="poAck-outbound-scheduled-flow" doc:id="c56a91e5-1d46-4698-8c65-fe2418b3ebfa" maxConcurrency="1">
-        <!-- [STUDIO:"EVERY 3 HOURS"]<scheduler doc:name="EVERY 3 HOURS" doc:id="eea15be8-70e2-4e7c-a48a-9045276f296f">
+        <scheduler doc:name="EVERY 3 HOURS" doc:id="eea15be8-70e2-4e7c-a48a-9045276f296f">
             <scheduling-strategy>
 				<fixed-frequency frequency="${scheduler.vantage.outbound.poAck.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
-        </scheduler> [STUDIO] -->
+        </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="9efd3e2c-ec93-4ffa-a301-b19deaeef91e">
             <ee:message />
             <ee:variables>
@@ -226,11 +226,11 @@ output application/json
         <logger level="INFO" doc:name="LOG INFO : END" doc:id="ce6f1ad5-30ee-4e4e-b877-f6786d87d3ea" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;END&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
     </flow>
     <flow name="shipment-outbound-scheduled-flow" doc:id="a73526f3-22ef-4be8-bb6a-b13c75e82454" maxConcurrency="1">
-        <!-- [STUDIO:"EVERY 3 HOURS"]<scheduler doc:name="EVERY 3 HOURS" doc:id="d4e29f4a-0d3b-4a7f-9bc3-7997d68496ac">
+        <scheduler doc:name="EVERY 3 HOURS" doc:id="d4e29f4a-0d3b-4a7f-9bc3-7997d68496ac">
             <scheduling-strategy>
                 <fixed-frequency frequency="${scheduler.vantage.outbound.shipment.frequency}" timeUnit="MINUTES" />
             </scheduling-strategy>
-        </scheduler> [STUDIO] -->
+        </scheduler>
         <ee:transform doc:name="var: initialVariables" doc:id="9f91056e-77d4-47aa-9a33-cee4ae839557">
             <ee:message />
             <ee:variables>
