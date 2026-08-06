@@ -247,7 +247,7 @@ output application/json
 }]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <logger level="INFO" doc:name="LOG INFO : START" doc:id="0b7e3d52-0980-49ec-973f-4d25a0f7a4e4" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;START&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: vars.initialVariables.correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
+        <logger level="INFO" doc:name="LOG INFO : START" doc:id="0b7e3d52-0980-49ec-973f-4d25a0f7a4e4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; event: "START ",&#10; flow: flow.name,&#10; application: app.name,&#10; environment: Mule::p("mule.env"),&#10; timestamp: now(),&#10; correlationId: vars.initialVariables.correlationId,&#10; sourceSystem: "P21",&#10; targetSystem: "APM - Anypoint Partner Manager"&#10;}]' />
         <flow-ref doc:name="Flow Reference To outbound-shipment-processing-subflow" doc:id="3c5eba7e-e8e0-40e5-aac9-ffae5ec2e541" name="outbound-shipment-processing-subflow" />
         <logger level="INFO" doc:name="LOG INFO : END" doc:id="349d2194-54f1-4bc9-83f6-0d655646605d" message="#[%dw 2.0&#xA;output application/json&#xA;---&#xA;{&#xA; event: &quot;END&quot;,&#xA; flow: flow.name,&#xA; application: app.name,&#xA; environment: Mule::p(&quot;mule.env&quot;),&#xA; timestamp: now(),&#xA; correlationId: correlationId,&#xA; sourceSystem: &quot;P21&quot;,&#xA; targetSystem: &quot;APM - Anypoint Partner Manager&quot;&#xA;}]" />
     </flow>

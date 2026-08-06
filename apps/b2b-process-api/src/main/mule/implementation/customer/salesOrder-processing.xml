@@ -256,7 +256,7 @@ var itemData= vars.initialPayload flatMap (order) ->
 				</ee:transform>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="LOG INFO : customer Item Validation" doc:id="4d1c66ca-6b99-4f3a-bfd7-499eff11864d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message: "",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21",&#10;	&#10;}]' />
+				<logger level="INFO" doc:name="LOG INFO : customer Item Validation" doc:id="4d1c66ca-6b99-4f3a-bfd7-499eff11864d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message: "Customer item id found for all or some buyer part number",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21",&#10;	&#10;}]' />
 				<ee:transform doc:name="var: httpOperation" doc:id="eb9a9296-3190-4e32-8530-539c5e8d8a95">
 			<ee:message>
 			</ee:message>
@@ -303,7 +303,7 @@ output application/json
 				</async>
 			</when>
 			<otherwise>
-				<logger level="INFO" doc:name="LOG INFO :  Price Match Sccucess" doc:id="2efd245d-291e-4f13-9011-d52b0fee8308" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "PRICE_MATCH_SUCCESS",&#10;//	message : "All PO lines matched P21 pricing and items successfully. No CSR review required.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
+				<logger level="INFO" doc:name="LOG INFO :  Price Match Sccucess" doc:id="2efd245d-291e-4f13-9011-d52b0fee8308" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "PRICE_MATCH_SUCCESS",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
 			</otherwise>
 		</choice>
 		<flow-ref doc:name="Flow Reference To get-email-view-subflow" doc:id="11a409d1-2084-4838-8a29-80c44df57127" name="get-email-view-subflow" target="emailView" />
@@ -378,9 +378,8 @@ var data = {
             "P21 Processing Completed Successfully",
 
  
-    companyName:
-        vars.purchaseOrderData.value.company_no[0]
-            default "N/A",
+    companyName:     (vars.salesOrderLookUpData[0].company_id default "N/A"),
+
  
     vendorName:
         vendorId,
@@ -421,7 +420,7 @@ var data = {
         upper(p("mule.env") default "DEV"),
  
     message:
-        "Invoice for Purchase Order "
+        "Purchase Order "
         ++ poNumber
         ++ " has been processed successfully in P21.",
  
