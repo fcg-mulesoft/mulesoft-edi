@@ -378,9 +378,8 @@ var data = {
             "P21 Processing Completed Successfully",
 
  
-    companyName:
-        vars.purchaseOrderData.value.company_no[0]
-            default "N/A",
+    companyName:     (vars.salesOrderLookUpData[0].company_id default "N/A"),
+
  
     vendorName:
         vendorId,
@@ -421,7 +420,7 @@ var data = {
         upper(p("mule.env") default "DEV"),
  
     message:
-        "Invoice for Purchase Order "
+        "Purchase Order "
         ++ poNumber
         ++ " has been processed successfully in P21.",
  
