@@ -1,16 +1,7 @@
 %dw 2.0
 output application/json
 import toBase64 from dw::core::Binaries
-var objectStorePayload = vars.invoiceTimeStamp
-var modifiedTime =
-    if (isEmpty(objectStorePayload))
-        (((now() - |PT168H|) >> "UTC") as String {
-            format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-        })
-    else
-        (((objectStorePayload as DateTime) >> "UTC") as String {
-            format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-        })
+var modifiedTime = vars.invoiceTimeStamp
 ---
 {
 	"method": Mule::p('b2b-p21-sys-api.view.method'),

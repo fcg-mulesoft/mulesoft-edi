@@ -1,22 +1,33 @@
 %dw 2.0
 output application/json
-
 var poHeader   = vars.purchaseOrderData.value[0]
-
+var poLines    = vars.purchaseOrderData.value default []
 var b2bMessage = vars.initialPayload[0].b2bMessage
 var b2bHeader  = b2bMessage.header
 var b2bSummary = b2bMessage.summary
 var itemLines  = b2bMessage.detail.invoice.itemDetails
-
 fun edit(name: String, value: Any) = {
     "Name"          : name,
     "Value"         : (value default "") as String,
     "IgnoreIfEmpty" : true
 }
-
 fun formatDate(isoDate: String): String =
     isoDate[0 to 9] as Date { format: "yyyy-MM-dd" } as String { format: "MM/dd/yyyy" }
-
+fun first(v) = if (v is Array and sizeOf(v) > 0) v[0] else v
+fun findPoLineItemId(lineNo: Any): Any = do {
+    var targetLine = (first(lineNo) default "") as String
+    var poMatch = poLines filter ((line) -> ((line.line_no default "") as String) == targetLine)
+    ---
+    if (sizeOf(poMatch) > 0) poMatch[0].item_id else null
+}
+fun resolveItemId(item: Object): Any = do {
+    var buyerPart = first(item.buyerPartNo)
+    ---
+    if (!isEmpty(buyerPart default ""))
+        buyerPart
+    else
+        findPoLineItemId(item.lineNo)
+}
 ---
 {
     "Name"           : "VendorInvoice",
@@ -58,12 +69,11 @@ fun formatDate(isoDate: String): String =
                             edit("line_no",          item.lineNo),
                             edit("c_select_flag",    "Y"),
                             edit("c_qty_to_invoice", item.qtyInvoiced),
-                            edit("item_id",          item.vendorPartNo)
+                            edit("item_id",          resolveItemId(item))
                         ],
                         "RelativeDateEdits": []
                     }
                 }
-
             ],
             "Documents": null
         }

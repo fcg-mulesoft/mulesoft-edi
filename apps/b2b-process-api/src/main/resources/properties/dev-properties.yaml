@@ -107,7 +107,7 @@ partner:
     "960163954IDXT": "VANTAGE"
     "default": "N/A"
   outbound:
-    "960163954IDX": "VANTAGE"
+    "960163954IDXT": "VANTAGE"
     "1631404318T": "FESTO"
     "default": "N/A"
 

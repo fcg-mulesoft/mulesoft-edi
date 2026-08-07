@@ -1,6 +1,13 @@
 %dw 2.0
 output application/json
-var invoiceItems = vars.invoiceData.value groupBy ($.invoice_no ++ "_" ++ $.order_no)
+var filteredRecords =
+    vars.invoiceData.value
+        filter ((item) ->
+            (item.date_last_modified as DateTime) >= vars.httpOperation.queryParams.lastModified
+        )
+var invoiceItems =
+    filteredRecords groupBy ($.invoice_no ++ "_" ++ $.order_no)
+    
 ---
 invoiceItems pluck ((items, invoiceNo) -> {
 	b2bMessage: {
