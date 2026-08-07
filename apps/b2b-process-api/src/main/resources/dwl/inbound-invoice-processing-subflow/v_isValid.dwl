@@ -177,7 +177,7 @@ var safeComp0 = comparison[0] default {}
 var itemErrors = (comparison map (line) -> do {
     var errs =
       if (isMismatch(line.supplier_part_no.match))
-        ["Supplier part number not found in P21"]
+        ["Vendor part number not found in P21"]
       else
         flatten([
           if (isMismatch(line.qty_ordered.match)) ["Invoiced quantity exceeds received amount"] else [],
