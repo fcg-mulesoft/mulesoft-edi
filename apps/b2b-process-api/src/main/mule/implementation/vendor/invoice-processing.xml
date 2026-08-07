@@ -44,16 +44,16 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<ee:set-variable resource="dwl/inbound-invoice-processing-subflow/v_httpOperationPostInvoice.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
-		<!-- [STUDIO:"Flow Reference To commom-http-request-subflow"]<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" /> [STUDIO] -->
+		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" />
 		<logger level="INFO" doc:name="LOG INFO : P21 Response Payload" doc:id="b58c0223-9472-440d-bae4-b40e566691d1" message='#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;{&#10;	"Message": "P21 Response Payload After Invoice Creation",&#10;	"Payload": payload&#10;}]'/>
-		<!-- [STUDIO:"is Successful?"]<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b" >
-			<when expression='#[payload."TransactionSetResult"."Summary"."Failed" != "0"&#93;'>
-				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="cf33fd6d-514a-40df-8113-45bedd343499" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"&#93;'/>
+		<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b" >
+			<when expression='#[payload."TransactionSetResult"."Summary"."Failed" != "0"]'>
+				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="cf33fd6d-514a-40df-8113-45bedd343499" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"]'/>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="LOG INFO : InvoiceCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;&#45;&#45;-&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0&#93;.b2bMessage.header.transmissionId default "",&#10;	"message": "Invoice Creation Successful"&#10;}&#93;'/>
+				<logger level="INFO" doc:name="LOG INFO : InvoiceCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Invoice Creation Successful"&#10;}]'/>
 			</otherwise>
-		</choice> [STUDIO] -->
+		</choice>
 		<choice doc:name="Send Shipment Address Warning Email?" doc:id="74f2d4e7-a8cf-4a84-9bc1-51f0b9c52a20" >
 			<when expression="#[(vars.isValid.validationErrors.shipToNameMatchPercentage &gt;= ((Mule::p('shipToValidation.lowerLimit')) as Number) and vars.isValid.validationErrors.shipToNameMatchPercentage &lt;=((Mule::p('shipToValidation.upperLimit')) as Number))&#10;or&#10;(vars.isValid.validationErrors.shipToAddressMatchPercentage &gt;= ((Mule::p('shipToValidation.lowerLimit')) as Number) and vars.isValid.validationErrors.shipToAddressMatchPercentage &lt;=((Mule::p('shipToValidation.upperLimit')) as Number))]">
 				<ee:transform doc:name="Prepare Warning Email Payload, var : subject" doc:id="3de95ddf-6440-4783-91d0-c609384b4a26">
