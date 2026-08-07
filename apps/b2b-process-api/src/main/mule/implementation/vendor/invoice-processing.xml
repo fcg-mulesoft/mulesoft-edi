@@ -6,6 +6,7 @@
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<sub-flow name="inbound-invoice-processing-subflow" doc:id="0f3b0ec8-ab83-4254-a92f-ce1b7e4e5fca" >
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="f3eaae67-8060-4585-9b21-8949893def16" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
+		<flow-ref doc:name="Flow Reference" doc:id="0d3cac58-dffa-4c24-8888-f27ed40d3784" name="get-email-view-subflow"/>
 		<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="0f587fa5-6fc6-4c33-aa38-3c2478ca3fe8" >
 			<ee:message >
 			</ee:message>
@@ -23,7 +24,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</ee:variables>
 		</ee:transform>
 		<choice doc:name="isValid Invoice?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
-			<when expression="#[vars.isValid.isValid == false or (vars.isValid.validationErrors.shipToMatchPercentage &lt; ((Mule::p('shipToValidation.lowerLimit')) as Number))]">
+			<when expression="#[vars.isValid.isValid == false&#10;&#10;or vars.isValid.validationErrors.shipToNameMatchPercentage &lt; (Mule::p('shipToValidation.lowerLimit') as Number)&#10;&#10;or vars.isValid.validationErrors.shipToAddressMatchPercentage &lt; (Mule::p('shipToValidation.lowerLimit') as Number)]">
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="7ead687f-13fd-40c6-87a7-c586405347d4" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
 			</when>
 			<otherwise>
@@ -43,80 +44,165 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<ee:set-variable resource="dwl/inbound-invoice-processing-subflow/v_httpOperationPostInvoice.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" />
+		<!-- [STUDIO:"Flow Reference To commom-http-request-subflow"]<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" /> [STUDIO] -->
 		<logger level="INFO" doc:name="LOG INFO : P21 Response Payload" doc:id="b58c0223-9472-440d-bae4-b40e566691d1" message='#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;{&#10;	"Message": "P21 Response Payload After Invoice Creation",&#10;	"Payload": payload&#10;}]'/>
-		<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b" >
-			<when expression='#[payload."TransactionSetResult"."Summary"."Failed" != "0"]'>
-				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="cf33fd6d-514a-40df-8113-45bedd343499" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"]'/>
+		<!-- [STUDIO:"is Successful?"]<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b" >
+			<when expression='#[payload."TransactionSetResult"."Summary"."Failed" != "0"&#93;'>
+				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="cf33fd6d-514a-40df-8113-45bedd343499" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"&#93;'/>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="LOG INFO : InvoiceCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Invoice Creation Successful"&#10;}]'/>
+				<logger level="INFO" doc:name="LOG INFO : InvoiceCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;&#45;&#45;-&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0&#93;.b2bMessage.header.transmissionId default "",&#10;	"message": "Invoice Creation Successful"&#10;}&#93;'/>
 			</otherwise>
-		</choice>
+		</choice> [STUDIO] -->
 		<choice doc:name="Send Shipment Address Warning Email?" doc:id="74f2d4e7-a8cf-4a84-9bc1-51f0b9c52a20" >
-			<when expression="#[(vars.isValid.validationErrors.shipToMatchPercentage &gt;= ((Mule::p('shipToValidation.lowerLimit')) as Number) and vars.isValid.validationErrors.shipToMatchPercentage &lt;=((Mule::p('shipToValidation.upperLimit')) as Number))]">
+			<when expression="#[(vars.isValid.validationErrors.shipToNameMatchPercentage &gt;= ((Mule::p('shipToValidation.lowerLimit')) as Number) and vars.isValid.validationErrors.shipToNameMatchPercentage &lt;=((Mule::p('shipToValidation.upperLimit')) as Number))&#10;or&#10;(vars.isValid.validationErrors.shipToAddressMatchPercentage &gt;= ((Mule::p('shipToValidation.lowerLimit')) as Number) and vars.isValid.validationErrors.shipToAddressMatchPercentage &lt;=((Mule::p('shipToValidation.upperLimit')) as Number))]">
 				<ee:transform doc:name="Prepare Warning Email Payload, var : subject" doc:id="3de95ddf-6440-4783-91d0-c609384b4a26">
 			<ee:message>
-				<ee:set-payload><![CDATA[
-%dw 2.0
+				<ee:set-payload><![CDATA[%dw 2.0
 output text/plain
-
-fun safe(v,d="N/A") = if (v == null or (v is String and trim(v) == "")) d else v
-
+ 
+fun safe(v, d = "N/A") =
+    if (v == null or (v is String and trim(v) == "")) d else v
+ 
 var integration = vars.integration default vars.initialVariables default {}
-var sysInfo = vars.systemInformation default {}
 var cdm = (vars.initialPayload default [])[0].b2bMessage default {}
 var header = cdm.header default {}
-
+ 
 var senderKey = header.senderId default ""
+ 
 var vendorId =
     if (senderKey != "")
         (p("partner.inbound." ++ senderKey)
-         default p("partner.outbound." ++ senderKey)
-         default "N/A")
-    else "N/A"
-
+            default p("partner.outbound." ++ senderKey)
+            default "N/A")
+    else
+        "N/A"
+ 
 var poNumber = safe(header.poNumber)
-var percentage =
-    vars.isValid.validationErrors.shipToMatchPercentage
-    default vars.isValid.validationErrors.shipToMatchPercentage
-    default null
-
+ 
+var namePercentage =
+    vars.isValid.validationErrors.shipToNameMatchPercentage default null
+ 
+var addressPercentage =
+    vars.isValid.validationErrors.shipToAddressMatchPercentage default null
+ 
+var lowerLimit =
+    (Mule::p("shipToValidation.lowerLimit") as Number)
+ 
+var upperLimit =
+    (Mule::p("shipToValidation.upperLimit") as Number)
+ 
 var data = {
-	matchPercentage: (percentage as Number) as String {format: "00.00"} ++ "%",
-    flowDirection: if(lower(safe(integration.source,"APM"))=="apm") "INBOUND" else "OUTBOUND",
-    documentType: safe(integration."integration-type", safe(header.documentType,"API")),
-    warningTitle: "Address Match Warning",
+    lowerLimit: lowerLimit as String,
+    upperLimit: upperLimit as String,
+ 
+    shipToNameMatchPercentage:
+        if (namePercentage != null)
+            ((namePercentage as Number) as String {format: "00.00"}) ++ "%"
+        else
+            "N/A",
+ 
+    shipToAddressMatchPercentage:
+        if (addressPercentage != null)
+            ((addressPercentage as Number) as String {format: "00.00"}) ++ "%"
+        else
+            "N/A",
+ 
+    flowDirection:
+        if (lower(safe(integration.source, "APM")) == "apm")
+            "INBOUND"
+        else
+            "OUTBOUND",
+ 
+    documentType:
+        safe(integration."integration-type", safe(header.documentType, "API")),
+ 
+    warningTitle: "Ship-To Validation Warning",
+ 
     bannerColor: "#f59e0b",
-    warningType: "ADDRESS_MATCH_WARNING",
-    warningCategory: "VALIDATION",
+ 
+    warningType: "SHIP_TO_VALIDATION_WARNING",
+ 
+    warningCategory: "SHIP_TO_VALIDATION",
+ 
     status: "PROCESSED WITH WARNING",
-    companyName: vars.purchaseOrderData.value.company_no[0] default "N/A",
-    vendorName: vendorId,
-    route: safe(integration.source,"APM") ++ " → Mule → " ++ safe(integration.target,"P21"),
-    businessKey: "PO " ++ poNumber,
-    timestamp: now() as String {format:"yyyy-MM-dd HH:mm:ss"},
-    transmissionId: safe(header.transmissionId),
-    keyLabel: "Correlation ID",
-    key: correlationId default uuid(),
-    transactionType: safe(integration."integration-type", safe(header.documentType,"API")),
-    appName: p("api.name") default "Mule Application",
-    environment: upper(p("mule.env") default "DEV"),
+ 
+    companyName:
+        vars.purchaseOrderData.value.company_no[0] default "N/A",
+ 
+    vendorName:
+        vendorId,
+ 
+    route:
+        safe(integration.source, "APM")
+        ++ " → Mule → "
+        ++ safe(integration.target, "P21"),
+ 
+    businessKey:
+        "PO " ++ poNumber,
+ 
+    timestamp:
+        now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+ 
+    transmissionId:
+        safe(header.transmissionId),
+ 
+    keyLabel:
+        "Correlation ID",
+ 
+    key:
+        correlationId default uuid(),
+ 
+    transactionType:
+        safe(integration."integration-type", safe(header.documentType, "API")),
+ 
+    appName:
+        p("api.name") default "Mule Application",
+ 
+    environment:
+        upper(p("mule.env") default "DEV"),
+ 
     message:
-        "Purchase Order " ++ poNumber ++ " was processed successfully with a warning.",
+        "Purchase Order "
+        ++ poNumber
+        ++ " was processed successfully with a warning.",
+ 
     warningDescription:
-        "The Ship-To address matched "
-        ++ (((percentage as Number) as String {format: "00.00"} default "N/A") as String)
-        ++ "% with the corresponding address in P21."
-        ++ "\nThe transaction was processed because the configured warning threshold is between " ++ Mule::p('shipToValidation.lowerLimit') ++ "%" ++ "and" ++ Mule::p('shipToValidation.upperLimit') ++ "%.",
+        "Ship-To validation results:"
+        ++ "\n• Ship-To Name Match Percentage: "
+        ++ (
+            if (namePercentage != null)
+                ((namePercentage as Number) as String {format: "00.00"})
+            else
+                "N/A"
+        )
+        ++ "%"
+        ++ "\n• Ship-To Address Match Percentage: "
+        ++ (
+            if (addressPercentage != null)
+                ((addressPercentage as Number) as String {format: "00.00"})
+            else
+                "N/A"
+        )
+        ++ "%"
+        ++ "\n\nThe transaction was processed because one or more Ship-To validation match percentages fell within the configured warning threshold range of "
+        ++ (lowerLimit as String)
+        ++ "% and "
+        ++ (upperLimit as String)
+        ++ "%.",
+ 
     warningResolution:
-        "No action is required. Please review the Ship-To address if necessary."
+        "No action is required. Please review the Ship-To Name and Ship-To Address information if necessary."
 }
-
-var template = readUrl("classpath://templates/warning-template.html","text/plain")
+ 
+var template =
+    readUrl(
+        "classpath://templates/warning-template.html",
+        "text/plain"
+    )
+ 
 ---
-template replace /\$\{(\w+)\}/ with ((m) -> (data[m[1]] as String) default "")
-]]></ee:set-payload>
+template replace /\$\{(\w+)\}/ with ((m) -> (data[m[1]] as String) default "")]]></ee:set-payload>
 			</ee:message>
 					<ee:variables >
 						<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
@@ -133,21 +219,13 @@ var poNumber =
     vars.initialPayload[0].b2bMessage.header.poNumber
         default "N/A"
  
-var matchPercentage =
-    vars.validationResult.validationErrors.shipToMatchPercentage
-        default vars.isValid.validationErrors.shipToMatchPercentage
-        default null
  
 ---
 [
     env,
     "FCG WARNING",
     integrationType,
-    "PO " ++ poNumber,
-    if (matchPercentage != null)
-        "Address Match " ++ ((matchPercentage as Number) as String {format: "##.##"}) ++ "%"
-    else
-        null
+    "PO " ++ poNumber
 ]
     filter ($ != null and $ != "")
     joinBy " | "]]></ee:set-variable>
