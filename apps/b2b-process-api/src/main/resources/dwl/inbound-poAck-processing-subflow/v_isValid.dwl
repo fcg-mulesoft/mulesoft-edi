@@ -2,7 +2,6 @@
 output application/json
 var DEBUG = true
 
-// ============ helpers ============
 fun hasValue(v) = v != null and (v is String and trim(v) != "" or !(v is String))
 fun norm(v) =
     if (v is String)
@@ -12,20 +11,22 @@ fun norm(v) =
     else
         ""
 fun isMatch(a, b) = hasValue(a) and hasValue(b) and (norm(a) == norm(b))
-fun normalizeAddress(address) =
-    if (!hasValue(address))
+fun normalizeWords(text) =
+    if (!hasValue(text))
         []
     else
-        upper(trim((address as String))) splitBy /\s+/
-fun addressMatchPercentage(a, b) =
+        upper(trim((text as String))) splitBy /\s+/
+fun wordMatchPercentage(a, b) =
     do {
-        var words1 = normalizeAddress(a)
-        var words2 = normalizeAddress(b)
+        var words1 = normalizeWords(a)
+        var words2 = normalizeWords(b)
         var matchedWords = sizeOf(words1 filter (word) -> words2 contains word)
         var totalWords = max([sizeOf(words1), sizeOf(words2)])
         ---
         if (totalWords == 0) 0 else (matchedWords * 100.0) / totalWords
     }
+fun addressMatchPercentage(a, b) = wordMatchPercentage(a, b)
+fun nameMatchPercentage(a, b) = wordMatchPercentage(a, b)
 fun isMismatch(v) = !(v default false)
 fun first(v) = if (v is Array and sizeOf(v) > 0) v[0] else v
 fun toNumber(v) = if (v is Array) (v[0] default null) else v
@@ -46,7 +47,6 @@ fun isPriceMatch(a, b) =
         abs((toNumber(a) default 0) - (toNumber(b) default 0)) <= 0.01
 fun lineKey(v) = if (hasValue(v)) (v as String) else "UNKNOWN_LINE"
 
-// ============ top-level source presence checks ============
 var payloadMissing = (payload == null or (payload is Array and sizeOf(payload) == 0))
 var root = if (payloadMissing) {} else payload[0] default {}
 var b2bMessage = root.b2bMessage default {}
@@ -68,7 +68,6 @@ var sourceErrors =
         if (odataLinesMissing) ["P21 PO OData response contains no line items"] else []
     ])
 
-// ============ ship to ============
 var partyInfo = header.partyInformation default []
 var shipToRaw = (partyInfo filter ($.qualifier == "ST"))[0]
 var shipToMissing = (shipToRaw == null)
@@ -83,23 +82,42 @@ var shipTo = {
 var firstOdataLine = odataLines[0]
 var firstOdataLineMissing = (firstOdataLine == null)
 
-// ============ line matching (fixed: item_id primary key, supplier_part_no fallback) ============
-fun matchLine(buyerPart, vendorPart, odataLines) =
+fun matchLine(buyerPart, vendorPart, lineNo, odataLines) =
     do {
+        var identityValidated = hasValue(buyerPart)
+
         var byItem =
-            if (hasValue(buyerPart))
+            if (identityValidated)
                 (odataLines filter (norm($.item_id) == norm(buyerPart)))[0]
             else
                 null
+
         var bySupplier =
-            if (byItem == null and hasValue(vendorPart))
+            if (identityValidated and byItem == null and hasValue(vendorPart))
                 (odataLines filter (norm($.supplier_part_no) == norm(vendorPart)))[0]
             else
                 null
+
+        var byVendorAndLine =
+            if (!identityValidated and hasValue(vendorPart) and hasValue(lineNo))
+                (odataLines filter (
+                    (norm($.supplier_part_no) == norm(vendorPart))
+                    and (norm($.line_no) == norm(lineNo))
+                ))[0]
+            else
+                null
+
+        var matched = byItem default (bySupplier default byVendorAndLine)
+        var matchedBy =
+            if (byItem != null) "item_id"
+            else if (bySupplier != null) "supplier_part_no"
+            else if (byVendorAndLine != null) "supplier_part_no+line_no"
+            else "none"
         ---
         {
-            matched: byItem default bySupplier,
-            matchedBy: if (byItem != null) "item_id" else if (bySupplier != null) "supplier_part_no" else "none"
+            matched: matched,
+            matchedBy: matchedBy,
+            identityValidated: identityValidated
         }
     }
 
@@ -110,10 +128,11 @@ var comparison =
             var buyerPart = first(line.buyerPartNo)
             var vendorPart = first(line.vendorPartNo)
 
-            var matchResult = matchLine(buyerPart, vendorPart, odataLines)
+            var matchResult = matchLine(buyerPart, vendorPart, lineNo, odataLines)
             var matched = matchResult.matched
             var isFound = (matched != null)
             var m = matched default {}
+            var identityValidated = matchResult.identityValidated
 
             var orderedQty = toNumber(line.quantityOrdered)
             var receivedQty = m.qty_received
@@ -122,7 +141,6 @@ var comparison =
             var odataPrice = m.unit_price
             var addressPercentage = addressMatchPercentage(shipTo.address1, m.ship2_add1)
 
-            // per-field presence flags, only meaningful when a PO line was found
             var missingFields =
                 if (!isFound)
                     []
@@ -149,7 +167,13 @@ var comparison =
                 supplier_part_no: {
                     original: vendorPart,
                     odata: m.supplier_part_no,
-                    match: if (!isFound or !hasValue(m.supplier_part_no)) false else isMatch(vendorPart, m.supplier_part_no)
+                    match:
+                        if (!isFound or !hasValue(m.supplier_part_no))
+                            false
+                        else if (!identityValidated)
+                            true
+                        else
+                            isMatch(vendorPart, m.supplier_part_no)
                 },
                 qty_ordered: {
                     original: orderedQty,
@@ -175,7 +199,7 @@ var comparison =
                         postalCode: m.ship2_zip
                     },
                     match: {
-                        name: isMatch(shipTo.name, m.ship2_name),
+                        name: nameMatchPercentage(shipTo.name, m.ship2_name) >= 50,
                         address1: isMatch(shipTo.address1, m.ship2_add1),
                         city: isMatch(shipTo.city, m.ship2_city),
                         state: isMatch(shipTo.state, m.ship2_state),
@@ -187,7 +211,6 @@ var comparison =
             }
         }
 
-// ============ item-level error rollup ============
 var itemErrors =
     (comparison map (line) -> {
         (lineKey(line.lineNo)):
@@ -214,7 +237,6 @@ var itemErrors =
     reduce ((item, acc = {}) -> acc ++ item)
     filterObject (sizeOf($) > 0)
 
-// ============ ship-to error rollup ============
 var shipToErrors =
     if (shipToMissing)
         ["Ship To (ST) party information missing in EDI header"]
@@ -222,11 +244,11 @@ var shipToErrors =
         ["Cannot validate Ship To — no PO line data available from P21"]
     else
         flatten([
-            if (isMismatch(isMatch(shipTo.name, firstOdataLine.ship2_name)))
+            if (nameMatchPercentage(shipTo.name, firstOdataLine.ship2_name) < 50)
                 ["ShipTo Name mismatch"]
             else
                 [],
-            if (addressMatchPercentage(shipTo.address1, firstOdataLine.ship2_add1) < ((Mule::p('shipToValidation.lowerLimit')) as Number))
+            if (addressMatchPercentage(shipTo.address1, firstOdataLine.ship2_add1) < 50)
                 ["ShipTo Address1 mismatch"]
             else
                 [],
@@ -246,11 +268,18 @@ var shipToErrors =
 
 var itemErrorList = flatten(valuesOf(itemErrors))
 var errorCount = sizeOf(itemErrorList) + sizeOf(shipToErrors) + sizeOf(sourceErrors)
-var shipToMatchPct =
+
+var shipToAddressMatchPct =
     if (shipToMissing or firstOdataLineMissing)
         0
     else
         addressMatchPercentage(shipTo.address1, firstOdataLine.ship2_add1)
+
+var shipToNameMatchPct =
+    if (shipToMissing or firstOdataLineMissing)
+        0
+    else
+        nameMatchPercentage(shipTo.name, firstOdataLine.ship2_name)
 ---
 {
     debug:
@@ -258,7 +287,8 @@ var shipToMatchPct =
             {
                 comparison: comparison,
                 errorCount: errorCount,
-                shipToMatchPercentage: shipToMatchPct
+                shipToAddressMatchPercentage: shipToAddressMatchPct,
+                shipToNameMatchPercentage: shipToNameMatchPct
             }
         else
             null,
@@ -267,7 +297,8 @@ var shipToMatchPct =
     validationErrors: {
         itemErrors: itemErrors,
         shipToErrors: shipToErrors,
-        shipToMatchPercentage: shipToMatchPct,
+        shipToAddressMatchPercentage: shipToAddressMatchPct,
+        shipToNameMatchPercentage: shipToNameMatchPct,
         carrierErrors: [],
         externalPoErrors: [],
         customerPartErrors: []

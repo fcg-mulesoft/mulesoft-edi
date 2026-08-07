@@ -139,6 +139,24 @@ import toBase64 from dw::core::Binaries
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d0f77aaa-dae3-4974-9f53-7bcaf573cc4b" name="common-http-request-subflow" target="customerItemValidationResponse" targetValue="#[payload.value]"/>
+		<ee:transform doc:name="vars: missingCustomerItemIds" doc:id="6f38d48b-ca76-4d2c-80e6-732c8f8d0fbc" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="missingCustomerItemIds" ><![CDATA[%dw 2.0
+output application/json
+
+var p21ItemIds =
+    vars.customerItemValidationResponse map (item) -> item.their_item_id
+
+var payloadItemIds =
+    (vars.initialPayload flatMap (x) -> x.b2bMessage.detail.itemDetails)
+        map (item) -> item.buyersPartNumber
+
+---
+payloadItemIds filter (itemId) -> !(p21ItemIds contains itemId)]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 		<choice doc:name="is customerItemValidationResponse Empty" doc:id="c36df86d-20ec-40d2-9c11-135dd86dd0b5" >
 			<when expression="#[isEmpty(vars.customerItemValidationResponse)]">
 				<ee:transform doc:name="var : customerItemValidationResponse" doc:id="fc6736a5-0266-471c-be29-9afc080f1933" >
