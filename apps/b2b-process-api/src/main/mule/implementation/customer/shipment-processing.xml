@@ -61,7 +61,7 @@ import toBase64 from dw::core::Binaries
 			<os:default-value><![CDATA[#[%dw 2.0
 output application/json
 ---
-(now() - |P1D|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
+(now() - |PT1H|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
 		</os:retrieve>
 				<ee:transform doc:name="var : httpOperation - get shipment Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2">
 			<ee:message />
