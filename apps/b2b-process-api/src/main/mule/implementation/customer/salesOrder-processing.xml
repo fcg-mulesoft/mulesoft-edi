@@ -68,6 +68,7 @@ var hasInvalidEdiXref = isEmpty(response)
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
+		<logger level="INFO" doc:name="isValid" doc:id="4540d2e6-8ba6-4a7d-98e7-32190c49cf3e" message='#[output json&#10;---&#10;{&#10;	"step" :"XRefId Validation",&#10;	"inputFileXrefId" : (payload[0].b2bMessage.header.partyInformation&#10;    filter ($.qualifier == "ST"))[0].identificationCode default "" ,&#10;    "isValid" : vars.isValid&#10;}]'/>
 		<choice doc:name="Is EDI XRef Valid?" doc:id="61b7e6df-ee78-49bc-aa9e-a5e3f4572590" >
 			<when expression="#[vars.isValid.isValid != true]">
 				<logger level="INFO" doc:name="LOG INFO : invalid PurchaseOrder" doc:id="a71b6ad5-e657-484c-9672-ac39528c8f40" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message: "EDI X-Reference Validation failed. Invalid EDI Reference ID for the given Company ID. Stopping process.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
@@ -92,6 +93,7 @@ var hasInvalidEdiXref = isEmpty(response)
 				<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_isValidDuplicatePoCheck.dwl" variableName="isValid" />
 			</ee:variables>
 		</ee:transform>
+		<logger level="INFO" doc:name="isValid" doc:id="827a77cf-6eb2-429f-aaa0-de6ea2ab2d68" message='#[output json&#10;---&#10;{&#10;	"step" :"Po duplicate Validation",&#10;    "isValid" : vars.isValid&#10;}]'/>
 		<choice doc:name="Is PO Duplicate?" doc:id="1fe107bd-2165-4afa-99bc-57c020e660ce" >
 			<when expression="#[vars.isValid.isValid != true]" >
 				<logger level="INFO" doc:name="LOG INFO : invalid PurchaseOrder" doc:id="c728d8dd-d54e-4f96-81f5-6305163fd972" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message : "Duplicate check failed. The incoming Purchase Order already exists in the system. Stopping process.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
@@ -322,6 +324,162 @@ output application/json
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="LOG INFO :  Price Match Sccucess" doc:id="2efd245d-291e-4f13-9011-d52b0fee8308" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "PRICE_MATCH_SUCCESS",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
+			</otherwise>
+		</choice>
+		<choice doc:name="Check for missingCustomerItemIds" doc:id="e5b2e41b-656c-47c2-9d08-9353bb51814f">
+			<when expression="#[!isEmpty(vars.missingCustomerItemIds)]">
+				<ee:transform doc:name="Prepare Warning Email Payload" doc:id="6dd3e410-dbb7-49ae-abea-59927057f0f9" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+ 
+fun safe(v, d = "N/A") =
+    if (v == null or (v is String and trim(v) == "")) d else v
+ 
+var integration = vars.integration default vars.initialVariables default {}
+var cdm = (vars.initialPayload default [])[0].b2bMessage default {}
+var header = cdm.header default {}
+ 
+var senderKey = header.senderId default ""
+ 
+var vendorId =
+    if (senderKey != "")
+        (
+            p("partner.inbound." ++ senderKey)
+            default p("partner.outbound." ++ senderKey)
+            default "N/A"
+        )
+    else
+        "N/A"
+ 
+var poNumber = safe(header.poNumber)
+ 
+ 
+var missingCustomerItemIds = 
+    (vars.missingCustomerItemIds map ((id) ->
+        "<li>" ++ id ++ "</li>"
+    )) joinBy ""
+ 
+var defaultItemId =
+    p("customer.default.itemId") default "DEFAULT"
+ 
+var data = {
+ 
+    flowDirection:
+        if (lower(safe(integration.source, "APM")) == "apm")
+            "INBOUND"
+        else
+            "OUTBOUND",
+ 
+    documentType:
+        safe(integration."integration-type", safe(header.documentType, "API")),
+ 
+    warningTitle:
+        "Missing Customer Item IDs",
+ 
+    bannerColor:
+        "#f59e0b",
+ 
+    warningType:
+        "MISSING_CUSTOMER_ITEM_IDS",
+ 
+    warningCategory:
+        "CUSTOMER_ITEM_MAPPING",
+ 
+    status:
+        "PROCESSED WITH WARNING",
+ 
+    companyName:
+        vars.purchaseOrderData.value.company_no[0] default "N/A",
+ 
+    vendorName:
+        vendorId,
+ 
+    route:
+        safe(integration.source, "APM")
+            ++ " → Mule → "
+            ++ safe(integration.target, "P21"),
+ 
+    businessKey:
+        "PO " ++ poNumber,
+ 
+    timestamp:
+        now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+ 
+    transmissionId:
+        safe(header.transmissionId),
+ 
+    keyLabel:
+        "Correlation ID",
+ 
+    key:
+        correlationId default uuid(),
+ 
+    transactionType:
+        safe(integration."integration-type", safe(header.documentType, "API")),
+ 
+    appName:
+        p("api.name") default "Mule Application",
+ 
+    environment:
+        upper(p("mule.env") default "DEV"),
+ 
+    message:
+        "Purchase Order "
+            ++ poNumber
+            ++ " was processed successfully with warning(s).",
+ 
+    defaultItemId:
+        defaultItemId,
+ 
+    missingCustomerItemIds: missingCustomerItemIds,
+    missingItemCount:
+        sizeOf(missingCustomerItemIds) as String,
+ 
+    warningDescription:
+        "The following Customer Item IDs were not found in the configured cross-reference mapping and were processed using the default Item ID ("
+            ++ defaultItemId
+            ++ ").",
+ 
+    warningResolution:
+        "Please update the Customer Item cross-reference mapping to avoid using the default Item ID in future transactions."
+}
+ 
+var template =
+    readUrl(
+        "classpath://templates/missing-customer-item-warning-template.html",
+        "text/plain"
+    )
+ 
+---
+template replace /\$\{(\w+)\}/ with ((m) -> (data[m[1]] as String) default "")]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
+output application/json
+ 
+var env = upper(p("mule.env"))
+ 
+var integrationType =
+    vars.integration."integration-type"
+        default vars.initialVariables."integration-type"
+        default "Transaction"
+ 
+---
+[
+    env,
+    "FCG WARNING",
+    "Missing Customer Item IDs",
+    integrationType
+]
+filter ($ != null and $ != "")
+joinBy " | "]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference To send-email-subflow" doc:id="d5678af4-699c-4eec-946f-9d11aba675e5" name="send-email-subflow" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO :  No Missing Customer Item Ids " doc:id="1161e1a3-e02d-4a83-b13c-ec26a4e0adc7" message='#[{&#10;	flow: flow.name,&#10;	Message: "No Missing Customer Item Ids",&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now()&#10;	&#10;}]'/>
 			</otherwise>
 		</choice>
 		<flow-ref doc:name="Flow Reference To get-email-view-subflow" doc:id="11a409d1-2084-4838-8a29-80c44df57127" name="get-email-view-subflow" target="emailView" />
