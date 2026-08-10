@@ -35,7 +35,7 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
             </email:properties>
         </email:smtp-connection>
     </email:smtp-config>
-	<os:object-store name="Object_store" doc:name="Object store" doc:id="f2a38677-1eeb-47c2-8c6b-87a11cb44897" entryTtl="${objectstore.token.entryTTL}" entryTtlUnit="HOURS" expirationInterval="${objectstore.token.expirationInterval}" expirationIntervalUnit="HOURS" persistent="false" maxEntries="${objectstore.token.maxEntries}"/>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="f2a38677-1eeb-47c2-8c6b-87a11cb44897" entryTtl="${objectstore.token.entryTTL}" entryTtlUnit="HOURS" expirationInterval="${objectstore.token.expirationInterval}" expirationIntervalUnit="HOURS" maxEntries="${objectstore.token.maxEntries}"/>
 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="de023e58-4c44-4b28-b57a-f2cb0bcd465b" flowRef="b2b-process-api-spec-main" />
 
     <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="847f670d-8d9f-4478-8c0b-92f5314af4db">
