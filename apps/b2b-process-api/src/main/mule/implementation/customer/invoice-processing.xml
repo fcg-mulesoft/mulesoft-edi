@@ -19,8 +19,11 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				</ee:transform>
 			</when>
 			<otherwise >
-				<os:retrieve doc:name="InvoiceLastRunTimestamp" doc:id="589e6dea-666d-4387-8ad6-e2b770968166" objectStore="Object_Store_Invoice_Vantage" key="InvoiceLastRunTimestamp" target="invoiceTimeStamp">
-			<os:default-value><![CDATA[#[now() - |PT24H|]]]></os:default-value>
+				<os:retrieve doc:name="InvoiceLastRunTimestamp" doc:id="589e6dea-666d-4387-8ad6-e2b770968166" objectStore="Outbound_Transction_Object_Store" key="InvoiceLastRunTimestamp" target="invoiceTimeStamp">
+					<os:default-value ><![CDATA[#[%dw 2.0
+output application/json
+---
+(now() - |PT1H|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
 		</os:retrieve>
 				<ee:transform doc:name="var : httpOperation - get invoice Data" doc:id="ab0afd4b-e630-49be-b19c-8c64728df459">
 			<ee:message />
@@ -36,7 +39,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<ee:set-payload resource="dwl/outbound-invoice-processing-subflow/p_cdmMapping.dwl" />
 			</ee:message>
 		</ee:transform>
-		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="3ff6576c-9421-4abe-9a7d-db8f1c557e4c" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}" />
+		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="3ff6576c-9421-4abe-9a7d-db8f1c557e4c" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	invoiceMapping: payload&#10;}]' category="${logger.debug.category}" />
 		<parallel-foreach doc:name="Parallel For Each : Iteration over POs" doc:id="abe87cef-3032-4d2e-af52-12ddc1652c48" collection="#[payload]" >
 			<try doc:name="Try" doc:id="9c6d8347-48ac-4d9d-8a60-0110cde43ef2" >
 				<json:validate-schema doc:name="Validate Incoming Payload" doc:id="9a90c357-2d9f-4818-9bbd-e7134b5d2327" schema="schema/INVOICE_OUTBOUND_JSON_SCHEMA.json" />
@@ -81,7 +84,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		</ee:transform>
 		<choice doc:name="Choice" doc:id="8e5eb359-210c-488e-9bee-d60a07c08f57" >
 			<when expression="#[isEmpty(vars.requestParams)]">
-				<os:store doc:name="InvoiceLastRunTimestamp" doc:id="2e22e55b-f7ce-4699-a03d-f9894bb7348f" key="InvoiceLastRunTimestamp" objectStore="Object_Store_Invoice_Vantage">
+				<os:store doc:name="InvoiceLastRunTimestamp" doc:id="2e22e55b-f7ce-4699-a03d-f9894bb7348f" key="InvoiceLastRunTimestamp" objectStore="Outbound_Transction_Object_Store">
 			<os:value><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
 		</os:store>
 			</when>
