@@ -82,42 +82,47 @@ var shipTo = {
 var firstOdataLine = odataLines[0]
 var firstOdataLineMissing = (firstOdataLine == null)
 
+// scenario 1: buyerPart present -> match on item_id
+// scenario 2: buyerPart absent, vendorPart present -> match on line_no + supplier_part_no
+// scenario 3: buyerPart and vendorPart both absent -> match on line_no alone
 fun matchLine(buyerPart, vendorPart, lineNo, odataLines) =
     do {
-        var identityValidated = hasValue(buyerPart)
+        var hasBuyer = hasValue(buyerPart)
+        var hasVendor = hasValue(vendorPart)
+        var hasLine = hasValue(lineNo)
 
         var byItem =
-            if (identityValidated)
+            if (hasBuyer)
                 (odataLines filter (norm($.item_id) == norm(buyerPart)))[0]
             else
                 null
 
-        var bySupplier =
-            if (identityValidated and byItem == null and hasValue(vendorPart))
-                (odataLines filter (norm($.supplier_part_no) == norm(vendorPart)))[0]
-            else
-                null
-
-        var byVendorAndLine =
-            if (!identityValidated and hasValue(vendorPart) and hasValue(lineNo))
+        var byLineAndSupplier =
+            if (byItem == null and hasVendor and hasLine)
                 (odataLines filter (
-                    (norm($.supplier_part_no) == norm(vendorPart))
-                    and (norm($.line_no) == norm(lineNo))
+                    (norm($.line_no) == norm(lineNo))
+                    and (norm($.supplier_part_no) == norm(vendorPart))
                 ))[0]
             else
                 null
 
-        var matched = byItem default (bySupplier default byVendorAndLine)
+        var byLineOnly =
+            if (byItem == null and byLineAndSupplier == null and hasLine)
+                (odataLines filter (norm($.line_no) == norm(lineNo)))[0]
+            else
+                null
+
+        var matched = byItem default (byLineAndSupplier default byLineOnly)
         var matchedBy =
             if (byItem != null) "item_id"
-            else if (bySupplier != null) "supplier_part_no"
-            else if (byVendorAndLine != null) "supplier_part_no+line_no"
+            else if (byLineAndSupplier != null) "line_no+supplier_part_no"
+            else if (byLineOnly != null) "line_no"
             else "none"
         ---
         {
             matched: matched,
             matchedBy: matchedBy,
-            identityValidated: identityValidated
+            identityValidated: (byItem != null)
         }
     }
 
@@ -140,6 +145,7 @@ var comparison =
             var linePrice = toNumber(line.unitPrice)
             var odataPrice = m.unit_price
             var addressPercentage = addressMatchPercentage(shipTo.address1, m.ship2_add1)
+            var namePercentage = nameMatchPercentage(shipTo.name, m.ship2_name)
 
             var missingFields =
                 if (!isFound)
@@ -199,13 +205,14 @@ var comparison =
                         postalCode: m.ship2_zip
                     },
                     match: {
-                        name: nameMatchPercentage(shipTo.name, m.ship2_name) >= 50,
+                        name: namePercentage >= 50,
                         address1: isMatch(shipTo.address1, m.ship2_add1),
                         city: isMatch(shipTo.city, m.ship2_city),
                         state: isMatch(shipTo.state, m.ship2_state),
                         postalCode: isZipMatch(shipTo.postalCode, m.ship2_zip)
                     },
-                    addressMatchPercentage: addressPercentage
+                    addressMatchPercentage: addressPercentage,
+                    nameMatchPercentage: namePercentage
                 },
                 lineErrors: lineIdentityMissing ++ missingFields
             }
@@ -244,11 +251,11 @@ var shipToErrors =
         ["Cannot validate Ship To — no PO line data available from P21"]
     else
         flatten([
-            if (nameMatchPercentage(shipTo.name, firstOdataLine.ship2_name) < 50)
+            if (nameMatchPercentage(shipTo.name, firstOdataLine.ship2_name) < ((Mule::p('shipToValidation.lowerLimit')) as Number))
                 ["ShipTo Name mismatch"]
             else
                 [],
-            if (addressMatchPercentage(shipTo.address1, firstOdataLine.ship2_add1) < 50)
+            if (addressMatchPercentage(shipTo.address1, firstOdataLine.ship2_add1) < ((Mule::p('shipToValidation.lowerLimit')) as Number))
                 ["ShipTo Address1 mismatch"]
             else
                 [],
@@ -268,14 +275,12 @@ var shipToErrors =
 
 var itemErrorList = flatten(valuesOf(itemErrors))
 var errorCount = sizeOf(itemErrorList) + sizeOf(shipToErrors) + sizeOf(sourceErrors)
-
-var shipToAddressMatchPct =
+var shipToAddressMatchPercentage =
     if (shipToMissing or firstOdataLineMissing)
         0
     else
         addressMatchPercentage(shipTo.address1, firstOdataLine.ship2_add1)
-
-var shipToNameMatchPct =
+var shipToNameMatchPercentage =
     if (shipToMissing or firstOdataLineMissing)
         0
     else
@@ -287,8 +292,8 @@ var shipToNameMatchPct =
             {
                 comparison: comparison,
                 errorCount: errorCount,
-                shipToAddressMatchPercentage: shipToAddressMatchPct,
-                shipToNameMatchPercentage: shipToNameMatchPct
+                shipToAddressMatchPercentage: shipToAddressMatchPercentage,
+                shipToNameMatchPercentage: shipToNameMatchPercentage
             }
         else
             null,
@@ -297,8 +302,8 @@ var shipToNameMatchPct =
     validationErrors: {
         itemErrors: itemErrors,
         shipToErrors: shipToErrors,
-        shipToAddressMatchPercentage: shipToAddressMatchPct,
-        shipToNameMatchPercentage: shipToNameMatchPct,
+        shipToAddressMatchPercentage: shipToAddressMatchPercentage,
+        shipToNameMatchPercentage: shipToNameMatchPercentage,
         carrierErrors: [],
         externalPoErrors: [],
         customerPartErrors: []

@@ -20,7 +20,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 				<ee:set-payload resource="dwl/outbound-poAck-processing-subflow/p_cdmMapping.dwl" />
 			</ee:message>
 		</ee:transform>
-		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="dd2a3676-5471-4371-89ce-821bd360d8e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}" />
+		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="dd2a3676-5471-4371-89ce-821bd360d8e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poAckMapping: payload&#10;}]' category="${logger.debug.category}" />
 		<parallel-foreach doc:name="Parallel For Each : Iteration over POs" doc:id="1263a5ed-f87d-48ad-b325-fcf1416e6412" collection="#[payload]">
 			<try doc:name="Try" doc:id="5569346c-9f15-4630-a9ad-1821bc79946e" >
 				<json:validate-schema doc:name="Validate schema" doc:id="85253572-4145-44bf-a03b-5978ac0da2d5" schema="schema/POACK_OUTBOUND_JSON_SCHEMA.json" />

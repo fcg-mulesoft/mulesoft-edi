@@ -23,7 +23,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 					<os:default-value ><![CDATA[#[%dw 2.0
 output application/json
 ---
-(now() - |P1D|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
+(now() - |PT1H|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
 		</os:retrieve>
 				<ee:transform doc:name="var : httpOperation - get invoice Data" doc:id="ab0afd4b-e630-49be-b19c-8c64728df459">
 			<ee:message />
@@ -39,7 +39,7 @@ output application/json
 				<ee:set-payload resource="dwl/outbound-invoice-processing-subflow/p_cdmMapping.dwl" />
 			</ee:message>
 		</ee:transform>
-		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="3ff6576c-9421-4abe-9a7d-db8f1c557e4c" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}" />
+		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="3ff6576c-9421-4abe-9a7d-db8f1c557e4c" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	invoiceMapping: payload&#10;}]' category="${logger.debug.category}" />
 		<parallel-foreach doc:name="Parallel For Each : Iteration over POs" doc:id="abe87cef-3032-4d2e-af52-12ddc1652c48" collection="#[payload]" >
 			<try doc:name="Try" doc:id="9c6d8347-48ac-4d9d-8a60-0110cde43ef2" >
 				<json:validate-schema doc:name="Validate Incoming Payload" doc:id="9a90c357-2d9f-4818-9bbd-e7134b5d2327" schema="schema/INVOICE_OUTBOUND_JSON_SCHEMA.json" />
