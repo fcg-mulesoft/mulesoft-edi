@@ -139,6 +139,24 @@ import toBase64 from dw::core::Binaries
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="d0f77aaa-dae3-4974-9f53-7bcaf573cc4b" name="common-http-request-subflow" target="customerItemValidationResponse" targetValue="#[payload.value]"/>
+		<ee:transform doc:name="vars: missingCustomerItemIds" doc:id="6f38d48b-ca76-4d2c-80e6-732c8f8d0fbc" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="missingCustomerItemIds" ><![CDATA[%dw 2.0
+output application/json
+
+var p21ItemIds =
+    vars.customerItemValidationResponse map (item) -> item.their_item_id
+
+var payloadItemIds =
+    (vars.initialPayload flatMap (x) -> x.b2bMessage.detail.itemDetails)
+        map (item) -> item.buyersPartNumber
+
+---
+payloadItemIds filter (itemId) -> !(p21ItemIds contains itemId)]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 		<choice doc:name="is customerItemValidationResponse Empty" doc:id="c36df86d-20ec-40d2-9c11-135dd86dd0b5" >
 			<when expression="#[isEmpty(vars.customerItemValidationResponse)]">
 				<ee:transform doc:name="var : customerItemValidationResponse" doc:id="fc6736a5-0266-471c-be29-9afc080f1933" >
@@ -256,7 +274,7 @@ var itemData= vars.initialPayload flatMap (order) ->
 				</ee:transform>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="LOG INFO : customer Item Validation" doc:id="4d1c66ca-6b99-4f3a-bfd7-499eff11864d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message: "",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21",&#10;	&#10;}]' />
+				<logger level="INFO" doc:name="LOG INFO : customer Item Validation" doc:id="4d1c66ca-6b99-4f3a-bfd7-499eff11864d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message: "Customer item id found for all or some buyer part number",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21",&#10;	&#10;}]' />
 				<ee:transform doc:name="var: httpOperation" doc:id="eb9a9296-3190-4e32-8530-539c5e8d8a95">
 			<ee:message>
 			</ee:message>
@@ -303,7 +321,7 @@ output application/json
 				</async>
 			</when>
 			<otherwise>
-				<logger level="INFO" doc:name="LOG INFO :  Price Match Sccucess" doc:id="2efd245d-291e-4f13-9011-d52b0fee8308" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "PRICE_MATCH_SUCCESS",&#10;//	message : "All PO lines matched P21 pricing and items successfully. No CSR review required.",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
+				<logger level="INFO" doc:name="LOG INFO :  Price Match Sccucess" doc:id="2efd245d-291e-4f13-9011-d52b0fee8308" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "PRICE_MATCH_SUCCESS",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	transmissionId: vars.integration.transmissionId default "",&#10;	correlationId: vars.integration.correlationId,&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
 			</otherwise>
 		</choice>
 		<flow-ref doc:name="Flow Reference To get-email-view-subflow" doc:id="11a409d1-2084-4838-8a29-80c44df57127" name="get-email-view-subflow" target="emailView" />
@@ -378,9 +396,8 @@ var data = {
             "P21 Processing Completed Successfully",
 
  
-    companyName:
-        vars.purchaseOrderData.value.company_no[0]
-            default "N/A",
+    companyName:     (vars.salesOrderLookUpData[0].company_id default "N/A"),
+
  
     vendorName:
         vendorId,
@@ -421,7 +438,7 @@ var data = {
         upper(p("mule.env") default "DEV"),
  
     message:
-        "Invoice for Purchase Order "
+        "Purchase Order "
         ++ poNumber
         ++ " has been processed successfully in P21.",
  

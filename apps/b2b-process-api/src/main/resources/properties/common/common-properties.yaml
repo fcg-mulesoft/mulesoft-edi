@@ -65,7 +65,17 @@ scheduler:
   alertNotification:
     frequency: "15"
     timeZone: "America/Chicago"
-   
+  vantage:
+    outbound:
+      invoice:
+        frequency: "30"
+        timeZone: "America/Chicago"
+      shipment:
+        frequency: "30"
+        timeZone: "America/Chicago"
+      poAck:
+        frequency: "30"
+        timeZone: "America/Chicago"
 #Logger 
 logger:
   debug:
