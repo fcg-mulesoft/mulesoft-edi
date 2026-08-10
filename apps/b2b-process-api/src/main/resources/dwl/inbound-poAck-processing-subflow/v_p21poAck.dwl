@@ -1,9 +1,18 @@
 %dw 2.0
 output application/json
 
+var viewData = (vars.purchaseOrderData.value default []) as Array
+
 fun formatDate(d) =
-if (d is String) ((d as DateTime) as String { format: "MM/dd/yyyy" })
-else ""
+    if (d is String) ((d as DateTime) as String { format: "MM/dd/yyyy" })
+    else ""
+
+fun lookupItemId(poNum: String, lineNo: Number, supplierPartNo: String | Null) =
+    (viewData filter (v) ->
+        (v.po_no as String) == (poNum as String)
+        and (v.line_no as Number) == lineNo
+        and (trim(v.supplier_part_no default "")) == (trim(supplierPartNo default ""))
+    )[0].item_id default null
 ---
 {
     UseCodeValues: true,
@@ -12,13 +21,20 @@ else ""
         var txn = wrapper.b2bMessage
         var items = txn.detail.itemDetails default []
         var poNum = txn.header.poNumber default ""
-		var supplierAcknowledgement = txn.header.supplierAcknowledgement  default poNum
-		
-        var matchedItems = (items map (item) -> {
+        var supplierAcknowledgement = txn.header.supplierAcknowledgement default poNum
+
+        var matchedItems = items map (item) -> do {
+            var directItemId = item.buyerPartNo default null
+            var resolvedItemId =
+                if (directItemId != null) directItemId
+                else lookupItemId(poNum, item.lineNo, item.vendorPartNo)
+            ---
+            {
                 item: item,
                 lineNo: item.lineNo,
-                itemId: item.buyerPartNo
-        })
+                itemId: resolvedItemId
+            }
+        }
         ---
         {
             Status: "New",
@@ -31,7 +47,6 @@ else ""
                         Name: "po_no",
                         Value: poNum
                     },
-                    
                     {
                         Name: "ufc_po_hdr_ud_supplier_acknowledgement",
                         Value: supplierAcknowledgement

@@ -10,7 +10,7 @@ fun norm(v) =
 )
 fun isMatch(a, b) = norm(a) == norm(b)
 fun isPriceMatch(a, b) = abs((a default 0) - (b default 0)) <= PRICE_TOLERANCE
-
+ 
 fun normalizeZip(zip) =
     if (isEmpty(zip default ""))
         ""
@@ -44,7 +44,20 @@ var total=max([sizeOf(w1),sizeOf(w2)])
 ---
 if(total==0)100 else (matched*100.0)/total
 }
-
+ 
+fun toChars(s) = s splitBy ""
+fun nameMatchPercentage(a, b) = do {
+  var s1 = (upper(trim((a default "") as String)) replace /[^A-Z0-9]/ with "")
+  var s2 = (upper(trim((b default "") as String)) replace /[^A-Z0-9]/ with "")
+  var c1 = toChars(s1)
+  var c2 = toChars(s2)
+  var freq2 = c2 groupBy ($)
+  var matched = sum((c1 groupBy ($) pluck ((v, k) -> min([sizeOf(v), sizeOf(freq2[k] default [])]))))
+  var total = max([sizeOf(c1), sizeOf(c2)])
+  ---
+  if (total == 0) 100 else (matched * 100.0) / total
+}
+ 
 fun isMismatch(v) = !(v default false)
 fun first(v) = if (v is Array and sizeOf(v) > 0) v[0] else v
 fun toNumber(v) = if (v is Array) (v[0] default 0) else ((v default 0) as Number)
@@ -96,7 +109,9 @@ var comparison = items map (line) -> do {
       ship2_name: {
         original: shipTo.name,
         odata: p21Ship.ship2_name,
-        match: isEmpty(p21Ship.ship2_name) or isMatch(shipTo.name, p21Ship.ship2_name)
+        percentage: nameMatchPercentage(shipTo.name, p21Ship.ship2_name),
+        matchPercentage: nameMatchPercentage(shipTo.name, p21Ship.ship2_name),
+        match: nameMatchPercentage(shipTo.name, p21Ship.ship2_name) >= ((Mule::p('shipToValidation.lowerLimit')) as Number)
       },
 		ship2_add1: {
 		    original: shipTo.address1,
@@ -162,7 +177,7 @@ var safeComp0 = comparison[0] default {}
 var itemErrors = (comparison map (line) -> do {
     var errs =
       if (isMismatch(line.supplier_part_no.match))
-        ["Supplier part number not found in P21"]
+        ["Vendor part number not found in P21"]
       else
         flatten([
           if (isMismatch(line.qty_ordered.match)) ["Invoiced quantity exceeds received amount"] else [],
@@ -171,7 +186,8 @@ var itemErrors = (comparison map (line) -> do {
     ---
     if (sizeOf(errs) > 0) {((line.supplier_part_no.original default line.lineNo) as String): errs} else {}
 }) reduce ((item, acc = {}) -> acc ++ item)
-var shipToMatchPercentage = safeComp0.ship2_add1.percentage default safeComp0.ship2_add1.matchPercentage default null
+var shipToAddressMatchPercentage = safeComp0.ship2_add1.percentage default safeComp0.ship2_add1.matchPercentage default null
+var shipToNameMatchPercentage = safeComp0.ship2_name.percentage default safeComp0.ship2_name.matchPercentage default null
 var shipToErrors = flatten([
   if (isMismatch(safeComp0.ship2_name.match)) ["ShipTo Name mismatch"] else [],
   if (isMismatch(safeComp0.ship2_add1.match)) ["ShipTo Address1 mismatch"] else [],
@@ -203,8 +219,9 @@ if (DEBUG) {
   isValid: errorCount == 0,
   validationErrors: {
     itemErrors: itemErrors,
+    shipToAddressMatchPercentage: shipToAddressMatchPercentage,
+    shipToNameMatchPercentage: shipToNameMatchPercentage,
     shipToErrors: shipToErrors,
-    shipToMatchPercentage: shipToMatchPercentage,
     carrierErrors: carrierErrors,
     externalPoErrors: externalPoErrors
   },
@@ -213,7 +230,8 @@ if (DEBUG) {
   isValid: errorCount == 0,
   validationErrors: {
     itemErrors: itemErrors,
-    shipToMatchPercentage: shipToMatchPercentage,
+    shipToAddressMatchPercentage: shipToAddressMatchPercentage,
+    shipToNameMatchPercentage: shipToNameMatchPercentage,
     shipToErrors: shipToErrors,
     carrierErrors: carrierErrors,
     externalPoErrors: externalPoErrors

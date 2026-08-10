@@ -57,8 +57,11 @@ import toBase64 from dw::core::Binaries
 				</ee:transform>
 			</when>
 			<otherwise >
-				<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="shipmentLastRunTimestamp" objectStore="Object_Store_Shipment_Vantage" target="shippmentTimestamp">
-			<os:default-value><![CDATA[#[now() - |PT24H|]]]></os:default-value>
+				<os:retrieve doc:name="lastRunTimestamp" doc:id="edfa47ad-8736-4945-8170-b0bdb7ca437e" key="shipmentLastRunTimestamp" target="shipmentTimestamp" objectStore="Outbound_Transction_Object_Store">
+			<os:default-value><![CDATA[#[%dw 2.0
+output application/json
+---
+(now() - |PT1H|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
 		</os:retrieve>
 				<ee:transform doc:name="var : httpOperation - get shipment Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2">
 			<ee:message />
@@ -66,16 +69,7 @@ import toBase64 from dw::core::Binaries
 				<ee:set-variable variableName="httpOperation"><![CDATA[%dw 2.0
 output application/json
 import toBase64 from dw::core::Binaries
-var objectStorePayload = vars.shippmentTimestamp
-var modifiedTime =
-    if (isEmpty(objectStorePayload))
-        (((now() - |PT168H|) >> "UTC") as String {
-            format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-        })
-    else
-        (((objectStorePayload as DateTime) >> "UTC") as String {
-            format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-        })
+var modifiedTime = vars.shipmentTimestamp
 ---
 {
 	"method": Mule::p('b2b-p21-sys-api.view.method'),
@@ -109,8 +103,14 @@ var modifiedTime =
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
- 
-var groupedPayload = vars.shipmentData.value groupBy $.pick_ticket_no
+var filteredRecords =
+    (vars.shipmentData.value default [])
+        filter ((item) ->
+            (item.date_last_modified as DateTime) >= vars.httpOperation.queryParams.lastModified
+        )
+
+var groupedPayload =
+    filteredRecords groupBy $.pick_ticket_no
  
 ---
 groupedPayload pluck ((records, pickTicketNo) -> {
@@ -226,7 +226,7 @@ groupedPayload pluck ((records, pickTicketNo) -> {
 })]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="f90faba7-8aa8-4f69-b9f5-e16df7fb55fc" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}" />
+		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="f90faba7-8aa8-4f69-b9f5-e16df7fb55fc" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	shipmentMapping: payload&#10;}]' category="${logger.debug.category}" />
 		<parallel-foreach doc:name="Parallel For Each : Iteration over Shipments" doc:id="be8fdd12-f1ab-43e2-bc2b-7c0103d25558" collection="#[payload]" >
 			<try doc:name="Try" doc:id="61de19cc-4860-48e4-aa61-2044c0bdb1ae" >
 				<json:validate-schema doc:name="Validate Incoming Payload" doc:id="aeb774d9-32b9-4cba-82e3-3854a1f026cf" schema="schema/ASN_OUTBOUND_JSON_SCHEMA.json" />
@@ -352,7 +352,7 @@ map (entry) -> {
 		</ee:transform>
 		<choice doc:name="Choice" doc:id="bfbf7614-46f7-477a-bae1-a8dd0bdbcf07" >
 			<when expression="#[isEmpty(vars.requestParams)]">
-				<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="shipmentLastRunTimestamp" objectStore="Object_Store_Shipment_Vantage">
+				<os:store doc:name="lastRunTimestamp" doc:id="a3a05c9a-4542-413f-a24c-dbf71f07b344" key="shipmentLastRunTimestamp" objectStore="Outbound_Transction_Object_Store">
 			<os:value><![CDATA[#[vars.initialVariables.timestamp]]]></os:value>
 		</os:store>
 			</when>
