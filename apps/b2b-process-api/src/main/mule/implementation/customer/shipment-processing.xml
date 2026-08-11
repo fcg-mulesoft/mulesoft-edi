@@ -128,7 +128,7 @@ groupedPayload pluck ((records, pickTicketNo) -> {
             shipNoticeNumber: records[0].BSN02_ShipNoticeNo,
             receiverId: if(Mule::p('mule.env')!= "prod") (((records[0].TP_edi_isa05_id default "") as String) ++ "T") else ((records[0].TP_edi_isa05_id default "") as String),
             senderId: Mule::p('fcg.edi_id') ,
- 
+            fcgOrderNo: records[0].order_no,
             shippedDateQualifier: records[0].DTM01_ShippedDateQual,
             shippedDate: records[0].DTM02_ShippedDate,
  
