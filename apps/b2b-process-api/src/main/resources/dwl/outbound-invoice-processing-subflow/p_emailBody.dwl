@@ -264,8 +264,8 @@ var data = {
     companyName:      (vars.invoiceData.value.company_id[0] default "N/A"),
     key:              correlationId,
     businessKey:      invoiceSegment,
-    timestamp:        now() as String {format: "yyyy-MM-dd HH:mm:ss"}
-}
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"}}
 
 var template =
     readUrl("classpath://templates/error-template.html", "text/plain")

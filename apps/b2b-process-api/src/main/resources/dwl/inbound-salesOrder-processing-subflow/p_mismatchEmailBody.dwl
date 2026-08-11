@@ -110,8 +110,8 @@ var data = {
     companyName:     (vars.salesOrderLookUpData[0].company_id default "N/A"),
     key:             correlationId,
     businessKey:     poSegment,
-    timestamp:       now() as String { format: "yyyy-MM-dd HH:mm:ss" }
-}
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"}}
 
 var template =
     readUrl("classpath://templates/error-template.html", "text/plain")
