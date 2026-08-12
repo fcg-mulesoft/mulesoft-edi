@@ -56,7 +56,7 @@ viewNames:
   purchaseOrderAckOutbound: "fcg_edi_poack_855_outbound_vw"
   purchaseOrderInvoiceOutbound: "fcg_edi_invoice_810_outbound_vw"
   purchaseOrderShipmentOutbound: "fcg_edi_asn_856_outbound_vw"
-  coupaPurchaseOrderPartsValidtion: "fcg_view_validate_item_Cost_date_vw"
+  coupaPurchaseOrderPartsValidtion: "fcg_edi_Item_Validation_vw"
   coupaInvoiceOutbound: "fcg_edi_xref_vw"
   coupaInvoiceInbound: "fcg_kft_coupa_invoice_outbound_vw"
   coupaOrderOutbound: "fcg_edi_order_vw"
