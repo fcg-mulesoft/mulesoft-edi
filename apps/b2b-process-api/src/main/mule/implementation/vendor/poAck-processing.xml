@@ -95,7 +95,8 @@ var data = {
     vendorName: vendorId,
     route: safe(integration.source,"APM") ++ " → Mule → " ++ safe(integration.target,"P21"),
     businessKey: "PO " ++ poNumber,
-    timestamp: now() as String {format:"yyyy-MM-dd HH:mm:ss"},
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"},
     transmissionId: safe(header.transmissionId),
     keyLabel: "Correlation ID",
     key: correlationId default uuid(),
@@ -243,10 +244,8 @@ var data = {
     businessKey:
         "PO " ++ poNumber,
  
-    timestamp:
-        now() as String {
-            format: "yyyy-MM-dd HH:mm:ss"
-        },
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"},
  
     transmissionId:
         safe(header.transmissionId),

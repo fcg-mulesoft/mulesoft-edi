@@ -153,8 +153,8 @@ var data = {
     vendorName:       msgVendorId,
     companyName:      msgCompanyNo,
     businessKey:      msgPoNumber,
-    timestamp:        now() as String {format: "yyyy-MM-dd HH:mm:ss"}
-}
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"}}
 
 var template =
     readUrl("classpath://templates/error-template.html", "text/plain")
