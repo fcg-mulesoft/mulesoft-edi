@@ -115,45 +115,28 @@ output application/json
 			<ee:message />
 			<ee:variables >
 				<ee:set-variable variableName="emailList" ><![CDATA[%dw 2.0
-
 output application/java
- 
 var viewRecords =
-
     (vars.emailView.value default [])
-
-        filter ((vars.vendorName default []) contains $.trading_partner_name)
+        filter ((vars.vendorName default "") contains $.trading_partner_name)
  
 ---
-
-{
-
-    to:
-
-        (
-
-            viewRecords flatMap ((record) ->
-
-                [
-
-                    record.fcg_biz_contact_email,
-
-                    record.fcg_tech_contact_email,
-
-                    record.trading_partner_contact_email
-
-                ]
-
-            )
-
-        )
-
-        filter ($ != null and trim($) != "")
-
-        distinctBy ((item) -> item)
-
-}
- ]]></ee:set-variable>
+(
+    viewRecords
+        flatMap (record) ->
+            [
+                record.fcg_biz_contact_email,
+                record.fcg_tech_contact_email,
+                record.trading_partner_contact_email
+            ]
+        flatMap (email) ->
+            if (email != null and trim(email) != "")
+                (email splitBy ";") map trim($)
+            else
+                []
+)
+filter ($ != "")
+distinctBy $]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<try doc:name="Try" doc:id="2b8c4eb1-4645-4a22-9dfa-137ed789de64">
@@ -163,7 +146,7 @@ var viewRecords =
 					</when>
 				</choice>
 				<until-successful maxRetries="5" doc:name="Until Successful" doc:id="89130f15-6658-4f98-bb97-72a3b35123dc" millisBetweenRetries="6000">
-				<email:send doc:name="Send Email" doc:id="94f86c8b-49de-48fc-9ba9-843c3ed795aa" config-ref="Email_SMTP" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[(vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)) ++  (vars.emailList.&quot;to&quot;)]">
+				<email:send doc:name="Send Email" doc:id="94f86c8b-49de-48fc-9ba9-843c3ed795aa" config-ref="Email_SMTP" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[(vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)) ++  (vars.emailList)]">
 					<reconnect />
 					<email:body contentType="text/html" />
 					<email:attachments><![CDATA[#[{
