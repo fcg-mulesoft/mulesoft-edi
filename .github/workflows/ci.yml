@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - 'dev'
+      - 'rel/**'
 
 jobs:
   changes:
@@ -27,11 +28,30 @@ jobs:
   build-and-test:
     needs: changes
     if: ${{ fromJson(needs.changes.outputs.apps)[0] != null }}
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         app: ${{ fromJson(needs.changes.outputs.apps) }}
     steps:
+      - name: Setup Node for Anypoint CLI v4
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Anypoint CLI v4
+        shell: bash
+        run: |
+           npm install -g anypoint-cli-v4
+
+      - name: Configure Anypoint CLI v4
+        env:
+          ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_EXCHANGE_CLIENT_ID }}
+          ANYPOINT_CLIENT_SECRET: ${{secrets.ANYPOINT_EXCHANGE_CLIENT_SECRET }}
+        run: |
+          anypoint-cli-v4 conf client_id "${{ env.ANYPOINT_CLIENT_ID }}"
+          anypoint-cli-v4 conf client_secret "${{ env.ANYPOINT_CLIENT_SECRET }}"
+
       - name: Setup Maven Environment
         uses: s4u/setup-maven-action@v1.19.0
         with:
@@ -94,8 +114,33 @@ jobs:
         working-directory: ./apps/${{ matrix.app }}
         run: echo "version=$(mvn -q help:evaluate -Dexpression=project.version -q -DforceStdout)" >> "$GITHUB_OUTPUT"
 
+      - name: Determine If ${{ matrix.app }}-v${{ steps.app.outputs.version }} Exists in Anypoint Exchange
+        id: asset_check
+        env:
+          MAVEN_GROUP_ID: ${{ secrets.ANYPOINT_EXCHANGE_GROUP_ID }}
+          MAVEN_ARTIFACT_ID: ${{ matrix.app }}-app
+          MAVEN_VERSION_ID: ${{ steps.app.outputs.version }}
+        shell: bash
+        run: |
+          set +e
+          anypoint-cli-v4 exchange:asset:describe \
+          "${{ env.MAVEN_GROUP_ID }}/${{ env.MAVEN_ARTIFACT_ID }}/${{ env.MAVEN_VERSION_ID }}" \
+          --organization "Flow Control Group" \
+          --environment "NonProd"
+          ANYPOINT_CMD_EXIT_CODE=$?
+          set -e
+          if [[ "$ANYPOINT_CMD_EXIT_CODE" -eq 0 ]]; then
+            echo "${{ matrix.app }}-v${{ steps.app.outputs.version }} Exists in Anypoint Exchange."
+            echo "exists=true" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "${{ matrix.app }}-v${{ steps.app.outputs.version }} DOES NOT Exist in Anypoint Exchange."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Determine If ${{ matrix.app }}-v${{ steps.app.outputs.version }} Release Exists in GitHub
-        id: check_release
+        id: release_check
+        if: steps.asset_check.outputs.exists == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -107,12 +152,12 @@ jobs:
             echo "Release '$TAG' already exists in $REPO. Failing this job."
             exit 1
            else
-            echo "exists=false" >> "GITHUB_OUTPUT"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
             echo "No Release named '$TAG' found. Continuing."
            fi
 
       - name: Build ${{ matrix.app }}-v${{ steps.app.outputs.version }}
         id: build-release
-        if: ${{steps.check_release.outputs.exists == false }}
+        if: steps.asset_check.outputs.exists == 'false' && steps.release_check.outputs.exists == 'false'
         working-directory: ./apps/${{ matrix.app }}
         run: mvn clean test -Dmule.env="test" -Dmule.key="${{ secrets.MULE_CI_KEY }}"
