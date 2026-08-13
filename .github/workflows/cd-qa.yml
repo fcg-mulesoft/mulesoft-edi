@@ -134,8 +134,26 @@ jobs:
             echo "No Release named '$TAG' found. Building and uploading to Exchange."
            fi
 
+      - name: Determine If ${{ matrix.app }}-v${{ steps.app.outputs.version }} Exists in Anypoint Exchange
+        id: check_exchange
+        env:
+          MAVEN_GROUP_ID: ${{ secrets.ANYPOINT_EXCHANGE_GROUP_ID }}
+          MAVEN_ARTIFACT_ID: ${{ matrix.app }}-app
+          MAVEN_VERSION_ID: ${{ steps.app.outputs.version }}
+        shell: bash
+        run: |
+          if anypoint-cli-v4 exchange:asset:describe \
+            "${{ env.MAVEN_GROUP_ID }}/${{ env.MAVEN_ARTIFACT_ID }}/${{ env.MAVEN_VERSION_ID }}" \
+            --organization "Flow Control Group" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Asset ${{ env.MAVEN_ARTIFACT_ID }}/${{ env.MAVEN_VERSION_ID }} exists in Exchange."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Asset ${{ env.MAVEN_ARTIFACT_ID }}/${{ env.MAVEN_VERSION_ID }} not found in Exchange."
+          fi
+
       - name: Build and Upload ${{ matrix.app }}-v${{ steps.app.outputs.version }} to Anypoint Exchange
-        if: steps.check_release.outputs.exists == 'false'
+        if: steps.check_release.outputs.exists == 'false' || steps.check_exchange.outputs.exists == 'false'
         shell: bash
         working-directory: ./apps/${{ matrix.app }}
         env:
