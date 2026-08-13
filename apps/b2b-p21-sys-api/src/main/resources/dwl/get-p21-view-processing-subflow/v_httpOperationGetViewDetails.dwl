@@ -23,7 +23,7 @@ var salesOrderValidationConfig =
     }
     else if (validationMode == "customerPart") {
         view: "fcg_edi_Item_Validation_vw",
-        filter: "company_id eq 'KFT' and (" ++ ((businesskey map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+        filter: "company_id eq 'KFT' and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
     }
     else {
         view: "",
@@ -34,7 +34,7 @@ var routingConfig = {
         validation: {
             view: Mule::p('viewNames.coupaPurchaseOrderPartsValidtion'),
             queryParams: {
-                "\$filter": "company_id eq 'KFT' and (" ++ ((businesskey map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+                "\$filter": "company_id eq 'KFT' and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
             }
         },
         outbound: {
