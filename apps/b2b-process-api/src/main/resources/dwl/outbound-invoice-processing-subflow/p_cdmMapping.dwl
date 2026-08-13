@@ -12,8 +12,9 @@ var invoiceItems =
 invoiceItems pluck ((items, invoiceNo) -> {
 	b2bMessage: {
 		header: {
-			senderId: Mule::p(lower(items[0].trading_partner_name) ++ ".ack.senderId"),
-			receiverId: items[0].TP_edi_isa05_id ++ "T",
+			senderId: Mule::p('fcg.edi_id'),
+			receiverId: if(Mule::p('mule.env')!= "prod") (((items[0].TP_edi_isa05_id default "") as String) ++ "T") else ((items[0].TP_edi_isa05_id default "") as String),
+			fcgOrderNo: items[0].order_no,
 			invoiceNumber: items[0].BIG02_InvNo,
 			invoiceDate: items[0].BIG01_InvDate,
 			purchaseOrderNumber: items[0].BIG04_PurchaseOrderNo,
