@@ -302,20 +302,26 @@ var itemData= vars.initialPayload flatMap (order) ->
 			</otherwise>
 		</choice>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="5a90d143-a74e-40b4-ab5d-db30a3238ccb" name="common-http-request-subflow"/>
-		<choice doc:name="PO details Mismatch" doc:id="3de6e3a6-8ebb-4e16-9a6a-04e39729f3cd" >
-			<when expression='#[vars.isValid.validationSummary.overallStatus == "FAILED"]'>
-				<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="1e2ca3c5-c4a2-4618-bd29-dfd5112a9966">
-					<ee:message>
-						<ee:set-payload resource="dwl/inbound-salesOrder-processing-subflow/p_mismatchEmailBody.dwl" />
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_subjectMismatchEmail.dwl" variableName="subject" />
-						<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+		<ee:transform doc:name="var : vendorName" doc:id="d9c9590f-8c40-4348-9746-a3a185f0fc64" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
 output application/json
 ---
 [(p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
     default [(p('partner.outbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
     default []]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="PO details Mismatch" doc:id="3de6e3a6-8ebb-4e16-9a6a-04e39729f3cd" >
+			<when expression='#[vars.isValid.validationSummary.overallStatus == "FAILED"]'>
+				<ee:transform doc:name="Preparing Email Template, var : subject" doc:id="1e2ca3c5-c4a2-4618-bd29-dfd5112a9966">
+					<ee:message>
+						<ee:set-payload resource="dwl/inbound-salesOrder-processing-subflow/p_mismatchEmailBody.dwl" />
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable resource="dwl/inbound-salesOrder-processing-subflow/v_subjectMismatchEmail.dwl" variableName="subject" />
 					</ee:variables>
 				</ee:transform>
 				<async doc:name="Async" doc:id="16be9983-e5a5-4c7f-99b0-a1042ddd1152" >
@@ -403,8 +409,8 @@ var data = {
     businessKey:
         "PO " ++ poNumber,
  
-    timestamp:
-        now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"},
  
     transmissionId:
         safe(header.transmissionId),
@@ -568,10 +574,8 @@ var data = {
     businessKey:
         "PO " ++ poNumber,
  
-    timestamp:
-        now() as String {
-            format: "yyyy-MM-dd HH:mm:ss"
-        },
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"},
  
     transmissionId:
         safe(header.transmissionId),
