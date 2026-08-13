@@ -469,8 +469,8 @@ var data = {
     companyName: companyName,
     keyLabel:        "Correlation ID",
     key:             correlationId default uuid(),
-    timestamp:        errResp.timestamp default (now() as String {format: "yyyy-MM-dd HH:mm:ss"})
-}
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"}}
 
 var template =
     readUrl("classpath://templates/error-template.html", "text/plain")
