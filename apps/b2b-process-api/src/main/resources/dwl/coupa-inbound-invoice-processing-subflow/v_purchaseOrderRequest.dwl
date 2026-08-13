@@ -2,17 +2,17 @@
 import trim from dw::core::Strings
 output application/xml skipNullOn="everywhere"
 
-var theirItemIds =
-    (vars.partsPriceResponse.value.their_item_id default [])
+var incomingPartNumbers =
+    (vars.partsPriceResponse.value.incoming_part_number default [])
         map (v) -> lower(trim((v default "") as String))
         filter ($ != "")
 
-var ourItemIds =
-    (vars.partsPriceResponse.value.our_item_id default [])
+var resolvedItemIds =
+    (vars.partsPriceResponse.value.resolved_item_id default [])
         map (v) -> lower(trim((v default "") as String))
         filter ($ != "")
 
-var itemIDSearch = (theirItemIds ++ ourItemIds) distinctBy $
+var itemIDSearch = (incomingPartNumbers ++ resolvedItemIds) distinctBy $
 
 var defaultItemId = Mule::p('edi.default.item.id')
 
@@ -47,15 +47,15 @@ fun isMatched(line) =
         (id != "") and (itemIDSearch contains id)
     }
 
-fun getOurItemIdFromLine(line) =
+fun getResolvedItemIdFromLine(line) =
     do {
         var id = lower(lineItemId(line))
         var matchedRecord = (vars.partsPriceResponse.value filter (
-            lower(trim(($.their_item_id default "") as String)) == id or 
-            lower(trim(($.our_item_id default "") as String)) == id
+            lower(trim(($.incoming_part_number default "") as String)) == id or 
+            lower(trim(($.resolved_item_id default "") as String)) == id
         ))[0]
         ---
-        matchedRecord.our_item_id default lineItemId(line)
+        matchedRecord.resolved_item_id default lineItemId(line)
     }
 
 fun isValidLine(line) = 
@@ -73,23 +73,23 @@ fun getCostDate(line) =
     do {
         var id = lower(lineItemId(line))
         var matchedRecord = (vars.partsPriceResponse.value filter (
-            lower(trim(($.their_item_id default "") as String)) == id or
-            lower(trim(($.our_item_id default "") as String)) == id
+            lower(trim(($.incoming_part_number default "") as String)) == id or
+            lower(trim(($.resolved_item_id default "") as String)) == id
         ))[0]
         var costDate = matchedRecord.cost_date default ""
         ---
         formatCostDate(costDate)
     }
 
-fun lookupOurItemId(theirItemId) =
+fun lookupResolvedItemId(incomingPartNumber) =
     do {
-        var id = lower(trim((theirItemId default "") as String))
+        var id = lower(trim((incomingPartNumber default "") as String))
         var matchedRecord = (vars.partsPriceResponse.value filter (
-            lower(trim(($.their_item_id default "") as String)) == id or
-            lower(trim(($.our_item_id default "") as String)) == id
+            lower(trim(($.incoming_part_number default "") as String)) == id or
+            lower(trim(($.resolved_item_id default "") as String)) == id
         ))[0]
         ---
-        matchedRecord.our_item_id default theirItemId
+        matchedRecord.resolved_item_id default incomingPartNumber
     }
 
 var rawLines = vars.initialPayload.Order.Lines.*OrderLine default []
@@ -121,11 +121,19 @@ var headerNoteText =
           OrderNote: {
             Topic: "EDI_HEADER",
             Note: headerNoteText,
-            NotepadClassId: "ITEMS"
+            NotepadClassId: "ITEMS",
+            Mandatory: "false"
           }
         }
       else
-        vars.initialPayload.Order.Notes,
+        {
+          OrderNote: {
+            Topic: vars.initialPayload.Order.Notes.OrderNote.Topic,
+            Note: vars.initialPayload.Order.Notes.OrderNote.Note,
+            NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId,
+            Mandatory: "false"
+          }
+        },
 
     Lines: 
       if (sizeOf(validLinesArr) > 0)
@@ -134,11 +142,22 @@ var headerNoteText =
             validLinesArr map (line) ->
               (
                 if (isMatched(line))
-                  ((line - "UserDefinedFields") mapObject ((value, key) -> 
+                  ((line - "UserDefinedFields" - "Notes") mapObject ((value, key) -> 
                     if (isEmpty(value)) {} 
-                    else if (key as String == "ItemId") {(key): lookupOurItemId(value)} 
+                    else if (key as String == "ItemId") {(key): lookupResolvedItemId(value)} 
                     else {(key): value}
                   ))
+                  ++
+                  {
+                    Notes: {
+                      OrderLineNote: {
+                        Topic: line.Notes.OrderLineNote.Topic,
+                        Note: line.Notes.OrderLineNote.Note,
+                        NotepadClassId: line.Notes.OrderLineNote.NotepadClassId,
+                        Mandatory: "N"
+                      }
+                    }
+                  }
                 else
                   (((line - "ItemId" - "Notes" - "UserDefinedFields") mapObject ((value, key) -> 
                     if (isEmpty(value)) {} 
@@ -149,7 +168,8 @@ var headerNoteText =
                       OrderLineNote: {
                         Topic: "EDI_LINE1",
                         Note: lineNoteText(line),
-                        NotepadClassId: "ITEMS"
+                        NotepadClassId: "ITEMS",
+                        Mandatory: "N"
                       }
                     }
                   })
