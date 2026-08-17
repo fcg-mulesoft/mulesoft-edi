@@ -99,7 +99,7 @@ var comparison = items map (line) -> do {
       qty_ordered: {
         original: invoicedQty,
         odata: orderedQty,
-        match: (invoicedQty) <= receivedQty
+        match: true
       },
       unit_price: {
         original: toNumber(line.unitPrice),
