@@ -69,13 +69,14 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 				<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationPostPurchaseOrder.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
+								<logger level="INFO" doc:name="Logger" doc:id="cdaa2507-c6c1-4c02-afa1-ead7f1370047" message="#[vars.httpOperation]"/>
 								<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" />
 								<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b">
 			<when expression="#[isEmpty(payload.Order.OrderNo)]">
 				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="cf33fd6d-514a-40df-8113-45bedd343499" type="CUSTOM:P21_FAILED" description='#[payload."TransactionSetResult"."Messages".*"string" joinBy "\n"]' />
 			</when>
-			<otherwise>
-				<logger level="INFO" doc:name="LOG INFO : CoupaPurrchaseOrderCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Coupa Purchase Order Creation Successful. Order Number is " ++ (payload.Order.OrderNo default "NA")&#10;}]' />
+									<otherwise>
+										<logger level="INFO" doc:name="Logger" doc:id="dfacf5c6-c2c1-44cf-9281-fd14c46ea801" />
 										<ee:transform doc:name="var : errorResponse, systemInformation, orderId" doc:id="e4f2185c-ca35-4daa-8aee-a418157c7772">
 											<ee:message />
 											<ee:variables>
@@ -234,6 +235,7 @@ segments joinBy " | "]]></ee:set-variable>
 										<flow-ref doc:name="send-email-subflow" doc:id="c09e96d0-879c-4ebf-a337-378bb3fee223" name="send-email-subflow" />
 			</otherwise>
 		</choice>
+								<logger level="INFO" doc:name="LOG INFO : CoupaPurrchaseOrderCreated" doc:id="a929f772-d691-425a-abf8-8333ff62d353" />
 							</otherwise>
 						</choice>
 						<choice doc:name="Choice" doc:id="503271aa-31f6-42b1-93e1-05315a7a4675">
