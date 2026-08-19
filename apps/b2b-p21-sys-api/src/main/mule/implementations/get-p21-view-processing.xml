@@ -32,6 +32,7 @@ attributes.queryParams]]></ee:set-variable>
 
 			</ee:variables>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="c37fe9f3-d1bd-4d64-9ef9-232f40b2825e" message="#[vars.httpOperation]"/>
 		<flow-ref
 			doc:name="Flow Reference: to common-http-request-subflow"
 			doc:id="0b67aa1c-3aa2-4777-a4d9-4b72a2d44b61"
@@ -45,6 +46,7 @@ output application/json
 payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="c0aabf2b-73eb-4139-8330-c841571201fa" message="#[payload]"/>
 		<logger level="INFO" doc:name="LOG INFO : END"
 			doc:id="134ace73-d305-49a9-b801-f05190eb0490"
 			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "End: " ++ (flow.name),&#10;    "correlationId": correlationId&#10;}]' />
