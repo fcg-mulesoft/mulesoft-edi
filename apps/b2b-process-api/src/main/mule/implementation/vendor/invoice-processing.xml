@@ -24,8 +24,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 					<ee:variables >
 						<ee:set-variable variableName="isValid" ><![CDATA[%dw 2.0
 output application/json
-import trim, upper from dw::core::Strings
-var invoice = payload[0].b2bMessage
+
+var invoice = vars.initialPayload[0].b2bMessage
 var header = invoice.header
 var summaryData = invoice.summary
 var lines = invoice.detail.invoice.itemDetails default []
@@ -98,7 +98,7 @@ var poNoNum = header.poNumber as Number default null
 }]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
-				<logger level="INFO" doc:name="LOG INFO :  Data" doc:id="8d167bf2-208d-4798-965e-6fbe8e97e750" message='#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;{&#10;	"Message": "Direct Ship Info",&#10;	"Payload": vars.isValid&#10;}]'/>
+				<logger level="INFO" doc:name="LOG INFO :  Data" doc:id="8d167bf2-208d-4798-965e-6fbe8e97e750" message='#[%dw 2.0&#10;output application/json &#10;---&#10;{&#10;	"Message": "Direct Ship Info",&#10;	"Payload": vars.isValid&#10;}]'/>
 				<ee:transform doc:name="var: p21Invoice" doc:id="d0c93656-fdde-4d0a-9a76-817ad7e48e91">
 					<ee:message>
 					</ee:message>
@@ -216,7 +216,7 @@ import toBase64 from dw::core::Binaries
 		"x-correlation-id": vars.integration.correlationId
 	},
 	"queryParams": {
-		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrderInvoice'),
+		"transactionType": "purchaseOrderInvoiceDirect",
 	},
 	"uriParams": {
 	},
