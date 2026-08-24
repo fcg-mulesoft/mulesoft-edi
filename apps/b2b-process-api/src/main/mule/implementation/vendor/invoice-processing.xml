@@ -93,7 +93,7 @@ var poNoNum = header.poNumber as Number default null
   po_no: poNoNum,
   tracking_no: summaryData.carrierDetail.trackingNumber default null,
   freight_cd: "CPO",
-  receipt_freight: finalFreight,
+  receipt_freight: finalFreight[0],
   items: matchedItems
 }]]></ee:set-variable>
 					</ee:variables>
