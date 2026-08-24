@@ -6,9 +6,21 @@
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+	<http:listener-config
+		name="b2b-p21-sys-api-spec-httpListenerConfig">
+		<http:listener-connection host="${http.host}"
+			port="${https.private.port}" readTimeout="${http.readTimeout}"
+			protocol="HTTPS" tlsContext="TLS_Context" />
+	</http:listener-config>
+	<apikit:config name="b2b-p21-sys-api-spec-config"
+		api="resource::d239ff40-5b13-47be-9bb0-a029a64dac2c:b2b-p21-sys-api-spec:1.0.11:raml:zip:b2b-p21-sys-api-spec.raml"
+		outboundHeadersMapName="outboundHeaders"
+		httpStatusVarName="httpStatus" parser="AMF" />
+
 	<flow name="b2b-p21-sys-api-spec-main">
 		<http:listener
-			config-ref="b2b-p21-sys-api-spec-httpListenerConfig" path="${http.path.listener}" doc:name=" b2b-p21-sys-api-spec-main">
+			config-ref="b2b-p21-sys-api-spec-httpListenerConfig"
+			path="${http.path.listener}" doc:name=" b2b-p21-sys-api-spec-main">
 			<http:response
 				statusCode="#[vars.httpStatus default 200]">
 				<http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
@@ -56,6 +68,9 @@
 	</flow>
 	<flow
 		name="post:\transactions\custom:application\xml:b2b-p21-sys-api-spec-config">
-		<flow-ref doc:name="Flow Reference to post-p21-transaction-xml-processing-subflow" doc:id="9f6008ae-5d49-439d-b624-7dad5394a314" name="post-p21-transaction-xml-processing-subflow" />
+		<flow-ref
+			doc:name="Flow Reference to post-p21-transaction-xml-processing-subflow"
+			doc:id="9f6008ae-5d49-439d-b624-7dad5394a314"
+			name="post-p21-transaction-xml-processing-subflow" />
 	</flow>
 </mule>
