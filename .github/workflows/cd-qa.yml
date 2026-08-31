@@ -26,7 +26,6 @@ jobs:
             b2b-process-api: 'apps/b2b-process-api/**'
             b2b-p21-sys-api: 'apps/b2b-p21-sys-api/**'
 
-
   check-release:
     if: ${{ fromJson(needs.changes.outputs.apps)[0] != null }}
     needs: changes
