@@ -69,6 +69,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 				<ee:set-variable resource="dwl/coupa-inbound-invoice-processing-subflow/v_httpOperationPostPurchaseOrder.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
+								<logger level="INFO" doc:name="Logger" doc:id="b54cc7e4-75c9-47bc-90a4-8e1172cc7fb8" message="#[vars.httpOperation]"/>
 								<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" />
 								<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b">
 			<when expression="#[isEmpty(payload.Order.OrderNo)]">

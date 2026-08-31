@@ -61,7 +61,7 @@ import toBase64 from dw::core::Binaries
 			<os:default-value><![CDATA[#[%dw 2.0
 output application/json
 ---
-(now() - |P1D|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
+(now() - |PT1H|) >> 'America/New_York' as String {format: 'yyyy-MM-dd\'T\'HH:mm:ss.SXX'}]]]></os:default-value>
 		</os:retrieve>
 				<ee:transform doc:name="var : httpOperation - get shipment Data" doc:id="edb90ed6-cc2b-43de-b808-8cf2070b54e2">
 			<ee:message />
@@ -126,9 +126,9 @@ groupedPayload pluck ((records, pickTicketNo) -> {
                 },
  
             shipNoticeNumber: records[0].BSN02_ShipNoticeNo,
-			receiverId: records[0].TP_edi_isa05_id ++ "T",
-            senderId: Mule::p(lower(records[0].trading_partner_name) ++ ".ack.senderId") ,
- 
+            receiverId: if(Mule::p('mule.env')!= "prod") (((records[0].TP_edi_isa05_id default "") as String) ++ "T") else ((records[0].TP_edi_isa05_id default "") as String),
+            senderId: Mule::p('fcg.edi_id') ,
+            fcgOrderNo: records[0].order_no,
             shippedDateQualifier: records[0].DTM01_ShippedDateQual,
             shippedDate: records[0].DTM02_ShippedDate,
  
@@ -226,7 +226,7 @@ groupedPayload pluck ((records, pickTicketNo) -> {
 })]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="f90faba7-8aa8-4f69-b9f5-e16df7fb55fc" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	poMapping: payload&#10;}]' category="${logger.debug.category}" />
+		<logger level="DEBUG" doc:name="LOG DEBUG:  Parallel for each" doc:id="f90faba7-8aa8-4f69-b9f5-e16df7fb55fc" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "Parllel for each process started",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId,&#10;	shipmentMapping: payload&#10;}]' category="${logger.debug.category}" />
 		<parallel-foreach doc:name="Parallel For Each : Iteration over Shipments" doc:id="be8fdd12-f1ab-43e2-bc2b-7c0103d25558" collection="#[payload]" >
 			<try doc:name="Try" doc:id="61de19cc-4860-48e4-aa61-2044c0bdb1ae" >
 				<json:validate-schema doc:name="Validate Incoming Payload" doc:id="aeb774d9-32b9-4cba-82e3-3854a1f026cf" schema="schema/ASN_OUTBOUND_JSON_SCHEMA.json" />

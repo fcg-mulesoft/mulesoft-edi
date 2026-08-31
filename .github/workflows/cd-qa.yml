@@ -26,7 +26,7 @@ jobs:
             b2b-process-api: 'apps/b2b-process-api/**'
             b2b-p21-sys-api: 'apps/b2b-p21-sys-api/**'
 
-  deploy-release:
+  check-release:
     if: ${{ fromJson(needs.changes.outputs.apps)[0] != null }}
     needs: changes
     runs-on: ubuntu-latest
@@ -117,11 +117,59 @@ jobs:
         working-directory: ./apps/${{ matrix.app }}
         run: echo "version=$(mvn -q help:evaluate -Dexpression=project.version -q -DforceStdout)" >> "$GITHUB_OUTPUT"
 
+      - name: Determine If ${{ matrix.app }}-v${{ steps.app.outputs.version }} Release Exists in GitHub
+        id: check_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+        shell: bash
+        run: |
+           if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release '$TAG' already exists in $REPO. Failing this job."
+            exit 1
+           else
+            echo "exists=false" >> "GITHUB_OUTPUT"
+            echo "No Release named '$TAG' found. Continuing."
+           fi
+
+      - name: Build ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+        id: build-release
+        if: ${{steps.check_release.outputs.exists == false }}
+        working-directory: ./apps/${{ matrix.app }}
+        run: mvn clean package -DskipMunitTests
+
+      - name: Create Github Release for ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+        if: ${{steps.check_release.outputs.exists == false }}
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          tag_name: ${{ matrix.app }}-v${{ steps.app.outputs.version }}
+          files: ./apps/${{ matrix.app }}/target/${{ matrix.app }}-app-${{ steps.app.outputs.version }}-mule-application.jar
+          target_commitish: ${{ github.ref_name }}
+
+      - name: Upload ${{ matrix.app }}-v${{ steps.app.outputs.version }} to Anypoint Exchange
+        shell: bash
+        working-directory: ./apps/${{ matrix.app }}
+        env:
+          MAVEN_GROUP_ID: ${{ secrets.ANYPOINT_EXCHANGE_GROUP_ID }}
+          MAVEN_ARTIFACT_ID: ${{ matrix.app }}-app
+          MAVEN_VERSION_ID: ${{ steps.app.outputs.version }}
+          APP_NAME: ${{ matrix.app }}
+        run: |
+          anypoint-cli-v4 exchange:asset:upload \
+          "${{ env.MAVEN_GROUP_ID }}/${{ env.MAVEN_ARTIFACT_ID }}/${{ env.MAVEN_VERSION_ID }}" \
+          --organization "Flow Control Group" \
+          --environment "NonProd" \
+          --files '{"mule-application.jar": "target/${{ env.APP_NAME }}-app-${{ env.MAVEN_VERSION_ID }}-mule-application.jar"}' \
+          --type='app' \
+          --name='${{ env.APP_NAME }}'
+
       - name: Determine If ${{ matrix.app }} Exists in CloudHub 2.0
         id: ch2_0_app
         shell: bash
         env:
-          APP_NAME: ${{ matrix.app }}-qa
+          APP_DEPLOY_NAME: ${{ matrix.app }}-qa
         run: |
           CH_2_APP_ID=$(anypoint-cli-v4 runtime-mgr:application:list \
           --organization "Flow Control Group" \
@@ -159,7 +207,7 @@ jobs:
           --assetVersion "${{ env.APP_VERSION }}" \
           --objectStoreV2 \
           --lastMileSecurity \
-          --property "mule.env:qa" \
+          --property "mule.env:dev" \
           --secureProperty "mule.key:${{ env.MULE_KEY }}" \
           --secureProperty "anypoint.platform.client_id:${{ env.ANYPOINT_PLATFORM_CLIENT_ID }}" \
           --secureProperty "anypoint.platform.client_secret:${{ env.ANYPOINT_PLATFORM_CLIENT_SECRET }}"
@@ -169,7 +217,7 @@ jobs:
         if: steps.ch2_0_app.outputs.exists == 'false'
         shell: bash
         env:
-          APP_DEPLOY_NAME: ${{ matrix.app }}-qa
+          APP_DEPLOY_NAME: ${{ matrix.app }}-dev
           CLOUDHUB2_SPACE_UUID: ${{ secrets.CLOUDHUB2_SPACE_UUID }}
           RUNTIME_VERSION: 4.9.0
           APP_NAME: ${{ matrix.app }}-app
@@ -190,7 +238,7 @@ jobs:
             --releaseChannel LTS \
             --objectStoreV2 \
             --lastMileSecurity \
-            --property "mule.env:qa" \
+            --property "mule.env:dev" \
             --secureProperty "mule.key:${{ env.MULE_KEY }}" \
             --secureProperty "anypoint.platform.client_id:${{ env.ANYPOINT_PLATFORM_CLIENT_ID }}" \
             --secureProperty "anypoint.platform.client_secret:${{ env.ANYPOINT_PLATFORM_CLIENT_SECRET }}"

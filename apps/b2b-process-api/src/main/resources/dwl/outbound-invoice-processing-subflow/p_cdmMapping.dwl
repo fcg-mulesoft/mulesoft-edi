@@ -12,8 +12,9 @@ var invoiceItems =
 invoiceItems pluck ((items, invoiceNo) -> {
 	b2bMessage: {
 		header: {
-			senderId: Mule::p(lower(items[0].trading_partner_name) ++ ".ack.senderId"),
-			receiverId: items[0].TP_edi_isa05_id ++ "T",
+			senderId: Mule::p('fcg.edi_id'),
+			receiverId: if(Mule::p('mule.env')!= "prod") (((items[0].TP_edi_isa05_id default "") as String) ++ "T") else ((items[0].TP_edi_isa05_id default "") as String),
+			fcgOrderNo: items[0].order_no,
 			invoiceNumber: items[0].BIG02_InvNo,
 			invoiceDate: items[0].BIG01_InvDate,
 			purchaseOrderNumber: items[0].BIG04_PurchaseOrderNo,
@@ -41,7 +42,8 @@ invoiceItems pluck ((items, invoiceNo) -> {
 				address1: items[0].N301_VN_Addr,
 				city: items[0].N401_VN_City,
 				state: items[0].N402_VN_State,
-				country: "US"
+				country: "US",
+				zipCode: items[0].N403_VN_postal_code
 			},
  
                 {
@@ -52,7 +54,8 @@ invoiceItems pluck ((items, invoiceNo) -> {
 				address1: items[0].N301_BY_Addr,
 				city: items[0].N401_BY_City,
 				state: items[0].N402_BY_State,
-				country: "US"
+				country: "US",
+				zipCode: items[0].N403_BY_postal_code
 			},
  
                 {
@@ -63,7 +66,9 @@ invoiceItems pluck ((items, invoiceNo) -> {
 				address1: items[0].N301_ST_Addr,
 				city: items[0].N401_ST_City,
 				state: items[0].N402_ST_State,
-				country: "US"
+				country: "US",
+				zipCode: items[0].N403_ST_postal_code
+				
 			},
  
                 {
@@ -74,7 +79,9 @@ invoiceItems pluck ((items, invoiceNo) -> {
 				address1: items[0].N301_SF_Addr,
 				city: items[0].N401_SF_City,
 				state: items[0].N402_SF_State,
-				country: "US"
+				country: "US",
+				zipCode: items[0].N403_SF_postal_code
+				
 			}] filter ($.qualifier != null),
 			dates: [{
 				dateQualifier: items[0].DTM01_Qual,

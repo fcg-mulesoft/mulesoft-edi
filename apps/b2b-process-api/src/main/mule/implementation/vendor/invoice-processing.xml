@@ -6,6 +6,7 @@
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<sub-flow name="inbound-invoice-processing-subflow" doc:id="0f3b0ec8-ab83-4254-a92f-ce1b7e4e5fca" >
 		<logger level="INFO" doc:name="LOG INFO : START" doc:id="f3eaae67-8060-4585-9b21-8949893def16" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "START",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
+		<flow-ref doc:name="Flow Reference" doc:id="0d3cac58-dffa-4c24-8888-f27ed40d3784" name="get-email-view-subflow"/>
 		<ee:transform doc:name="var : httpOperation - get purchase order" doc:id="0f587fa5-6fc6-4c33-aa38-3c2478ca3fe8" >
 			<ee:message >
 			</ee:message>
@@ -14,35 +15,252 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="fe068a4b-652e-4c31-a9e9-4aac018cbed3" name="common-http-request-subflow" target="purchaseOrderData"/>
-		<logger level="INFO" doc:name="LOG INFO : P21 View Data" doc:id="6be8d4ce-9b7c-40e6-8a9a-d1d44551958b" message='#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;{&#10;	"Message": "P21 View",&#10;	"Payload": vars.purchaseOrderData&#10;}]'/>
-		<ee:transform doc:name="var : isValid" doc:id="866e5918-c2cb-45fd-b79c-fddd23c0c465" >
-			<ee:message >
+		<choice doc:name="Choice" doc:id="658499de-7165-4923-b26f-234ea8472aee" >
+			<when expression='#[(vars.purchaseOrderData.value.po_type) contains "D"]'>
+				<logger level="INFO" doc:name="LOG INFO : P21 View Data" doc:id="fd1f4dca-2377-4589-8693-ba65c87e8e4d" message='#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;{&#10;	"Message": "P21 View",&#10;	"Payload": vars.purchaseOrderData,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]' />
+				<ee:transform doc:name="var: isValid" doc:id="20a62ca8-aba1-4255-83b5-ff13d006fe55" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="isValid" ><![CDATA[%dw 2.0
+output application/json
+
+var invoice = vars.initialPayload[0].b2bMessage
+var header = invoice.header
+var summaryData = invoice.summary
+var lines = invoice.detail.invoice.itemDetails default []
+var poLines = vars.purchaseOrderData.value
+
+// ---------- Step 1: Carrier ID presence ----------
+var carrierId = (summaryData.carrierDetail.carrierCode default "") as String
+var isCarrierPresent = !isEmpty(trim(carrierId))
+
+// ---------- Step 2: Festo Freight Value ----------
+var festoFreightValue = summaryData.serviceAllowanceCharge.adjustmentAmount default 0
+
+// ---------- Step 3: Tier-based flat rate markup ----------
+fun tierFlatRate(amount: Number): Number =
+  if (amount >= 1000) 20.00
+  else if (amount >= 500) 18.00
+  else if (amount >= 100) 14.00
+  else if (amount >= 50) 8.00
+  else if (amount >= 0.01) 6.00
+  else 0.00
+
+// ---------- Step 4: Apply Scenario Rules ----------
+var itemBillAmount = summaryData.totalAmount default 0
+
+var scenarioCode =
+  if (isCarrierPresent) "SC1"
+  else if (festoFreightValue >= 100) "SC2"
+  else "SC3"
+
+var finalFreight =
+  if (scenarioCode == "SC1") festoFreightValue
+  else if (scenarioCode == "SC2") festoFreightValue
+  else festoFreightValue + tierFlatRate(itemBillAmount)
+
+// ---------- Step 5: Normalize + strip "FES" prefix ----------
+fun normalize(s: String): String =
+  upper(trim(s default ""))
+
+fun stripFesPrefix(partNo: String): String = do {
+  var norm = normalize(partNo)
+  ---
+  if (norm startsWith "FES") norm[3 to -1] else norm
+}
+
+// ---------- Step 6: Match invoice lines to P21 PO lines ----------
+var matchedItems = lines map ((line) -> do {
+    var vendorPartNoNorm = normalize(line.vendorPartNo)
+    var poLine = (poLines filter (
+        stripFesPrefix($.supplier_part_no) == vendorPartNoNorm
+      ))[0]
+    ---
+    {
+      item_id: poLine.item_id default null,
+      unit_quantity:  if (poLine.unit_quantity != null)
+            poLine.unit_quantity as Number {format: "0.00"}
+        else
+            null
+    }
+})
+
+// ---------- Step 7: Assemble Output ----------
+var poNoNum = header.poNumber as Number default null
+---
+{
+  po_no: poNoNum,
+  tracking_no: summaryData.carrierDetail.trackingNumber default null,
+  freight_cd: "CPO",
+  receipt_freight: finalFreight[0],
+  items: matchedItems
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="LOG INFO :  Data" doc:id="8d167bf2-208d-4798-965e-6fbe8e97e750" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Direct Ship Info",&#10;	"Payload": vars.isValid,&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	sourceSystem: "APM - Anypoint Partner Manager",&#10;	targetSystem: "P21"&#10;}]'/>
+				<ee:transform doc:name="var: p21Invoice" doc:id="d0c93656-fdde-4d0a-9a76-817ad7e48e91">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="p21Invoice"><![CDATA[%dw 2.0
+output application/json
+
+---
+{
+
+    Description: null,
+    UseCodeValues: true,
+    IgnoreDisabled: true,
+    Transactions: [
+        {
+            Status: "New",
+            DataElements: [
+                {
+                    Name: "TABPAGE_1.tp_1_dw_po",
+                    BusinessObjectName: null,
+                    Type: "Form",
+                    Keys: ["po_no"],
+                    Rows: [
+                        {
+                            Edits: [
+                                {
+                                    Name: "po_no",
+                                    Value: vars.isValid.po_no as String,
+                                    IgnoreIfEmpty: true
+                                },
+                                {
+                                    Name: "tracking_no",
+                                    Value: vars.isValid.tracking_no,
+                                    IgnoreIfEmpty: true
+                                }
+                            ],
+                            RelativeDateEdits: []
+                        }
+                    ]
+                },
+                {
+                    Name: "TABPAGE_FREIGHT.tabpage_freight",
+                    BusinessObjectName: null,
+                    Type: "Form",
+                    Keys: [],
+                    Rows: [
+                        {
+                            Edits: [
+                                {
+                                    Name: "freight_cd",
+                                    Value: vars.isValid.freight_cd,
+                                    IgnoreIfEmpty: true
+                                },
+                                {
+                                    Name: "receipt_freight",
+                                    Value: (vars.isValid.receipt_freight as Number) as String {
+                                        format: "0.00"
+                                    },
+                                    IgnoreIfEmpty: true
+                                }
+                            ],
+                            RelativeDateEdits: []
+                        }
+                    ]
+                },
+                {
+                    Name: "TABPAGE_17.tp_17_dw_17",
+                    BusinessObjectName: null,
+                    Type: "List",
+                    Keys: ["item_id"],
+                    Rows: vars.isValid.items map (item) -> {
+                        Edits: [
+                            {
+                                Name: "item_id",
+                                Value: item.item_id,
+                                IgnoreIfEmpty: true
+                            },
+                            {
+                                Name: "unit_quantity",
+                                Value: (item.unit_quantity as Number) as String {
+                                    format: "0.00"
+                                },
+                                IgnoreIfEmpty: true
+                            }
+                        ],
+                        RelativeDateEdits: []
+                    }
+                }
+            ],
+            Documents: null
+        }
+    ],
+    Query: null,
+    FieldMap: [],
+    TransactionSplitMethod: 0,
+    Parameters: null
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<ee:transform doc:name="var: httpOperation" doc:id="121201dc-431b-44a3-8598-5a8fe76917b3" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpOperation" ><![CDATA[%dw 2.0
+output application/json
+import toBase64 from dw::core::Binaries
+---
+{
+	"method": Mule::p('b2b-p21-sys-api.transaction.method'),
+	"host": Mule::p('b2b-p21-sys-api.host'),
+	"port": Mule::p('b2b-p21-sys-api.port'),
+	"basePath": Mule::p('b2b-p21-sys-api.basePath'),
+	"path": Mule::p('b2b-p21-sys-api.transaction.path'),
+	"headers": {
+		"x-correlation-id": vars.integration.correlationId
+	},
+	"queryParams": {
+		"transactionType": "purchaseOrderInvoiceDirect",
+	},
+	"uriParams": {
+	},
+	"untilsuccessful": {
+		"maxRetries": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.maxRetries'),
+		"interval": Mule::p('b2b-p21-sys-api.transaction.untilsuccessful.interval')
+	},
+	"body": vars.p21Invoice
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO : P21 View Data" doc:id="6be8d4ce-9b7c-40e6-8a9a-d1d44551958b" message='#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;{&#10;	"Message": "P21 View",&#10;	"Payload": vars.purchaseOrderData&#10;}]' />
+				<ee:transform doc:name="var : isValid" doc:id="866e5918-c2cb-45fd-b79c-fddd23c0c465">
+			<ee:message>
 			</ee:message>
-			<ee:variables >
+			<ee:variables>
 				<ee:set-variable resource="dwl/inbound-invoice-processing-subflow/v_isValid.dwl" variableName="isValid" />
 			</ee:variables>
 		</ee:transform>
-		<choice doc:name="isValid Invoice?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
-			<when expression="#[vars.isValid.isValid == false or (vars.isValid.validationErrors.shipToMatchPercentage &lt; ((Mule::p('shipToValidation.lowerLimit')) as Number))]">
+				<choice doc:name="isValid Invoice?" doc:id="79afbb3c-188a-4276-acd4-2c9d7bb69503">
+			<when expression="#[vars.isValid.isValid == false&#10;&#10;or vars.isValid.validationErrors.shipToNameMatchPercentage &lt; (Mule::p('shipToValidation.lowerLimit') as Number)&#10;&#10;or vars.isValid.validationErrors.shipToAddressMatchPercentage &lt; (Mule::p('shipToValidation.lowerLimit') as Number)]">
 				<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="7ead687f-13fd-40c6-87a7-c586405347d4" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed" />
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="LOG INFO : Valid Invoice" doc:id="5f5af8b4-e52c-4e60-850d-cde8a78887e3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.integration.correlationId,&#10;	transmissionId: vars.initialPayload[0].b2bMessage.header.transmissionId default "",&#10;	"message": "Invoice validation successful, Moving forward to create the Invoice in p21",&#10;}]' />
 			</otherwise>
 		</choice>
-		<ee:transform doc:name="var : p21Invoice" doc:id="4dc242d7-5131-44a4-a93a-f72e5a3cc70d" >
-			<ee:message >
+				<ee:transform doc:name="var : p21Invoice" doc:id="4dc242d7-5131-44a4-a93a-f72e5a3cc70d">
+			<ee:message>
 			</ee:message>
-			<ee:variables >
+			<ee:variables>
 				<ee:set-variable resource="dwl/inbound-invoice-processing-subflow/v_p21Invoice.dwl" variableName="p21Invoice" />
 			</ee:variables>
 		</ee:transform>
-		<ee:transform doc:name="var : httpOperation - post invoice" doc:id="8d832f08-d5bd-4035-bb98-a4041efdda0c">
+				<ee:transform doc:name="var : httpOperation - post invoice" doc:id="8d832f08-d5bd-4035-bb98-a4041efdda0c">
 			<ee:message />
 			<ee:variables>
 				<ee:set-variable resource="dwl/inbound-invoice-processing-subflow/v_httpOperationPostInvoice.dwl" variableName="httpOperation" />
 			</ee:variables>
 		</ee:transform>
+			</otherwise>
+		</choice>
 		<flow-ref doc:name="Flow Reference To commom-http-request-subflow" doc:id="98913654-3e07-4c01-be00-d71faa614beb" name="common-http-request-subflow" />
 		<logger level="INFO" doc:name="LOG INFO : P21 Response Payload" doc:id="b58c0223-9472-440d-bae4-b40e566691d1" message='#[%dw 2.0&#10;output application/json indent = false&#10;---&#10;{&#10;	"Message": "P21 Response Payload After Invoice Creation",&#10;	"Payload": payload&#10;}]'/>
 		<choice doc:name="is Successful?" doc:id="4a8c246b-d93e-451f-afbd-f3e1e84a071b" >
@@ -54,69 +272,154 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</otherwise>
 		</choice>
 		<choice doc:name="Send Shipment Address Warning Email?" doc:id="74f2d4e7-a8cf-4a84-9bc1-51f0b9c52a20" >
-			<when expression="#[(vars.isValid.validationErrors.shipToMatchPercentage &gt;= ((Mule::p('shipToValidation.lowerLimit')) as Number) and vars.isValid.validationErrors.shipToMatchPercentage &lt;=((Mule::p('shipToValidation.upperLimit')) as Number))]">
+			<when expression="#[(vars.isValid.validationErrors.shipToNameMatchPercentage &gt;= ((Mule::p('shipToValidation.lowerLimit')) as Number) and vars.isValid.validationErrors.shipToNameMatchPercentage &lt;=((Mule::p('shipToValidation.upperLimit')) as Number))&#10;or&#10;(vars.isValid.validationErrors.shipToAddressMatchPercentage &gt;= ((Mule::p('shipToValidation.lowerLimit')) as Number) and vars.isValid.validationErrors.shipToAddressMatchPercentage &lt;=((Mule::p('shipToValidation.upperLimit')) as Number))]">
 				<ee:transform doc:name="Prepare Warning Email Payload, var : subject" doc:id="3de95ddf-6440-4783-91d0-c609384b4a26">
 			<ee:message>
-				<ee:set-payload><![CDATA[
-%dw 2.0
+				<ee:set-payload><![CDATA[%dw 2.0
 output text/plain
-
-fun safe(v,d="N/A") = if (v == null or (v is String and trim(v) == "")) d else v
-
+ 
+fun safe(v, d = "N/A") =
+    if (v == null or (v is String and trim(v) == "")) d else v
+ 
 var integration = vars.integration default vars.initialVariables default {}
-var sysInfo = vars.systemInformation default {}
 var cdm = (vars.initialPayload default [])[0].b2bMessage default {}
 var header = cdm.header default {}
-
+ 
 var senderKey = header.senderId default ""
+ 
 var vendorId =
     if (senderKey != "")
         (p("partner.inbound." ++ senderKey)
-         default p("partner.outbound." ++ senderKey)
-         default "N/A")
-    else "N/A"
-
+            default p("partner.outbound." ++ senderKey)
+            default "N/A")
+    else
+        "N/A"
+ 
 var poNumber = safe(header.poNumber)
-var percentage =
-    vars.isValid.validationErrors.shipToMatchPercentage
-    default vars.isValid.validationErrors.shipToMatchPercentage
-    default null
-
+ 
+var namePercentage =
+    vars.isValid.validationErrors.shipToNameMatchPercentage default null
+ 
+var addressPercentage =
+    vars.isValid.validationErrors.shipToAddressMatchPercentage default null
+ 
+var lowerLimit =
+    (Mule::p("shipToValidation.lowerLimit") as Number)
+ 
+var upperLimit =
+    (Mule::p("shipToValidation.upperLimit") as Number)
+ 
 var data = {
-	matchPercentage: (percentage as Number) as String {format: "00.00"} ++ "%",
-    flowDirection: if(lower(safe(integration.source,"APM"))=="apm") "INBOUND" else "OUTBOUND",
-    documentType: safe(integration."integration-type", safe(header.documentType,"API")),
-    warningTitle: "Address Match Warning",
+    lowerLimit: lowerLimit as String,
+    upperLimit: upperLimit as String,
+ 
+    shipToNameMatchPercentage:
+        if (namePercentage != null)
+            ((namePercentage as Number) as String {format: "00.00"}) ++ "%"
+        else
+            "N/A",
+ 
+    shipToAddressMatchPercentage:
+        if (addressPercentage != null)
+            ((addressPercentage as Number) as String {format: "00.00"}) ++ "%"
+        else
+            "N/A",
+ 
+    flowDirection:
+        if (lower(safe(integration.source, "APM")) == "apm")
+            "INBOUND"
+        else
+            "OUTBOUND",
+ 
+    documentType:
+        safe(integration."integration-type", safe(header.documentType, "API")),
+ 
+    warningTitle: "Ship-To Validation Warning",
+ 
     bannerColor: "#f59e0b",
-    warningType: "ADDRESS_MATCH_WARNING",
-    warningCategory: "VALIDATION",
+ 
+    warningType: "SHIP_TO_VALIDATION_WARNING",
+ 
+    warningCategory: "SHIP_TO_VALIDATION",
+ 
     status: "PROCESSED WITH WARNING",
-    companyName: vars.purchaseOrderData.value.company_no[0] default "N/A",
-    vendorName: vendorId,
-    route: safe(integration.source,"APM") ++ " → Mule → " ++ safe(integration.target,"P21"),
-    businessKey: "PO " ++ poNumber,
-    timestamp: now() as String {format:"yyyy-MM-dd HH:mm:ss"},
-    transmissionId: safe(header.transmissionId),
-    keyLabel: "Correlation ID",
-    key: correlationId default uuid(),
-    transactionType: safe(integration."integration-type", safe(header.documentType,"API")),
-    appName: p("api.name") default "Mule Application",
-    environment: upper(p("mule.env") default "DEV"),
+ 
+    companyName:
+        vars.purchaseOrderData.value.company_no[0] default "N/A",
+ 
+    vendorName:
+        vendorId,
+ 
+    route:
+        safe(integration.source, "APM")
+        ++ " → Mule → "
+        ++ safe(integration.target, "P21"),
+ 
+    businessKey:
+        "PO " ++ poNumber,
+ 
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"},
+ 
+    transmissionId:
+        safe(header.transmissionId),
+ 
+    keyLabel:
+        "Correlation ID",
+ 
+    key:
+        correlationId default uuid(),
+ 
+    transactionType:
+        safe(integration."integration-type", safe(header.documentType, "API")),
+ 
+    appName:
+        p("api.name") default "Mule Application",
+ 
+    environment:
+        upper(p("mule.env") default "DEV"),
+ 
     message:
-        "Purchase Order " ++ poNumber ++ " was processed successfully with a warning.",
+        "Purchase Order "
+        ++ poNumber
+        ++ " was processed successfully with a warning.",
+ 
     warningDescription:
-        "The Ship-To address matched "
-        ++ (((percentage as Number) as String {format: "00.00"} default "N/A") as String)
-        ++ "% with the corresponding address in P21."
-        ++ "\nThe transaction was processed because the configured warning threshold is between " ++ Mule::p('shipToValidation.lowerLimit') ++ "%" ++ "and" ++ Mule::p('shipToValidation.upperLimit') ++ "%.",
+        "Ship-To validation results:"
+        ++ "\n• Ship-To Name Match Percentage: "
+        ++ (
+            if (namePercentage != null)
+                ((namePercentage as Number) as String {format: "00.00"})
+            else
+                "N/A"
+        )
+        ++ "%"
+        ++ "\n• Ship-To Address Match Percentage: "
+        ++ (
+            if (addressPercentage != null)
+                ((addressPercentage as Number) as String {format: "00.00"})
+            else
+                "N/A"
+        )
+        ++ "%"
+        ++ "\n\nThe transaction was processed because one or more Ship-To validation match percentages fell within the configured warning threshold range of "
+        ++ (lowerLimit as String)
+        ++ "% and "
+        ++ (upperLimit as String)
+        ++ "%.",
+ 
     warningResolution:
-        "No action is required. Please review the Ship-To address if necessary."
+        "No action is required. Please review the Ship-To Name and Ship-To Address information if necessary."
 }
-
-var template = readUrl("classpath://templates/warning-template.html","text/plain")
+ 
+var template =
+    readUrl(
+        "classpath://templates/warning-template.html",
+        "text/plain"
+    )
+ 
 ---
-template replace /\$\{(\w+)\}/ with ((m) -> (data[m[1]] as String) default "")
-]]></ee:set-payload>
+template replace /\$\{(\w+)\}/ with ((m) -> (data[m[1]] as String) default "")]]></ee:set-payload>
 			</ee:message>
 					<ee:variables >
 						<ee:set-variable variableName="subject" ><![CDATA[%dw 2.0
@@ -133,21 +436,13 @@ var poNumber =
     vars.initialPayload[0].b2bMessage.header.poNumber
         default "N/A"
  
-var matchPercentage =
-    vars.validationResult.validationErrors.shipToMatchPercentage
-        default vars.isValid.validationErrors.shipToMatchPercentage
-        default null
  
 ---
 [
     env,
     "FCG WARNING",
     integrationType,
-    "PO " ++ poNumber,
-    if (matchPercentage != null)
-        "Address Match " ++ ((matchPercentage as Number) as String {format: "##.##"}) ++ "%"
-    else
-        null
+    "PO " ++ poNumber
 ]
     filter ($ != null and $ != "")
     joinBy " | "]]></ee:set-variable>
@@ -243,10 +538,8 @@ var data = {
     businessKey:
         "PO " ++ poNumber,
  
-    timestamp:
-        now() as String {
-            format: "yyyy-MM-dd HH:mm:ss"
-        },
+	timestamp:
+    (now() >> "UTC") as String {format: "yyyy-MM-dd HH:mm:ss 'UTC'"},
  
     transmissionId:
         safe(header.transmissionId),

@@ -3,43 +3,51 @@ output application/json
 var transactionType = attributes.queryParams.transactionType
 var purpose = attributes.queryParams.purpose
 var ediRefId = attributes.queryParams.ediRefId default ""
-var date_last_modified= attributes.queryParams.lastModified default ""
+var date_last_modified = attributes.queryParams.lastModified default ""
 var businesskey =
-
     (attributes.queryParams.businesskey default "") splitBy "," map (trim($)) filter ($ != "") distinctBy $
 var validationMode = attributes.queryParams.validationMode default "xref"
 var customerId = attributes.queryParams.customerId default ""
-var companyId = attributes.queryParams.companyId default "TPA"
+var companyId = attributes.queryParams.companyId default "KFT"
 var startTime = attributes.queryParams.startTime default ""
 var endTime = attributes.queryParams.endTime default ""
 var partnerName = attributes.queryParams.partnerName default ""
 var salesOrderValidationConfig =
-    if ( validationMode == "xref" ) {
-    view: "fcg_edi_xref_vw",
-    filter: "edi_x_ref_id eq '" ++ ediRefId ++
-                "' and company_id eq '" ++ companyId ++ "'"
-}
-    else if ( validationMode == "po" ) {
-    view: "fcg_edi_order_vw",
-    filter: "(" ++
-                ((businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ") and company_id eq '" ++ companyId ++ "'" ++ " and customer_id eq " ++ customerId
-}
-    else if ( validationMode == "customerPart" ) {
-    view: "p21_view_customer_part_number",
-    filter: "customer_id eq " ++ customerId ++ " and (" ++ ((businesskey map ("their_item_id eq '" ++ $ ++ "' or our_item_id eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
-}
-    else
-        {
-    view: "",
-    filter: ""
-}
+    if (validationMode == "xref") {
+        view: "fcg_edi_xref_vw",
+        filter: "edi_x_ref_id eq '" ++ ediRefId ++ "' and company_id eq '" ++ companyId ++ "'"
+    }
+    else if (validationMode == "po") {
+        view: "fcg_edi_order_vw",
+        filter: "(" ++ ((businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ") and company_id eq '" ++ companyId ++ "'" ++ " and customer_id eq " ++ customerId
+    }
+    else if (validationMode == "customerPart") {
+        view: if (companyId == "KFT")
+          "fcg_edi_Item_Validation_vw"
+          else "p21_view_customer_part_number",
+        filter:  if (companyId == "KFT")
+        	"company_id eq '" ++ companyId ++ "' and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+        	else 
+        		"company_id eq '" ++ companyId ++ "' and (" ++
+(
+    businesskey flatMap ((item) -> [
+        "their_item_id eq '" ++ item ++ "'",
+        "our_item_id eq '" ++ item ++ "'"
+    ])
+    joinBy " or "
+) ++
+")"
+    }
+    else {
+        view: "",
+        filter: ""
+    }
 var routingConfig = {
     purchaseOrder: {
         validation: {
             view: Mule::p('viewNames.coupaPurchaseOrderPartsValidtion'),
             queryParams: {
-                "\$filter": (businesskey flatMap ((item) ->
-                    (item splitBy "|" filter ($ != "")) flatMap ((part) -> ["their_item_id eq '" ++ part ++ "'", "our_item_id eq '" ++ part ++ "'"]))) joinBy " or "
+                "\$filter": "company_id eq 'KFT' and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
             }
         },
         outbound: {
@@ -58,7 +66,7 @@ var routingConfig = {
         total: {
             view: Mule::p('viewNames.purchaseOrderOutbound'),
             queryParams: {
-            	"\$orderby" : "po_no asc,line_no asc"
+                "\$orderby": "po_no asc,line_no asc"
             }
         }
     },
@@ -119,15 +127,15 @@ var routingConfig = {
     salesOrderAck: {
         total: {
             view: Mule::p('viewNames.purchaseOrderAckOutbound'),
-            queryParams: {
-            }
+            queryParams: {}
         }
     },
     salesOrderInvoice: {
         total: {
             view: Mule::p('viewNames.purchaseOrderInvoiceOutbound'),
             queryParams: {
-                "\$filter": "date_last_modified ge  " ++ date_last_modified			}
+                "\$filter": "date_last_modified ge  " ++ date_last_modified
+            }
         },
         outbound: {
             view: Mule::p('viewNames.coupaOrderOutbound'),
@@ -139,13 +147,11 @@ var routingConfig = {
             view: Mule::p('viewNames.purchaseOrderInvoiceOutbound'),
             queryParams: {
                 "\$filter": (["date_last_modified ge " ++ startTime,
-                        "date_last_modified le " ++ endTime,
-                        if ( !isEmpty(businesskey) ) "(" ++ ((businesskey map ("invoice_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
-                        else
-                            null,
-                        if ( !isEmpty(partnerName) ) "trading_partner_name eq '" ++ partnerName ++ "'"
-                        else
-                            null] filter ($ != null)) joinBy " and "
+                    "date_last_modified le " ++ endTime,
+                    if (!isEmpty(businesskey)) "(" ++ ((businesskey map ("invoice_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+                    else null,
+                    if (!isEmpty(partnerName)) "trading_partner_name eq '" ++ partnerName ++ "'"
+                    else null] filter ($ != null)) joinBy " and "
             }
         }
     },
@@ -160,29 +166,23 @@ var routingConfig = {
             view: Mule::p('viewNames.purchaseOrderShipmentOutbound'),
             queryParams: {
                 "\$filter": (["date_last_modified ge " ++ startTime,
-                        "date_last_modified le " ++ endTime,
-                        if ( !isEmpty(businesskey) ) "(" ++ ((businesskey map ("pick_ticket_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
-                        else
-                            null,
-                        if ( !isEmpty(partnerName) ) "trading_partner_name eq '" ++ partnerName ++ "'"
-                        else
-                            null] filter ($ != null)) joinBy " and "
+                    "date_last_modified le " ++ endTime,
+                    if (!isEmpty(businesskey)) "(" ++ ((businesskey map ("pick_ticket_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+                    else null,
+                    if (!isEmpty(partnerName)) "trading_partner_name eq '" ++ partnerName ++ "'"
+                    else null] filter ($ != null)) joinBy " and "
             }
         }
     },
     emailNotification: {
         total: {
             view: Mule::p('viewNames.emailNotification'),
-            queryParams: {
-            }
+            queryParams: {}
         }
     }
 }
 var selectedConfig =
-
-    (routingConfig[transactionType] default {
-})[purpose] default {
-}
+    (routingConfig[transactionType] default {})[purpose] default {}
 ---
 {
     method: Mule::p('p21.request.method.OData'),
@@ -194,10 +194,7 @@ var selectedConfig =
         Authorization: "Bearer " ++ (vars.accessToken default ""),
         "Content-Type": "application/json"
     },
-    queryParams: selectedConfig.queryParams default {
-    },
-    uriParams: {
-    },
-    body: {
-    }
+    queryParams: selectedConfig.queryParams default {},
+    uriParams: {},
+    body: {}
 }

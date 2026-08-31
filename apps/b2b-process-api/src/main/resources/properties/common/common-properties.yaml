@@ -81,10 +81,6 @@ logger:
   debug:
     category: "com.mycompany.b2b.edi"
     
-#Sender Id
-vantage:
-  ack:
-    senderId: "117414135T"
      
 edi:
   default:
