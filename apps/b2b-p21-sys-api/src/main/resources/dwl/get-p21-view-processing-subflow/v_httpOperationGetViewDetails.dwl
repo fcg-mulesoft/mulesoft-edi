@@ -24,10 +24,10 @@ var salesOrderValidationConfig =
     else if (validationMode == "customerPart") {
         view: if (companyId == "KFT")
           "fcg_edi_Item_Validation_vw"
-          else "p21_view_customer_part_number",
+          else "fcg_customer_part_number_vw",
         filter:  if (companyId == "KFT")
         	"company_id eq '" ++ companyId ++ "' and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
-        	else 
+        	else
         		"company_id eq '" ++ companyId ++ "' and (" ++
 (
     businesskey flatMap ((item) -> [
