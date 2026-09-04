@@ -8,7 +8,7 @@ var businesskey =
     (attributes.queryParams.businesskey default "") splitBy "," map (trim($)) filter ($ != "") distinctBy $
 var validationMode = attributes.queryParams.validationMode default "xref"
 var customerId = attributes.queryParams.customerId default ""
-var companyId = attributes.queryParams.companyId default "TPA"
+var companyId = attributes.queryParams.companyId default "KFT"
 var startTime = attributes.queryParams.startTime default ""
 var endTime = attributes.queryParams.endTime default ""
 var partnerName = attributes.queryParams.partnerName default ""
@@ -22,8 +22,21 @@ var salesOrderValidationConfig =
         filter: "(" ++ ((businesskey map ("po_no eq '" ++ $ ++ "'")) joinBy " or ") ++ ") and company_id eq '" ++ companyId ++ "'" ++ " and customer_id eq " ++ customerId
     }
     else if (validationMode == "customerPart") {
-        view: "fcg_edi_Item_Validation_vw",
-        filter: "company_id eq 'KFT' and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+        view: if (companyId == "KFT")
+          "fcg_edi_Item_Validation_vw"
+          else "p21_view_customer_part_number",
+        filter:  if (companyId == "KFT")
+        	"company_id eq '" ++ companyId ++ "' and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+        	else 
+        		"company_id eq '" ++ companyId ++ "' and (" ++
+(
+    businesskey flatMap ((item) -> [
+        "their_item_id eq '" ++ item ++ "'",
+        "our_item_id eq '" ++ item ++ "'"
+    ])
+    joinBy " or "
+) ++
+")"
     }
     else {
         view: "",
