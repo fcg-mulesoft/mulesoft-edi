@@ -60,29 +60,42 @@ var finalFreight =
   else if (scenarioCode == "SC2") festoFreightValue
   else festoFreightValue + tierFlatRate(itemBillAmount)
 
-// ---------- Step 5: Normalize + strip "FES" prefix ----------
-fun normalize(s: String): String =
-  upper(trim(s default ""))
+// ---------- Step 5: Null-safe normalize ----------
+fun normalize(s: Any | Null): String =
+  upper(trim((s default "") as String))
 
-fun stripFesPrefix(partNo: String): String = do {
+fun stripFesPrefix(partNo: Any | Null): String = do {
   var norm = normalize(partNo)
   ---
   if (norm startsWith "FES") norm[3 to -1] else norm
 }
 
-// ---------- Step 6: Match invoice lines to P21 PO lines ----------
+// ---------- Step 6: Two-tier match ----------
+fun findPoLine(line) = do {
+    // Tier 1 key: invoice buyer part no vs P21 item_id
+    var buyerKey = normalize(line.primaryItemNumber default line.buyerPartNo)
+    // Tier 2 key: invoice vendor part no vs P21 supplier_part_no (FES stripped)
+    var vendorKey = normalize(line.vendorPartNo)
+
+    var tier1 =
+      if (buyerKey == "") []
+      else poLines filter (normalize($.item_id) == buyerKey)
+
+    var tier2 =
+      if (vendorKey == "") []
+      else poLines filter (stripFesPrefix($.supplier_part_no) == vendorKey)
+    ---
+    if (!isEmpty(tier1)) tier1[0]
+    else if (!isEmpty(tier2)) tier2[0]
+    else null
+}
+
 var matchedItems = lines map ((line) -> do {
-    var vendorPartNoNorm = normalize(line.vendorPartNo)
-    var poLine = (poLines filter (
-        stripFesPrefix($.supplier_part_no) == vendorPartNoNorm
-      ))[0]
+    var poLine = findPoLine(line)
     ---
     {
       item_id: poLine.item_id default null,
-      unit_quantity:  if (poLine.unit_quantity != null)
-            poLine.unit_quantity as Number {format: "0.00"}
-        else
-            null
+      unit_quantity: poLine.unit_quantity default null
     }
 })
 

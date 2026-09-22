@@ -5,7 +5,7 @@ api:
   id: "20869875"
 
 b2b-p21-sys-api:
-  timeout: "150000"
+  timeout: "85000"
   host: "b2b-p21-sys-api-dev-zrx5fd.internal-y7366p.usa-e1.cloudhub.io"
   basePath: "/api/"
   port: "8092"
@@ -44,7 +44,7 @@ b2b-p21-sys-api:
     path: "/transactions"
     method: "POST"
     untilsuccessful:
-      maxRetries: "5"
+      maxRetries: "1"
       interval: "5000"
     custom:
       path: "/transactions/custom"
