@@ -106,7 +106,8 @@ var customer = if (payload.Order.CustomerIdentifier == "BLUEORG") "BLUEORG" else
 	"correlationId": correlationId,
 	"timestamp": now() as String {
 		format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
-	}
+	},
+	"companyID" : payload.Order.SharedCredential default "KFT"
 }]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
