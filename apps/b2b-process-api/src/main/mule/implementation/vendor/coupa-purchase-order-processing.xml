@@ -98,7 +98,7 @@ output application/json
 	"correlationId": (correlationId default uuid()),
 	"statusCode": vars.httpStatus,
 	"statusMessage": "PO was created succesfully",
-	"description": "Sucessfully creared P21 PO. – reference P21 Purchase Order Number : " ++ (payload.Order.OrderNo default "NA"),
+	"description": "Sucessfully created P21 PO. – reference P21 Purchase Order Number : " ++ (payload.Order.OrderNo default "NA"),
 	"timestamp": (((now() >> "UTC")  as String {
 		format : "yyyy/MM/dd HH:mm:ss"
 	}) ++ " UTC"),
