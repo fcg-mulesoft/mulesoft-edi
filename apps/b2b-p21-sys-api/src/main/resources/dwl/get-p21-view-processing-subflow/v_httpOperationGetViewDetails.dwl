@@ -47,7 +47,8 @@ var routingConfig = {
         validation: {
             view: Mule::p('viewNames.coupaPurchaseOrderPartsValidtion'),
             queryParams: {
-                "\$filter": "company_id eq 'KFT' and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+               // "\$filter": "company_id eq "KFT" and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
+               "\$filter": "company_id eq '" ++ companyId ++ "' and (" ++ (((businesskey flatMap ((item) -> (item splitBy "|" filter ($ != "")))) map ("incoming_part_number eq '" ++ $ ++ "'")) joinBy " or ") ++ ")"
             }
         },
         outbound: {

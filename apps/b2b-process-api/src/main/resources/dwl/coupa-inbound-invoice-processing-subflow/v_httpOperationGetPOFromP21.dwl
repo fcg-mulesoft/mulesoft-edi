@@ -14,7 +14,8 @@ import toBase64 from dw::core::Binaries
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrder'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.outbound'),
-		"businesskey": (vars.initialPayload.Order.PoNo default "") ++ ":" ++ Mule::p('edi.default.company.id') ++ ":" ++ (vars.poSearchResponse.value[0].customer_id default "") 
+		"businesskey": (vars.initialPayload.Order.PoNo default "") ++ ":" ++ vars.integration.companyID ++ ":" ++ (vars.poSearchResponse.value[0].customer_id default ""),
+		"companyId" : vars.integration.companyID 
 	},
 	"uriParams": {
 	},

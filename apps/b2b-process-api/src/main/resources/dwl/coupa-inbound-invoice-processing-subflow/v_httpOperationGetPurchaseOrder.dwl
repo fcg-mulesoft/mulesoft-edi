@@ -14,7 +14,9 @@ import toBase64 from dw::core::Binaries
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.purchaseOrderInvoice'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.outbound'),
-		"businesskey": (vars.initialPayload.Order.edixRefId default "") ++ ":" ++ Mule::p('edi.default.company.id')
+		"businesskey": (vars.initialPayload.Order.edixRefId default "") ++ ":" ++ vars.integration.companyID ,
+		//"businesskey": (vars.initialPayload.Order.edixRefId default "") ++ ":" ++ Mule::p('edi.default.company.id')
+		"companyId" : vars.integration.companyID
 	},
 	"uriParams": {
 	},
