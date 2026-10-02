@@ -22,9 +22,10 @@ jobs:
         id: filter
         with:
           filters: |
-            b2b-payload-storage-api: 'apps/b2b-payload-storage-api/**'
-            b2b-process-api: 'apps/b2b-process-api/**'
-            b2b-p21-sys-api: 'apps/b2b-p21-sys-api/**'
+            quote-prc-api: 'apps/quote-prc-api/**'
+            quote-sys-api: 'apps/quote-sys-api/**'
+            p21-gen-sys-api: 'apps/p21-gen-sys-api/**'
+            p21-quote-prc-api: 'apps/p21-quote-prc-api/**'
 
   deploy-release:
     if: ${{ fromJson(needs.changes.outputs.apps)[0] != null }}
@@ -45,12 +46,12 @@ jobs:
       - name: Install Anypoint CLI v4
         shell: bash
         run: |
-           npm install -g anypoint-cli-v4
+          npm install -g anypoint-cli-v4
 
       - name: Configure Anypoint CLI v4
         env:
           ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_EXCHANGE_CLIENT_ID }}
-          ANYPOINT_CLIENT_SECRET: ${{secrets.ANYPOINT_EXCHANGE_CLIENT_SECRET }}
+          ANYPOINT_CLIENT_SECRET: ${{ secrets.ANYPOINT_EXCHANGE_CLIENT_SECRET }}
         run: |
           anypoint-cli-v4 conf client_id "${{ env.ANYPOINT_CLIENT_ID }}"
           anypoint-cli-v4 conf client_secret "${{ env.ANYPOINT_CLIENT_SECRET }}"
@@ -104,7 +105,7 @@ jobs:
               "id":"anypoint-exchange-public",
               "name": "Anypoint Exchange",
               "url": "https://maven.anypoint.mulesoft.com/api/v3/maven"
-             } ]
+             }]
           settings-pluginRepositories: |
             [{
               "id":"mule-public",
@@ -163,7 +164,6 @@ jobs:
           --secureProperty "mule.key:${{ env.MULE_KEY }}" \
           --secureProperty "anypoint.platform.client_id:${{ env.ANYPOINT_PLATFORM_CLIENT_ID }}" \
           --secureProperty "anypoint.platform.client_secret:${{ env.ANYPOINT_PLATFORM_CLIENT_SECRET }}"
-
 
       - name: Deploy ${{ matrix.app }} to CloudHub 2.0
         if: steps.ch2_0_app.outputs.exists == 'false'
