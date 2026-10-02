@@ -21,11 +21,10 @@ jobs:
         uses: dorny/paths-filter@v3
         id: filter
         with:
-           filters: |
-            quote-prc-api: 'apps/quote-prc-api/**'
-            quote-sys-api: 'apps/quote-sys-api/**'
-            p21-gen-sys-api: 'apps/p21-gen-sys-api/**'
-            p21-quote-prc-api: 'apps/p21-quote-prc-api/**'
+          filters: |
+            b2b-payload-storage-api: 'apps/b2b-payload-storage-api/**'
+            b2b-process-api: 'apps/b2b-process-api/**'
+            b2b-p21-sys-api: 'apps/b2b-p21-sys-api/**'
 
   deploy-release:
     if: ${{ fromJson(needs.changes.outputs.apps)[0] != null }}
