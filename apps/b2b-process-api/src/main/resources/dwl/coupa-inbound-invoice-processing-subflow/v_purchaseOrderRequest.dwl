@@ -124,9 +124,9 @@ var headerNoteText =
             NotepadClassId: "ITEMS",
             Mandatory: "false"
           },
-           OrderNote: {
+            OrderNote: {
             Topic: "Shared_Secret"  ,
-            Note: vars.initialPayload.Order.CustomerIdentifier ++ "_" ++ vars.initialPayload.Order.SharedCredential,
+            Note: vars.initialPayload.Order.SharedCredential,
             NotepadClassId: "ITEMS",
             Mandatory: "false"
           }
@@ -138,11 +138,10 @@ var headerNoteText =
             Note: vars.initialPayload.Order.Notes.OrderNote.Note,
             NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId,
             Mandatory: "false"
-      
           },
-           OrderNote: {
+          OrderNote: {
             Topic: "Shared_Secret"  ,
-            Note: vars.initialPayload.Order.CustomerIdentifier ++ "_" ++ vars.initialPayload.Order.SharedCredential,
+            Note:  vars.initialPayload.Order.SharedCredential,
             //NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId,
             Mandatory: "false"
           }
