@@ -123,6 +123,12 @@ var headerNoteText =
             Note: headerNoteText,
             NotepadClassId: "ITEMS",
             Mandatory: "false"
+          },
+           OrderNote: {
+            Topic: "Shared_Secret"  ,
+            Note: vars.initialPayload.Order.CustomerIdentifier ++ "_" ++ vars.initialPayload.Order.SharedCredential,
+            NotepadClassId: "ITEMS",
+            Mandatory: "false"
           }
         }
       else
@@ -131,6 +137,13 @@ var headerNoteText =
             Topic: vars.initialPayload.Order.Notes.OrderNote.Topic,
             Note: vars.initialPayload.Order.Notes.OrderNote.Note,
             NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId,
+            Mandatory: "false"
+      
+          },
+           OrderNote: {
+            Topic: "Shared_Secret"  ,
+            Note: vars.initialPayload.Order.CustomerIdentifier ++ "_" ++ vars.initialPayload.Order.SharedCredential,
+            //NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId,
             Mandatory: "false"
           }
         },
