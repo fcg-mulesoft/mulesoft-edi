@@ -20,7 +20,9 @@ fun money(v) = "\u0024" ++ (((v default 0) as Number) as String { format: "0.00"
 
 fun lineItemId(line) = trim((line.ItemId default "") as String)
 fun lineNo(line) = (line.LineNo default "") as String
-fun lineQty(line) = (line.QtyOrdered default line.UnitQuantity default 0) as Number
+fun lineQty(line) =
+    (((line.QtyOrdered default line.UnitQuantity default 0) as String)
+        replace "," with "") as Number
 fun linePrice(line) = (line.UnitPrice default 0) as Number
 fun lineCost(line) = (line.CommissionCost default line.OtherCost default linePrice(line)) as Number
 
