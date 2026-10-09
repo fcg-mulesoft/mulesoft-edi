@@ -10,7 +10,10 @@ grouped pluck ((lines, invNo) -> {
 	from_domain: lines[0].from_domain,
 	from_identity: lines[0].from_identity,
 	to_domain: lines[0].to_domain default "NetworkID",
-	to_identity: (lines[0].Shared_Secret splitBy ("_"))[0],
+	to_identity: if (((lines[0].Shared_Secret splitBy "_")[0]) == "kingfiltration")
+              "ADMCoupaidentity"
+             else
+              (lines[0].Shared_Secret splitBy "_")[0],
 	customer_id: lines[0].customer_id,
 	buyer_name: lines[0].buyer_name,
 	buyer_customer_id: lines[0].buyer_customer_id,
