@@ -16,6 +16,7 @@ grouped pluck ((lines, invNo) -> {
               (lines[0].Shared_Secret splitBy "_")[0],
 	customer_id: lines[0].customer_id,
 	buyer_name: lines[0].buyer_name,
+	payment_terms: lines[0].terms_desc,
 	buyer_customer_id: lines[0].buyer_customer_id,
 	buyer_addr: lines[0].buyer_addr,
 	buyer_city: lines[0].buyer_city,
