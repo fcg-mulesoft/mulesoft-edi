@@ -14,24 +14,44 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<choice doc:name="Choice" doc:id="89ef4d83-3f79-47eb-85d4-33609fd2826c" >
 			<when expression="#[vars.httpOperation.path == Mule::p('b2b-p21-sys-api.transaction.custom.path')]">
 				<until-successful maxRetries="#[vars.httpOperation.untilsuccessful.maxRetries]" doc:name="Until Successful" doc:id="8972017f-37af-4b6c-a836-57c0ad5d2b16" millisBetweenRetries="#[vars.httpOperation.untilsuccessful.interval]" >
-					<http:request method="#[vars.httpOperation.method]" doc:name="Common HTTP Request" doc:id="fd7ab8e5-334d-45a9-b9c6-7159a81def18" config-ref="HTTP_Request_configuration" path="#[vars.httpOperation.path]" responseTimeout="#[Mule::p('b2b-p21-sys-api.timeout')]" >
-						<http:headers ><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
-						<http:query-params ><![CDATA[#[vars.httpOperation.queryParams]]]></http:query-params>
+					<try doc:name="Try" doc:id="f9aa6834-38aa-4044-8383-be01c779f216" >
+						<http:request method="#[vars.httpOperation.method]" doc:name="Common HTTP Request" doc:id="fd7ab8e5-334d-45a9-b9c6-7159a81def18" config-ref="HTTP_Request_configuration" path="#[vars.httpOperation.path]" responseTimeout="#[Mule::p('b2b-p21-sys-api.timeout')]">
+						<http:headers><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
+						<http:query-params><![CDATA[#[vars.httpOperation.queryParams]]]></http:query-params>
 					</http:request>
+						<error-handler >
+							<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="958e2264-06a5-4210-857f-a3bb720b16b9" type="HTTP:INTERNAL_SERVER_ERROR">
+								<set-variable value="#[output json&#10;---&#10;{&#10;	statusCode: error.errorMessage.attributes.statusCode default 500,&#10;	description: error.description default 'P21 returned HTTP 500',&#10;	body: error.errorMessage.payload.ResourceError.ErrorMessage splitBy (&quot;;&quot;)&#10; filter ((item, index) -&gt; !(item startsWith &quot;\r&quot;) and &#10;    !(item startsWith &quot;/&quot;) and !(item startsWith &quot;&amp;&quot;) and !(item contains &quot;&amp;quot&quot;) and !(item contains &quot;&amp;gt&quot;))&#10;}]" doc:name="var : deferredHttpFailure" doc:id="31f99869-d423-452c-ac98-e063ee2593b5" variableName="deferredHttpFailure"/>
+							</on-error-continue>
+						</error-handler>
+					</try>
 				</until-successful>
 			</when>
 			<otherwise >
 				<until-successful maxRetries="#[vars.httpOperation.untilsuccessful.maxRetries]" doc:name="Until Successful" doc:id="cbe1174f-23ba-45ae-bec4-2b02fc685743" millisBetweenRetries="#[vars.httpOperation.untilsuccessful.interval]">
-			<http:request method="#[vars.httpOperation.method]" doc:name="Common HTTP Request" doc:id="b976f5d7-308c-4391-9d3e-e65db725d6d5" config-ref="HTTP_Request_configuration" path="#[vars.httpOperation.path]" responseTimeout="#[Mule::p('b2b-p21-sys-api.timeout')]">
+					<try doc:name="Try" doc:id="36d48312-be8d-4b51-833b-1830524fce7f" >
+						<http:request method="#[vars.httpOperation.method]" doc:name="Common HTTP Request" doc:id="b976f5d7-308c-4391-9d3e-e65db725d6d5" config-ref="HTTP_Request_configuration" path="#[vars.httpOperation.path]" responseTimeout="#[Mule::p('b2b-p21-sys-api.timeout')]">
 				<http:body><![CDATA[#[vars.httpOperation.body]]]></http:body>
 				<http:headers><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
 				<http:query-params><![CDATA[#[vars.httpOperation.queryParams]]]></http:query-params>
 			</http:request>
+						<error-handler >
+							<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="0dfb4383-6dfb-43e8-8bb9-964e9c6500aa" type="HTTP:INTERNAL_SERVER_ERROR">
+								<set-variable value="#[{&#10;	statusCode: error.errorMessage.attributes.statusCode default 500,&#10;	description: error.description default 'P21 returned HTTP 500',&#10;	body: error.errorMessage.payload default null&#10;}]" doc:name="var : deferredHttpFailure" doc:id="b95674a1-a557-471a-a49b-b5a2d7e03a71" variableName="deferredHttpFailure"/>
+							</on-error-continue>
+						</error-handler>
+					</try>
 		</until-successful>
 			</otherwise>
 		</choice>
-		<logger level="INFO" doc:name="LOG INFO : END"
-			doc:id="fab713a1-b95a-477a-81df-e54430d91e55"
-			message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId default vars.integration.correlationId&#10;}]' />
+		<choice doc:name="Choice" doc:id="55a79fe8-d5c4-4241-aee7-0689973e9b51" >
+			<when expression="#[vars.deferredHttpFailure != null]">
+				<logger level="INFO" doc:name="INFO : Error Response Payload" doc:id="7d3e2704-19f2-439b-84e7-05949b6d274c" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	response : payload,&#10;	correlationId: vars.initialVariables.correlationId default vars.integration.correlationId&#10;}]'/>
+				<raise-error doc:name="CUSTOM:P21_FAILED" doc:id="20764268-6ea8-483e-86a2-98fde0e3df56" type="CUSTOM:P21_FAILED" description="#[vars.deferredHttpFailure.description]"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO : END" doc:id="fab713a1-b95a-477a-81df-e54430d91e55" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	event: "END",&#10;	flow: flow.name,&#10;	application: app.name,&#10;	environment: Mule::p("mule.env"),&#10;	timestamp: now(),&#10;	correlationId: vars.initialVariables.correlationId default vars.integration.correlationId&#10;}]' />
+			</otherwise>
+		</choice>
 	</sub-flow>
 </mule>

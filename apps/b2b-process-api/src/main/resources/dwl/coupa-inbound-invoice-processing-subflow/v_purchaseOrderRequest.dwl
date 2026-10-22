@@ -1,5 +1,5 @@
 %dw 2.0
-import trim from dw::core::Strings
+//import trim from dw::core::Strings
 output application/xml skipNullOn="everywhere"
 
 var incomingPartNumbers =

@@ -78,10 +78,12 @@ output application/json
 		<ee:dynamic-evaluate doc:name="Pick Dynamic mapping"
 			doc:id="43ee2fbb-3716-4670-a874-4392a1375d7f"
 			expression="#[vars.selectScript]" />
+		<logger level="INFO" doc:name="Logger " doc:id="4f0884d1-5bf7-44df-8604-56499ca40f30" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId,&#10;    "Request" : payload&#10;}]'/>
 		<flow-ref
 			doc:name="Flow Reference to common-http-request-subflow"
 			doc:id="4c273318-8cec-4374-901c-c2093c8d068e"
 			name="common-http-request-subflow" />
+		<logger level="INFO" doc:name="Logger" doc:id="011591e4-d8e7-4fa7-b36c-309991375512" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId,&#10;    "Response" : payload&#10;}]' />
 		<ee:transform doc:name="P21 Response Payload"
 			doc:id="10165467-bbd4-4fa8-b867-c2db2e6d435c">
 			<ee:message>
