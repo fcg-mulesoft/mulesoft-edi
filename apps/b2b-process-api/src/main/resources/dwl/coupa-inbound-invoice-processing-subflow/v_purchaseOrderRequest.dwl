@@ -109,7 +109,8 @@ var headerNoteText =
   Order @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd": "http://www.w3.org/2001/XMLSchema"): {
     CustomerId: vars.poSearchResponse.value[0].customer_id,
     CompanyId: vars.poSearchResponse.value[0].company_id,
-    LocationId: vars.poSearchResponse.value[0].preferred_location_id,
+    //LocationId: vars.poSearchResponse.value[0].preferred_location_id,
+    LocationId: "21000",
     ShipToId: vars.poSearchResponse.value[0].ship_to_id,
     PoNo: vars.initialPayload.Order.PoNo,
     ContactId: vars.poSearchResponse.value[0].edi_default_contact_id default null,

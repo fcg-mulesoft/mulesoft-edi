@@ -11,7 +11,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="vendorName" ><![CDATA[(vars.initialPayload.."SharedCredential"[0] splitBy("_"))[0]]]></ee:set-variable>
+				<ee:set-variable variableName="vendorName" ><![CDATA[((vars.initialPayload.."SharedCredential"[0] splitBy("_"))[0]) ++ " Coupa"]]></ee:set-variable>
 				<ee:set-variable variableName="companyName" ><![CDATA[(vars.initialPayload.."SharedCredential"[0] splitBy("_"))[1]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
@@ -161,15 +161,10 @@ var msgPoNumber = safe(cdmHeader.poNumber default "" as String,
 
 var senderKey = safe(cdmHeader.senderId, safe(sysInfo.source, "N/A")) as String
 
-var msgVendorId =
-    if (p('partner.inbound.' ++ senderKey) != null) p('partner.inbound.' ++ senderKey)
-    else if (p('partner.outbound.' ++ senderKey) != null) p('partner.outbound.' ++ senderKey)
-    else "N/A"
+var msgVendorId = vars.vendorName
 
-var companyName = safe(vars.purchaseOrderData.value.company_no[0] default "" as String,
-                    safe(if(lower(sourceSystem) contains "coupa") "King Filtration" else "", "N/A"))
+var companyName = vars.companyName
 
-// Extract P21 Order Number from successResponse description or payload
 var p21OrderNumber = payload.Order.OrderNo 
                      default vars.initialPayload.Order.OrderNo 
                      default "N/A"
