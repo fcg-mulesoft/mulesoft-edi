@@ -157,16 +157,16 @@ output application/json
 	"errorNs": "CUSTOM",
 	"errorId": "VALIDATION"
 }]]></ee:set-variable>
-					<ee:set-variable variableName="errorResponse" ><![CDATA[%dw 2.0
-output application/java
----
-vars.errorResponse ++ {
-        description: (
-            vars.deferredHttpFailure.body
-                default vars.errorResponse.description
-                default 'P21 processing failed'
-        ) as String
-    }]]></ee:set-variable>
+					<ee:set-variable variableName="errorResponse" ><![CDATA[vars.errorResponse ++ {
+description:
+if (vars.deferredHttpFailure.body != null)
+if (vars.deferredHttpFailure.body is String)
+vars.deferredHttpFailure.body
+else
+write(vars.deferredHttpFailure.body, "application/json")
+else
+vars.errorResponse.description default "P21 processing failed"
+}]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="send-email-subflow" doc:id="ea399aa1-8ba0-4433-8ff1-ba092407f427" name="send-email-subflow" />
@@ -236,6 +236,7 @@ output application/json
 	</error-handler>
 	<sub-flow name="send-email-subflow"
 		doc:id="7906133c-0dfd-4e3f-b42b-2f6ac4cb25ca">
+		<remove-variable doc:name="var : deferredHttpFailure" doc:id="a41cfb6e-121f-47c3-ab38-7ef1c9593ef9" variableName="deferredHttpFailure"/>
 		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email"
 			doc:id="62b77774-e85f-42c1-96a3-dc641aea7618"
 			message="Start: Email Alert" />
