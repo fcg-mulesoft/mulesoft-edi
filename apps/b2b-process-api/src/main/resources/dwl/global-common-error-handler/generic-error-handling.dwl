@@ -149,7 +149,7 @@ var senderKey = safe(cdmHeader.senderId, safe(integration.source, "N/A")) as Str
 var msgVendorId =
     if (p('partner.inbound.' ++ senderKey) != null) p('partner.inbound.' ++ senderKey)
     else if (p('partner.outbound.' ++ senderKey) != null) p('partner.outbound.' ++ senderKey)
-    else "N/A"
+    else (vars.vendorName default "N/A")
 
 var itemRows =
     flatten(
@@ -399,7 +399,7 @@ var corrId =
     else (errResp.correlationId default correlationId default uuid())
     
 var companyName = safe(vars.purchaseOrderData.value.company_no[0] default "" as String,
-					safe(if(lower(sourceSystem) contains "coupa") "King Filtration" else "", "N/A"))
+					safe(if(lower(sourceSystem) contains "coupa") "King Filtration" else "", (vars.companyName default "N/A")))
 var data = {
     flowDirection:   flowDirection,
     documentType:    safe(integration."integration-type",

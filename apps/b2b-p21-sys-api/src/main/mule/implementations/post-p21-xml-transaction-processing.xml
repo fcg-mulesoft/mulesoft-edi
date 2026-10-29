@@ -54,7 +54,9 @@ var selectedConfig =
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger " doc:id="930c100c-9ed0-4661-8dc1-a061b3850d7e" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId,&#10;    "Request" : payload&#10;}]' />
 		<flow-ref doc:name="Flow Reference to common-http-request-subflow" doc:id="924a6a48-77de-4a30-a89a-a1b281092821" name="common-http-request-subflow" />
+		<logger level="INFO" doc:name="Logger" doc:id="95e71711-ff67-4a34-821d-5ef2f2ed5dcf" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Message": "Start: " ++ (flow.name),&#10;    "correlationId": correlationId,&#10;    "Response" : payload&#10;}]' />
 		<ee:transform doc:name="P21 Response Payload" doc:id="42523949-c9fe-412c-ba13-f65a2cfc5e4c">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0

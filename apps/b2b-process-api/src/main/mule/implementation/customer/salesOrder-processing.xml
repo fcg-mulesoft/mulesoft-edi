@@ -26,10 +26,11 @@ import toBase64 from dw::core::Binaries
 	"queryParams": {
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
-		"validationMode" : Mule::p('b2b-p21-sys-api.validationMode.xref'),
-		"companyId": "TPA",
-		"ediRefId" : (payload[0].b2bMessage.header.partyInformation
-    filter ($.qualifier == "ST"))[0].identificationCode default ""
+		"validationMode": Mule::p('b2b-p21-sys-api.validationMode.xref'),
+		"companyId": if ( payload[0].b2bMessage.header.senderId == "ARIBAUS" ) "MTX"
+else
+    "TPA",
+		"ediRefId": (payload[0].b2bMessage.header.partyInformation filter ($.qualifier == "ST"))[0].identificationCode default ""
 	},
 	"uriParams": {
 	},

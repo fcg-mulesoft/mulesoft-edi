@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-	<error-handler name="global-error-handler" doc:id="69427b06-94f0-4392-af74-03f5a9e404cb" >
+	<error-handler name="global-error-handler"
+		doc:id="69427b06-94f0-4392-af74-03f5a9e404cb">
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate"
+			doc:id="0133fef3-8400-473f-bb94-37ca2cc4fcc1"
+			type="HTTP:INTERNAL_SERVER_ERROR">
+			<set-variable variableName="httpStatus" value="#[500]" />
+			<set-payload value="#[error.errorMessage.payload]"
+				mimeType="application/xml" />
+		</on-error-propagate>
 		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6058c81d-c3a6-42d0-9bab-5f65c6382a1d" type="APIKIT:BAD_REQUEST" >
 			<ee:transform doc:name="APIKIT:BAD_REQUEST" doc:id="26f488b7-3e0f-4236-86e6-05fa879fe833" >
 				<ee:message >

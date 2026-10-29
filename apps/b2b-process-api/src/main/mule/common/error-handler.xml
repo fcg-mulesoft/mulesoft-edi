@@ -1,34 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+<mule
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
 http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
-	<error-handler name="global-common-error-handler" doc:id="563d1b3b-156b-4772-9049-db788b4f5a22" >
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="APIKIT Errors" doc:id="82c2498d-bd1d-4f2c-9254-df285235de7e" when='#[error.errorType.namespace == "APIKIT"]' >
-			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="29aa0212-9fc3-4882-b859-0b3820d235dd" message="Start: Global Error Handler: APIKIT ERROR" />
-			<ee:transform doc:name="var : httpStatus" doc:id="d2ced819-650a-41d1-9e7a-d49e17a17b3d" >
+	<error-handler name="global-common-error-handler"
+		doc:id="563d1b3b-156b-4772-9049-db788b4f5a22">
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="APIKIT Errors"
+			doc:id="82c2498d-bd1d-4f2c-9254-df285235de7e"
+			when='#[error.errorType.namespace == "APIKIT"]'>
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow"
+				doc:id="29aa0212-9fc3-4882-b859-0b3820d235dd"
+				message="Start: Global Error Handler: APIKIT ERROR" />
+			<ee:transform doc:name="var : httpStatus"
+				doc:id="d2ced819-650a-41d1-9e7a-d49e17a17b3d">
 				<ee:message />
-				<ee:variables >
-					<ee:set-variable resource="dwl/global-common-error-handler/v_apikit_httpStatus.dwl" variableName="httpStatus" />
+				<ee:variables>
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_apikit_httpStatus.dwl"
+						variableName="httpStatus" />
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="var : errorResponse, systemInformation" doc:id="f60132e4-2d52-4a08-b986-e14009dc412d" >
+			<ee:transform
+				doc:name="var : errorResponse, systemInformation"
+				doc:id="f60132e4-2d52-4a08-b986-e14009dc412d">
 				<ee:message />
-				<ee:variables >
-					<ee:set-variable resource="dwl/global-common-error-handler/v_apikit_errorResponse.dwl" variableName="errorResponse" />
-					<ee:set-variable resource="dwl/global-common-error-handler/v_systemInformation.dwl" variableName="systemInformation" />
+				<ee:variables>
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_apikit_errorResponse.dwl"
+						variableName="errorResponse" />
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_systemInformation.dwl"
+						variableName="systemInformation" />
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="143a87a8-7576-459e-a83c-da2e9799eef8" >
-				<ee:message >
-					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
+			<ee:transform
+				doc:name="Preparing Email Template, var : subject, vendorName"
+				doc:id="143a87a8-7576-459e-a83c-da2e9799eef8">
+				<ee:message>
+					<ee:set-payload
+						resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
-				<ee:variables >
-					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
-					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+				<ee:variables>
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_subject.dwl"
+						variableName="subject" />
+					<ee:set-variable variableName="vendorName"><![CDATA[%dw 2.0
 output application/json
 ---
 [(p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
@@ -36,20 +61,84 @@ output application/json
     default []]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<flow-ref doc:name="send-email-subflow" doc:id="7e864436-5ddc-425c-bf59-6c7fdca79205" name="send-email-subflow"/>
-			<set-payload value="#[vars.errorResponse]" doc:name="Set Payload : Response" doc:id="625e87af-ab15-4102-8983-89ca716bd3fe" />
-			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="73163ab8-3614-4bbf-8510-0e8a9073bd9e" message="#[vars.errorResponse]" category="com.apikit.errors" />
+			<flow-ref doc:name="send-email-subflow"
+				doc:id="7e864436-5ddc-425c-bf59-6c7fdca79205"
+				name="send-email-subflow" />
+			<set-payload value="#[vars.errorResponse]"
+				doc:name="Set Payload : Response"
+				doc:id="625e87af-ab15-4102-8983-89ca716bd3fe" />
+			<logger level="INFO" doc:name="LOG INFO: End Flow"
+				doc:id="73163ab8-3614-4bbf-8510-0e8a9073bd9e"
+				message="#[vars.errorResponse]" category="com.apikit.errors" />
 		</on-error-propagate>
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="Validation Errors" doc:id="a601a7a2-dc1a-4ce9-8506-a09fb11a77df" when='#[error.errorType.namespace == "CUSTOM" and error.errorType.identifier == "VALIDATION_FAILED"]' >
-			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="be42c555-389e-4df8-af9e-d68dc8131be4" message="Start: Global Error Handler: Validation ERROR" />
-			<ee:transform doc:name="var : errorResponse, systemInformation" doc:id="0fe78c76-40dc-49cc-bdb9-e5822b6435db" >
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Validation Errors"
+			doc:id="a601a7a2-dc1a-4ce9-8506-a09fb11a77df"
+			when='#[error.errorType.namespace == "CUSTOM" and error.errorType.identifier == "VALIDATION_FAILED"]'>
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow"
+				doc:id="be42c555-389e-4df8-af9e-d68dc8131be4"
+				message="Start: Global Error Handler: Validation ERROR" />
+			<ee:transform
+				doc:name="var : errorResponse, systemInformation"
+				doc:id="0fe78c76-40dc-49cc-bdb9-e5822b6435db">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_systemInformation.dwl"
+						variableName="systemInformation" />
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_validation_errorResponse.dwl"
+						variableName="errorResponse" />
+				</ee:variables>
+			</ee:transform>
+			<ee:transform
+				doc:name="Preparing Email Template, var : subject, vendorName, errorDetails"
+				doc:id="4b8c9eee-c577-4e31-b34f-616940708899">
+				<ee:message>
+					<ee:set-payload
+						resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_subject.dwl"
+						variableName="subject" />
+					<ee:set-variable variableName="vendorName"><![CDATA[%dw 2.0
+output application/json
+---
+[(p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
+    default [(p('partner.outbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
+    default []]]></ee:set-variable>
+					<ee:set-variable variableName="errorDetails"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errorNs": "CUSTOM",
+	"errorId": "VALIDATION"
+}]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="send-email-subflow"
+				doc:id="144558c7-be6f-49eb-98e4-9caa6759d351"
+				name="send-email-subflow" />
+			<set-payload value="#[vars.errorResponse]"
+				doc:name="Set Payload : Response"
+				doc:id="5672a066-16ba-4471-8f94-eb012128e6c2" />
+			<logger level="INFO" doc:name="LOG INFO: End Flow"
+				doc:id="27ab5599-dbb2-421e-979f-6588da106524"
+				message="#[vars.errorResponse]" category="com.validation.errors" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="CUSTOM:P21_FAILED"
+			doc:id="6f6156ee-1184-4828-bc2c-4772c0d13d03" when='#[error.errorType.namespace == "CUSTOM" and error.errorType.identifier == "P21_FAILED"]'>
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="08834afe-e796-43ec-abcc-1a62604120ef" message="Start: Global Error Handler: Validation ERROR" />
+			<ee:transform doc:name="var : errorResponse, systemInformation" doc:id="2ef55c0b-7948-4341-89e0-207c1c004772" >
 				<ee:message />
 				<ee:variables >
 					<ee:set-variable resource="dwl/global-common-error-handler/v_systemInformation.dwl" variableName="systemInformation" />
 					<ee:set-variable resource="dwl/global-common-error-handler/v_validation_errorResponse.dwl" variableName="errorResponse" />
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName, errorDetails" doc:id="4b8c9eee-c577-4e31-b34f-616940708899" >
+			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName, errorDetails" doc:id="3f41768a-6081-4ebb-868c-36704af2bd78" >
 				<ee:message >
 					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
@@ -68,34 +157,64 @@ output application/json
 	"errorNs": "CUSTOM",
 	"errorId": "VALIDATION"
 }]]></ee:set-variable>
+					<ee:set-variable variableName="errorResponse" ><![CDATA[vars.errorResponse ++ {
+description:
+if (vars.deferredHttpFailure.body != null)
+if (vars.deferredHttpFailure.body is String)
+vars.deferredHttpFailure.body
+else
+write(vars.deferredHttpFailure.body, "application/json")
+else
+vars.errorResponse.description default "P21 processing failed"
+}]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<flow-ref doc:name="send-email-subflow" doc:id="144558c7-be6f-49eb-98e4-9caa6759d351" name="send-email-subflow"/>
-			<set-payload value="#[vars.errorResponse]" doc:name="Set Payload : Response" doc:id="5672a066-16ba-4471-8f94-eb012128e6c2" />
-			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="27ab5599-dbb2-421e-979f-6588da106524" message="#[vars.errorResponse]" category="com.validation.errors" />
+			<flow-ref doc:name="send-email-subflow" doc:id="ea399aa1-8ba0-4433-8ff1-ba092407f427" name="send-email-subflow" />
+			<set-payload value="#[vars.errorResponse]" doc:name="Set Payload : Response" doc:id="7a5143d7-1102-4aec-a392-ad4cc77f771a" />
+			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="dc0d3adc-023c-4be1-a5c6-69062d39a67a" message="#[vars.errorResponse]" category="com.validation.errors" />
 		</on-error-propagate>
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="Generic" doc:id="f2bc8bc0-ab29-40ea-befa-e0fbc0b4dfeb" >
-			<logger level="ERROR" doc:name="LOG INFO: Start Flow" doc:id="21c33efb-40b1-4fdd-be2f-516a188f28bd" message="Start: Global Error Handler: GENERIC ERROR" />
-			<ee:transform doc:name="var : httpStatus" doc:id="e67d7838-9b51-4a48-9958-d03aa11914f8" >
+
+
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Generic"
+			doc:id="f2bc8bc0-ab29-40ea-befa-e0fbc0b4dfeb">
+			<logger level="ERROR" doc:name="LOG INFO: Start Flow"
+				doc:id="21c33efb-40b1-4fdd-be2f-516a188f28bd"
+				message="Start: Global Error Handler: GENERIC ERROR" />
+			<ee:transform doc:name="var : httpStatus"
+				doc:id="e67d7838-9b51-4a48-9958-d03aa11914f8">
 				<ee:message />
-				<ee:variables >
-					<ee:set-variable resource="dwl/global-common-error-handler/v_generic_httpStatus.dwl" variableName="httpStatus" />
+				<ee:variables>
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_generic_httpStatus.dwl"
+						variableName="httpStatus" />
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="var : errorResponse, systemInformation" doc:id="14711625-d3fb-47a5-9b2c-5be74c48ba89" >
+			<ee:transform
+				doc:name="var : errorResponse, systemInformation"
+				doc:id="14711625-d3fb-47a5-9b2c-5be74c48ba89">
 				<ee:message />
-				<ee:variables >
-					<ee:set-variable resource="dwl/global-common-error-handler/v_systemInformation.dwl" variableName="systemInformation" />
-					<ee:set-variable resource="dwl/global-common-error-handler/v_generic_errorResponse.dwl" variableName="errorResponse" />
+				<ee:variables>
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_systemInformation.dwl"
+						variableName="systemInformation" />
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_generic_errorResponse.dwl"
+						variableName="errorResponse" />
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="Preparing Email Template, var : subject, vendorName" doc:id="19891363-12ef-4b1b-b67a-13897b04726c" >
-				<ee:message >
-					<ee:set-payload resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
+			<ee:transform
+				doc:name="Preparing Email Template, var : subject, vendorName"
+				doc:id="19891363-12ef-4b1b-b67a-13897b04726c">
+				<ee:message>
+					<ee:set-payload
+						resource="dwl/global-common-error-handler/generic-error-handling.dwl" />
 				</ee:message>
-				<ee:variables >
-					<ee:set-variable resource="dwl/global-common-error-handler/v_subject.dwl" variableName="subject" />
-					<ee:set-variable variableName="vendorName" ><![CDATA[%dw 2.0
+				<ee:variables>
+					<ee:set-variable
+						resource="dwl/global-common-error-handler/v_subject.dwl"
+						variableName="subject" />
+					<ee:set-variable variableName="vendorName"><![CDATA[%dw 2.0
 output application/json
 ---
 [(p('partner.inbound.' ++ (vars.initialPayload[0].b2bMessage.header.senderId default "" as String)))]
@@ -103,18 +222,32 @@ output application/json
     default []]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<flow-ref doc:name="send-email-subflow" doc:id="8fd93da9-3e91-4035-8982-cb383a55b653" name="send-email-subflow"/>
-			<set-payload value="#[vars.errorResponse]" doc:name="Set Payload : Response" doc:id="0390dd71-edff-45a7-a939-f8474b412637" />
-			<logger level="INFO" doc:name="LOG INFO: End Flow" doc:id="89f50ea4-a10b-4545-a8f5-6dabc5d74d1e" message="#[vars.errorResponse]" category="com.generic.errors" />
+			<flow-ref doc:name="send-email-subflow"
+				doc:id="8fd93da9-3e91-4035-8982-cb383a55b653"
+				name="send-email-subflow" />
+			<set-payload value="#[vars.errorResponse]"
+				doc:name="Set Payload : Response"
+				doc:id="0390dd71-edff-45a7-a939-f8474b412637" />
+			<logger level="INFO" doc:name="LOG INFO: End Flow"
+				doc:id="89f50ea4-a10b-4545-a8f5-6dabc5d74d1e"
+				message="#[vars.errorResponse]" category="com.generic.errors" />
 		</on-error-propagate>
+
 	</error-handler>
-	<sub-flow name="send-email-subflow" doc:id="7906133c-0dfd-4e3f-b42b-2f6ac4cb25ca" >
-		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email" doc:id="62b77774-e85f-42c1-96a3-dc641aea7618" message="Start: Email Alert" />
-		<flow-ref doc:name="Flow Reference To get-email-view-subflow" doc:id="599a38c5-46cb-46ce-bf1a-cdb677170dcd" name="get-email-view-subflow" target="emailView" />
-		<ee:transform doc:name="var : emailList" doc:id="a7f87568-dbaf-475a-a629-86790f33003e" >
+	<sub-flow name="send-email-subflow"
+		doc:id="7906133c-0dfd-4e3f-b42b-2f6ac4cb25ca">
+		<remove-variable doc:name="var : deferredHttpFailure" doc:id="a41cfb6e-121f-47c3-ab38-7ef1c9593ef9" variableName="deferredHttpFailure"/>
+		<logger level="DEBUG" doc:name="LOG DEBUG: Before Email"
+			doc:id="62b77774-e85f-42c1-96a3-dc641aea7618"
+			message="Start: Email Alert" />
+		<flow-ref doc:name="Flow Reference To get-email-view-subflow"
+			doc:id="599a38c5-46cb-46ce-bf1a-cdb677170dcd"
+			name="get-email-view-subflow" target="emailView" />
+		<ee:transform doc:name="var : emailList"
+			doc:id="a7f87568-dbaf-475a-a629-86790f33003e">
 			<ee:message />
-			<ee:variables >
-				<ee:set-variable variableName="emailList" ><![CDATA[%dw 2.0
+			<ee:variables>
+				<ee:set-variable variableName="emailList"><![CDATA[%dw 2.0
 output application/java
 var viewRecords =
     (vars.emailView.value default [])
@@ -140,36 +273,67 @@ distinctBy $]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<try doc:name="Try" doc:id="2b8c4eb1-4645-4a22-9dfa-137ed789de64">
-				<choice doc:name="If transmissionId Exists?" doc:id="ac259689-f859-44c3-a6bd-3491ce7b4a5e">
-					<when expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId) or !isEmpty(vars.initialPayload.Order.TransmissionId)]">
-						<idempotent-message-validator doc:name="To Avoid Duplicate Emails" doc:id="3fc2766d-e7a9-47a2-a006-f9c477f36885" idExpression="#[if (vars.initialPayload.Order?) &#10;  vars.initialPayload.Order.TransmissionId &#10;else &#10;  vars.initialPayload[0].b2bMessage.header.transmissionId]" objectStore="Object_store" />
-					</when>
-				</choice>
-				<until-successful maxRetries="5" doc:name="Until Successful" doc:id="89130f15-6658-4f98-bb97-72a3b35123dc" millisBetweenRetries="6000">
-				<email:send doc:name="Send Email" doc:id="94f86c8b-49de-48fc-9ba9-843c3ed795aa" config-ref="Email_SMTP" fromAddress="${email.username}" subject="#[vars.subject]" toAddresses="#[(vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)) ++  (vars.emailList)]">
+			<choice doc:name="If transmissionId Exists?"
+				doc:id="ac259689-f859-44c3-a6bd-3491ce7b4a5e">
+				<when
+					expression="#[!isEmpty(vars.initialPayload[0].b2bMessage.header.transmissionId) or !isEmpty(vars.initialPayload.Order.TransmissionId)]">
+					<idempotent-message-validator
+						doc:name="To Avoid Duplicate Emails"
+						doc:id="3fc2766d-e7a9-47a2-a006-f9c477f36885"
+						idExpression="#[if (vars.initialPayload.Order?) &#10;  vars.initialPayload.Order.TransmissionId &#10;else &#10;  vars.initialPayload[0].b2bMessage.header.transmissionId]"
+						objectStore="Object_store" />
+				</when>
+			</choice>
+			<until-successful maxRetries="5"
+				doc:name="Until Successful"
+				doc:id="89130f15-6658-4f98-bb97-72a3b35123dc"
+				millisBetweenRetries="6000">
+				<email:send doc:name="Send Email"
+					doc:id="94f86c8b-49de-48fc-9ba9-843c3ed795aa"
+					config-ref="Email_SMTP" fromAddress="${email.username}"
+					subject="#[vars.subject]"
+					toAddresses="#[(vars.recipientList splitBy &quot;,&quot; default (Mule::p('email.toRecipient') splitBy &quot;,&quot;)) ++  (vars.emailList)]">
 					<reconnect />
 					<email:body contentType="text/html" />
-					<email:attachments><![CDATA[#[{
-    (if (vars.endpoint == "/api/inboundTransactions")
-        {
-            "input-payload.json": vars.initialPayload default {}
-        }
-     else if (vars.emailContent != null)
-        {
-            "coupa-request.json": vars.attachments default {}
-        }
-     else
-        {}
-    )
+					<email:attachments><![CDATA[#[do {
+    var existingAttachments =
+        if (vars.endpoint == "/api/inboundTransactions")
+            {
+                "input-payload.json": vars.initialPayload default {}
+            }
+        else if (vars.emailContent != null)
+            {
+                "coupa-request.json": vars.attachments default {}
+            }
+        else {}
+
+    var failureBody = vars.deferredHttpFailure.body default null
+    ---
+    existingAttachments ++
+        (if (failureBody != null)
+            {
+                "p21-error.txt":
+                    (failureBody as String)
+                        as Binary {encoding: "UTF-8"}
+            }
+        else {})
 }]]]></email:attachments>
 				</email:send>
-		</until-successful>
-				<error-handler>
-					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6e6e47d2-d1b0-4999-a0bd-7a9d9a4d2871" type="DUPLICATE_MESSAGE">
-						<logger level="INFO" doc:name="LOG INFO : Duplicate Error - Skipping Email" doc:id="4caa8007-1e2f-48f9-a798-959f8fb4a288" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	timestamp: now(),&#10;	message: "Duplicate Error - Skipping Email"&#10;}]' />
-					</on-error-continue>
-				</error-handler>
-			</try>
-		<logger level="DEBUG" doc:name="LOG DEBUG: After Email" doc:id="a5243c3e-80de-4c7a-b80b-61b9d3343bee" message="End: Email Alert" />
+			</until-successful>
+			<error-handler>
+				<on-error-continue enableNotifications="true"
+					logException="true" doc:name="On Error Continue"
+					doc:id="6e6e47d2-d1b0-4999-a0bd-7a9d9a4d2871"
+					type="DUPLICATE_MESSAGE">
+					<logger level="INFO"
+						doc:name="LOG INFO : Duplicate Error - Skipping Email"
+						doc:id="4caa8007-1e2f-48f9-a798-959f8fb4a288"
+						message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	flow: flow.name,&#10;	timestamp: now(),&#10;	message: "Duplicate Error - Skipping Email"&#10;}]' />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<logger level="DEBUG" doc:name="LOG DEBUG: After Email"
+			doc:id="a5243c3e-80de-4c7a-b80b-61b9d3343bee"
+			message="End: Email Alert" />
 	</sub-flow>
-	</mule>
+</mule>

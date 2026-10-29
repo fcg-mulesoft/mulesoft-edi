@@ -16,7 +16,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 
     <scheduler doc:name="Scheduler">
 			<scheduling-strategy >
-				<fixed-frequency frequency="72" timeUnit="HOURS" />
+				<fixed-frequency frequency="72" timeUnit="HOURS"/>
 			</scheduling-strategy>
 		</scheduler>
 
