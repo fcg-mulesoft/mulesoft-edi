@@ -1,207 +1,170 @@
 %dw 2.0
-//import trim from dw::core::Strings
-output application/xml skipNullOn="everywhere"
-
+import trim from dw::core::Strings
+output application/xml skipNullOn = "everywhere"
 var incomingPartNumbers =
-    (vars.partsPriceResponse.value.incoming_part_number default [])
-        map (v) -> lower(trim((v default "") as String))
-        filter ($ != "")
-
+    (vars.partsPriceResponse.value.incoming_part_number default []) map (v) -> lower(trim((v default "") as String)) filter ($ != "")
 var resolvedItemIds =
-    (vars.partsPriceResponse.value.resolved_item_id default [])
-        map (v) -> lower(trim((v default "") as String))
-        filter ($ != "")
-
+    (vars.partsPriceResponse.value.resolved_item_id default []) map (v) -> lower(trim((v default "") as String)) filter ($ != "")
 var itemIDSearch = (incomingPartNumbers ++ resolvedItemIds) distinctBy $
-
 var defaultItemId = Mule::p('edi.default.item.id')
-
-fun money(v) = "\u0024" ++ (((v default 0) as Number) as String { format: "0.00" })
-
+fun money(v) = "\u0024" ++ (((v default 0) as Number) as String {
+	format: "0.00"
+})
 fun lineItemId(line) = trim((line.ItemId default "") as String)
 fun lineNo(line) = (line.LineNo default "") as String
 fun lineQty(line) =
-    (((line.QtyOrdered default line.UnitQuantity default 0) as String)
-        replace "," with "") as Number
+    (((line.QtyOrdered default line.UnitQuantity default 0) as String) replace "," with "") as Number
 fun linePrice(line) = (line.UnitPrice default 0) as Number
 fun lineCost(line) = (line.CommissionCost default line.OtherCost default linePrice(line)) as Number
-
 fun lineDesc(line) =
     trim(
         ((line.ItemId default "") as String) ++ " " ++
         ((line.ItemDesc default "") as String) ++ " " ++
         ((line.ExtendedDesc default "") as String)
     )
-
 fun lineNoteText(line) =
     lineDesc(line) ++
     " | Cost: " ++ money(lineCost(line)) ++
     " | Qty: " ++ ((lineQty(line)) as String) ++
     " | Price: " ++ money(linePrice(line))
-
 fun headerLineText(line) =
     "Line" ++ lineNo(line) ++ " | " ++ lineNoteText(line)
-
 fun isMatched(line) =
     do {
-        var id = lower(lineItemId(line))
-        ---
-        (id != "") and (itemIDSearch contains id)
-    }
-
+	var id = lower(lineItemId(line))
+	---
+	(id != "") and (itemIDSearch contains id)
+}
 fun getResolvedItemIdFromLine(line) =
     do {
-        var id = lower(lineItemId(line))
-        var matchedRecord = (vars.partsPriceResponse.value filter (
-            lower(trim(($.incoming_part_number default "") as String)) == id or 
-            lower(trim(($.resolved_item_id default "") as String)) == id
-        ))[0]
-        ---
-        matchedRecord.resolved_item_id default lineItemId(line)
-    }
-
+	var id = lower(lineItemId(line))
+	var matchedRecord = (vars.partsPriceResponse.value filter (lower(trim(($.incoming_part_number default "") as String)) == id or 
+            lower(trim(($.resolved_item_id default "") as String)) == id))[0]
+	---
+	matchedRecord.resolved_item_id default lineItemId(line)
+}
 fun isValidLine(line) = 
     line != null and !isEmpty(line)
-
 fun formatCostDate(costDate) =
-    if (isEmpty(costDate)) 
-        ""
-    else if ((costDate as String) contains "T")
-        ((costDate as String) splitBy /[-+]\d{2}:\d{2}$/)[0] default (costDate as String)
+    if ( isEmpty(costDate) ) ""
+    else if ( (costDate as String) contains "T" ) ((costDate as String) splitBy /[-+]\d{2}:\d{2}$/)[0] default (costDate as String)
     else
         costDate as String
-
 fun getCostDate(line) =
     do {
-        var id = lower(lineItemId(line))
-        var matchedRecord = (vars.partsPriceResponse.value filter (
-            lower(trim(($.incoming_part_number default "") as String)) == id or
-            lower(trim(($.resolved_item_id default "") as String)) == id
-        ))[0]
-        var costDate = matchedRecord.cost_date default ""
-        ---
-        formatCostDate(costDate)
-    }
-
+	var id = lower(lineItemId(line))
+	var matchedRecord = (vars.partsPriceResponse.value filter (lower(trim(($.incoming_part_number default "") as String)) == id or
+            lower(trim(($.resolved_item_id default "") as String)) == id))[0]
+	var costDate = matchedRecord.cost_date default ""
+	---
+	formatCostDate(costDate)
+}
 fun lookupResolvedItemId(incomingPartNumber) =
     do {
-        var id = lower(trim((incomingPartNumber default "") as String))
-        var matchedRecord = (vars.partsPriceResponse.value filter (
-            lower(trim(($.incoming_part_number default "") as String)) == id or
-            lower(trim(($.resolved_item_id default "") as String)) == id
-        ))[0]
-        ---
-        matchedRecord.resolved_item_id default incomingPartNumber
-    }
-
+	var id = lower(trim((incomingPartNumber default "") as String))
+	var matchedRecord = (vars.partsPriceResponse.value filter (lower(trim(($.incoming_part_number default "") as String)) == id or
+            lower(trim(($.resolved_item_id default "") as String)) == id))[0]
+	---
+	matchedRecord.resolved_item_id default incomingPartNumber
+}
 var rawLines = vars.initialPayload.Order.Lines.*OrderLine default []
-var linesArr = if (rawLines is Array) rawLines else [rawLines]
+var linesArr = if ( rawLines is Array ) rawLines else [rawLines]
 var validLinesArr = linesArr filter (line) -> isValidLine(line)
-
 var unmatchedLines = validLinesArr filter (line) -> not isMatched(line)
-
 var headerNoteText =
     ((unmatchedLines map (line) -> headerLineText(line)) joinBy " | ") ++
-    (if (sizeOf(unmatchedLines) > 0) " |" else "")
-
+    (if ( sizeOf(unmatchedLines) > 0 ) " |" else "")
 ---
 {
-  Order @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd": "http://www.w3.org/2001/XMLSchema"): {
-    CustomerId: vars.poSearchResponse.value[0].customer_id,
-    CompanyId: vars.poSearchResponse.value[0].company_id,
-    //LocationId: vars.poSearchResponse.value[0].preferred_location_id,
-    LocationId: "21000",
-    ShipToId: vars.poSearchResponse.value[0].ship_to_id,
-    PoNo: vars.initialPayload.Order.PoNo,
-    ContactId: vars.poSearchResponse.value[0].edi_default_contact_id default null,
-    Taker: vars.poSearchResponse.value[0].edi_default_taker default "MULESOFTINT",
-    Quote: "N",
-    Approved: "false",
-
-    Notes:
-      if (sizeOf(unmatchedLines) > 0)
-        {
-          OrderNote: {
-            Topic: "EDI_HEADER",
-            Note: headerNoteText,
-            NotepadClassId: "ITEMS",
-            Mandatory: "false"
-          },
-            OrderNote: {
-            Topic: "Shared_Secret"  ,
-            Note: vars.initialPayload.Order.SharedCredential,
-            NotepadClassId: "ITEMS",
-            Mandatory: "false"
-          }
-        }
+	Order @("xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd": "http://www.w3.org/2001/XMLSchema"): {
+		CustomerId: vars.poSearchResponse.value[0].customer_id,
+		CompanyId: vars.poSearchResponse.value[0].company_id,
+		LocationId: vars.poSearchResponse.value[0].preferred_location_id,
+		ShipToId: vars.poSearchResponse.value[0].ship_to_id,
+		PoNo: vars.initialPayload.Order.PoNo,
+		ContactId: vars.poSearchResponse.value[0].edi_default_contact_id default null,
+		Taker: vars.poSearchResponse.value[0].edi_default_taker default "MULESOFTINT",
+		Quote: "N",
+		Approved: "false",
+		Notes: if ( sizeOf(unmatchedLines) > 0 ) {
+			OrderNote: {
+				Topic: "EDI_HEADER",
+				Note: headerNoteText,
+				NotepadClassId: "ITEMS",
+				Mandatory: "false"
+			},
+			OrderNote: {
+				Topic: "Shared_Secret",
+				Note: vars.initialPayload.Order.SharedCredential,
+				NotepadClassId: "ITEMS",
+				Mandatory: "false"
+			}
+		}
       else
         {
-          OrderNote: {
-            Topic: vars.initialPayload.Order.Notes.OrderNote.Topic,
-            Note: vars.initialPayload.Order.Notes.OrderNote.Note,
-            NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId,
-            Mandatory: "false"
-          },
-          OrderNote: {
-            Topic: "Shared_Secret"  ,
-            Note:  vars.initialPayload.Order.SharedCredential,
-            //NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId,
-            Mandatory: "false"
-          }
-        },
-
-    Lines: 
-      if (sizeOf(validLinesArr) > 0)
-        {
-          OrderLine:
-            validLinesArr map (line) ->
-              (
-                if (isMatched(line))
-                  ((line - "UserDefinedFields" - "Notes") mapObject ((value, key) -> 
-                    if (isEmpty(value)) {} 
-                    else if (key as String == "ItemId") {(key): lookupResolvedItemId(value)} 
-                    else {(key): value}
-                  ))
-                  ++
+			OrderNote: {
+				Topic: vars.initialPayload.Order.Notes.OrderNote.Topic,
+				Note: vars.initialPayload.Order.Notes.OrderNote.Note,
+				NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId,
+				Mandatory: "false"
+			},
+			OrderNote: {
+				Topic: "Shared_Secret",
+				Note: vars.initialPayload.Order.SharedCredential,
+				// NotepadClassId: vars.initialPayload.Order.Notes.OrderNote.NotepadClassId,
+				Mandatory: "false"
+			}
+		},
+		Lines: if ( sizeOf(validLinesArr) > 0 ) {
+			OrderLine: validLinesArr map (line) ->
+              (if ( isMatched(line) ) ((line - "UserDefinedFields" - "Notes") mapObject ((value, key) -> 
+                    if ( isEmpty(value) ) {
+			} 
+                    else if ( key as String == "ItemId" ) {
+				(key): lookupResolvedItemId(value)
+			} 
+                    else {
+				(key): value
+			}
+                  )) ++
                   {
-                    Notes: {
-                      OrderLineNote: {
-                        Topic: line.Notes.OrderLineNote.Topic,
-                        Note: line.Notes.OrderLineNote.Note,
-                        NotepadClassId: line.Notes.OrderLineNote.NotepadClassId,
-                        Mandatory: "N"
-                      }
-                    }
-                  }
+				Notes: {
+					OrderLineNote: {
+						Topic: line.Notes.OrderLineNote.Topic,
+						Note: line.Notes.OrderLineNote.Note,
+						NotepadClassId: line.Notes.OrderLineNote.NotepadClassId,
+						Mandatory: "N"
+					}
+				}
+			}
                 else
                   (((line - "ItemId" - "Notes" - "UserDefinedFields") mapObject ((value, key) -> 
-                    if (isEmpty(value)) {} 
-                    else {(key): value}
+                    if ( isEmpty(value) ) {
+			} 
+                    else {
+				(key): value
+			}
                   )) ++ {
-                    ItemId: defaultItemId,
-                    Notes: {
-                      OrderLineNote: {
-                        Topic: "EDI_LINE1",
-                        Note: lineNoteText(line),
-                        NotepadClassId: "ITEMS",
-                        Mandatory: "N"
-                      }
-                    }
-                  })
-              )
-              ++
-              (
-                if (!isEmpty(getCostDate(line)))
-                  {
-                    UserDefinedFields: {
-                      LocCostDate: getCostDate(line)
-                    }
-                  }
+				ItemId: defaultItemId,
+				Notes: {
+					OrderLineNote: {
+						Topic: "EDI_LINE1",
+						Note: lineNoteText(line),
+						NotepadClassId: "ITEMS",
+						Mandatory: "N"
+					}
+				}
+			})) ++
+              (if ( !isEmpty(getCostDate(line)) ) {
+				UserDefinedFields: {
+					LocCostDate: getCostDate(line)
+				}
+			}
                 else
-                  {}
-              )
-        }
+                  {
+			})
+		}
       else
         null
-  }
+	}
 }

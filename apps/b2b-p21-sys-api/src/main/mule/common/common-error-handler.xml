@@ -12,8 +12,6 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			logException="true" doc:name="On Error Propagate"
 			doc:id="0133fef3-8400-473f-bb94-37ca2cc4fcc1"
 			type="HTTP:INTERNAL_SERVER_ERROR">
-			<logger level="INFO" doc:name="Logger"
-				doc:id="f0a95c32-17e2-4a5e-8094-837eac742991" />
 			<set-variable variableName="httpStatus" value="#[500]" />
 			<set-payload value="#[error.errorMessage.payload]"
 				mimeType="application/xml" />

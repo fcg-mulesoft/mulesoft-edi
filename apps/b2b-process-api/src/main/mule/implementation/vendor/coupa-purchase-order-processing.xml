@@ -50,7 +50,6 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 							<when expression="#[sizeOf(vars.p21POResponse.value filter ($.po_no == vars.initialPayload.Order.PoNo)) &gt; 0]">
 								<logger level="INFO" doc:name="PO Search Response" doc:id="bd2c8524-1c29-46b4-9827-84c9fc11fd7e" message="PO Search Response is #[vars.p21POResponse]" />
 								<raise-error doc:name="CUSTOM:VALIDATION_FAILED" doc:id="7ead687f-13fd-40c6-87a7-c586405347d4" type="CUSTOM:VALIDATION_FAILED" description="Validation Failed. PO Number in Coupa Request is already Available in P21 System." />
-								<!-- [STUDIO:"Logger"]<logger level="INFO" doc:name="Logger" doc:id="a19be147-57e3-4e85-b63b-2f1048790432" /> [STUDIO] -->
 							</when>
 							<otherwise >
 								<choice doc:name="Choice" doc:id="5964698f-be9a-44c9-9a9c-009f2d6c6489">
