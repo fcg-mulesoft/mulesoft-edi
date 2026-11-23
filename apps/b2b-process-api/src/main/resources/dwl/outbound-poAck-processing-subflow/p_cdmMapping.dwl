@@ -16,8 +16,8 @@ groupedOrders pluck ((orderItems, orderNo) -> {
             acknowledgmentType: orderItems[0].BAK02_AckType,
             purchaseOrderNumber: orderItems[0].BAK03_CustPO,
             purchaseOrderDate: orderItems[0].BAK04_Date,
-            acknowledgementdate: orderItems[0].BAK09_po_ack_date,
-            sellerOrderNumber: orderItems[0].BAK06_ReferenceNo,
+            acknowledgementdate: if(orderItems[0].company_id == "TPA")orderItems[0].BAK09_po_ack_date else if (orderItems[0].company_id == "MTX") orderItems[0].BAK09_AckDate else now() as String {format: "yyyyMMdd"},
+            sellerOrderNumber: if(orderItems[0].company_id == "TPA")orderItems[0].BAK06_ReferenceNo else if (orderItems[0].company_id == "MTX") orderItems[0].order_no else "",
  
             references:
                 [
@@ -97,10 +97,10 @@ groupedOrders pluck ((orderItems, orderNo) -> {
                             uom: item.PO1_03_UOM,
                             unitPrice: item.PO1_04_Price,
                             priceQualifier: item.PO1_05_PriceQual,
-                            buyerPartQualifier: item.PO1_06_BuyerPartQual,
-                            buyerPartNo: item.PO1_07_BuyerPart,
-                            vendorPartQualifier: item.PO1_08_VendorPartQual,
-                            vendorPartNo: item.PO1_09_VendorPart,
+                            buyerPartQualifier: item.PO1_06_BuyerPartQual default "",
+                            buyerPartNo: item.PO1_07_BuyerPart default "",
+                            vendorPartQualifier: if(orderItems[0].company_id == "TPA") item.PO1_08_VendorPartQual else if (orderItems[0].company_id == "MTX") item.PO1_06_Qual1 else "",
+                            vendorPartNo: if(orderItems[0].company_id == "TPA")item.PO1_09_VendorPart else if (orderItems[0].company_id == "MTX") item.PO1_07_Part1 else "",
  
                             acknowledgments: [
                                 {

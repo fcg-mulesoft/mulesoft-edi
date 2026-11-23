@@ -27,10 +27,18 @@ import toBase64 from dw::core::Binaries
 		"transactionType": Mule::p('b2b-p21-sys-api.transactionType.salesOrder'),
 		"purpose": Mule::p('b2b-p21-sys-api.purpose.validation'),
 		"validationMode": Mule::p('b2b-p21-sys-api.validationMode.xref'),
-		"companyId": if ( payload[0].b2bMessage.header.senderId == "ARIBAUS" ) "MTX"
+//		"companyId": if ( payload[0].b2bMessage.header.senderId == "ARIBAUS" ) "MTX"
+//		else if ( payload[0].b2bMessage.header.senderId == "ARIBAPUS" ) "KFT"
+//		else if ( payload[0].b2bMessage.header.senderId == "SPSAPEXWATER" ) "ACS"
+//else
+//    "TPA",
+	"companyId": if ( payload[0].b2bMessage.header.senderId == "ARIBAUS" ) "MTX"
+		else if ( payload[0].b2bMessage.header.senderId == "VISTRATEST" ) "KFT"
+		else if ( payload[0].b2bMessage.header.senderId == "SPSAPEXWATER" ) "ACS"
 else
     "TPA",
 		"ediRefId": (payload[0].b2bMessage.header.partyInformation filter ($.qualifier == "ST"))[0].identificationCode default ""
+		
 	},
 	"uriParams": {
 	},
@@ -66,7 +74,8 @@ var hasInvalidEdiXref = isEmpty(response)
             }
         else
             {}
-}]]></ee:set-variable>
+}
+]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<logger level="INFO" doc:name="isValid" doc:id="4540d2e6-8ba6-4a7d-98e7-32190c49cf3e" message='#[output json&#10;---&#10;{&#10;	"step" :"XRefId Validation",&#10;	"inputFileXrefId" : (payload[0].b2bMessage.header.partyInformation&#10;    filter ($.qualifier == "ST"))[0].identificationCode default "" ,&#10;    "isValid" : vars.isValid&#10;}]'/>
