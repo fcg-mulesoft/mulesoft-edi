@@ -127,7 +127,7 @@ import toBase64 from dw::core::Binaries
 		"validationMode": Mule::p('b2b-p21-sys-api.validationMode.customerPart'),
 		"companyId": vars.ediXrefResponse[0].company_id default "TPA",
 		"businesskey":(vars.initialPayload flatMap ((x) -> x.b2bMessage.detail.itemDetails))
-    map ((item) -> item.buyersPartNumber)
+    map ((item) -> item.buyersPartNumber default item.vendorPartNumber)
     joinBy ",",
 	},
 	"uriParams": {
@@ -171,8 +171,8 @@ var initialPayload = payload
 output application/json  
 ---
 initialPayload flatMap (order) -> order.b2bMessage.detail.itemDetails map (item) -> {
-    "our_item_id": item.buyersPartNumber,
-    "their_item_id": item.buyersPartNumber,
+    "our_item_id": item.buyersPartNumber default item.vendorPartNumber,
+    "their_item_id": item.buyersPartNumber default item.vendorPartNumber,
     "lineNo" : item.lineNo,
     "company_id": vars.ediXrefResponse.company_id[0],
     "customer_id": vars.ediXrefResponse.customer_id[0],
